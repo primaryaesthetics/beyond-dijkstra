@@ -1,0 +1,8 @@
+   Compiling beyond_dijkstra v0.1.0 (/Users/kirakabaeva/Documents/GitHub/beyond-dijkstra)
+    Finished `release` profile [optimized] target(s) in 2.90s
+     Running `target/release/examples/bench_fast 100000`
+graph: random m=4n, n=100000
+n=100000, m=400000
+params: delta=3 t=6 k=3 l_top=4 n2=800040
+dijkstra median    0.009 s
+mainline median    1.612 s   (182.40x dijkstra)

@@ -16,6 +16,41 @@ use std::collections::{BTreeSet, BinaryHeap};
 use crate::label::{Lab, Label};
 
 // ---------------------------------------------------------------------------
+// Phase attribution (feature `phase-timer`; zero overhead when off).
+
+/// Wall-clock seconds per solver phase. All zeros unless the crate is built
+/// with `--features phase-timer`. Buckets are non-overlapping except
+/// `partition`, which is a subset of `find_pivots` (reported so the local
+/// searches and the tree partition can be separated when reading).
+#[derive(Clone, Default, Debug)]
+pub struct PhaseTimes {
+    pub reduce: f64,
+    pub find_pivots: f64,
+    pub partition: f64,
+    pub base_case: f64,
+    pub ds_pull: f64,
+    pub ds_merge: f64,
+    pub pivot_bookkeeping: f64,
+    pub relax_sweep: f64,
+    pub boundary_sweeps: f64,
+}
+
+/// Time `$e` into `$st.phase.$field` when `phase-timer` is on; just `$e`
+/// otherwise. `$e` is evaluated exactly once either way.
+macro_rules! phase {
+    ($st:expr, $field:ident, $e:expr) => {{
+        #[cfg(feature = "phase-timer")]
+        let __phase_t0 = std::time::Instant::now();
+        let __phase_r = $e;
+        #[cfg(feature = "phase-timer")]
+        {
+            $st.phase.$field += __phase_t0.elapsed().as_secs_f64();
+        }
+        __phase_r
+    }};
+}
+
+// ---------------------------------------------------------------------------
 // Parameters (SPEC "Parameters"; clamps per QUESTIONS.md Q1).
 
 /// Mirror of `choose_params`: all logs base 2, `int()` truncation for delta.
@@ -257,11 +292,90 @@ pub fn partition_tree(edge_list: &[(u32, u32)], root: u32, s: usize) -> Vec<Vec<
 // ---------------------------------------------------------------------------
 // The solver: BMSSP recursion on the reduced graph.
 
+/// An F̄ tree: only its edge list and root are ever read (the reference's
+/// per-tree vertex list is write-only — OPTIMIZATION.md pass 3, point 3).
 struct Tree {
-    vert: Vec<u32>,
-    set: FxHashSet<u32>,
     edges: Vec<(u32, u32)>,
     root: u32,
+}
+
+/// Reusable FindPivots state (OPTIMIZATION.md pass 3): flat epoch-stamped
+/// membership arrays replace the per-call hash maps and sets — every one
+/// of them is queried for membership only, never iterated — and the search
+/// containers are cleared and reused across searches. Stamp arrays start
+/// at 0 and epochs at 1, so a zeroed array matches nothing.
+struct FpScratch {
+    epoch: u32,
+    heap: BinaryHeap<Reverse<(Lab, u32)>>,
+    k_vert: Vec<u32>,
+    k_parent_order: Vec<(u32, u32)>,
+    /// v ∈ K of the current search.
+    k_stamp: Vec<u32>,
+    /// v has a `k_parent_order` slot in the current search (+ its index).
+    kp_stamp: Vec<u32>,
+    kp_slot: Vec<u32>,
+    /// v lies in an F̄ tree of the current call (+ which one).
+    tree_stamp: Vec<u32>,
+    tree_id: Vec<u32>,
+    /// v ∈ Q / v ∈ W / v consumed by an earlier group / v in current group.
+    q_stamp: Vec<u32>,
+    w_stamp: Vec<u32>,
+    prior_stamp: Vec<u32>,
+    group_stamp: Vec<u32>,
+}
+
+impl Default for FpScratch {
+    fn default() -> Self {
+        FpScratch::new(0)
+    }
+}
+
+impl FpScratch {
+    fn new(n: usize) -> Self {
+        FpScratch {
+            epoch: 0,
+            heap: BinaryHeap::new(),
+            k_vert: Vec::new(),
+            k_parent_order: Vec::new(),
+            k_stamp: vec![0; n],
+            kp_stamp: vec![0; n],
+            kp_slot: vec![0; n],
+            tree_stamp: vec![0; n],
+            tree_id: vec![0; n],
+            q_stamp: vec![0; n],
+            w_stamp: vec![0; n],
+            prior_stamp: vec![0; n],
+            group_stamp: vec![0; n],
+        }
+    }
+
+    /// Call-boundary epoch hygiene: no stamps are live between calls, so
+    /// when less than half the u32 space remains, zero everything and
+    /// restart. A single call cannot consume 2^31 epochs without at least
+    /// as many heap operations first; `next_epoch` guards the absolute
+    /// ceiling loudly rather than alias stamps.
+    fn begin_call(&mut self) {
+        if self.epoch >= 1 << 31 {
+            for a in [
+                &mut self.k_stamp,
+                &mut self.kp_stamp,
+                &mut self.tree_stamp,
+                &mut self.q_stamp,
+                &mut self.w_stamp,
+                &mut self.prior_stamp,
+                &mut self.group_stamp,
+            ] {
+                a.fill(0);
+            }
+            self.epoch = 0;
+        }
+    }
+
+    fn next_epoch(&mut self) -> u32 {
+        assert!(self.epoch < u32::MAX, "epoch space exhausted within one call");
+        self.epoch += 1;
+        self.epoch
+    }
 }
 
 pub struct Solver<'a> {
@@ -269,6 +383,8 @@ pub struct Solver<'a> {
     t: u64,
     k: u64,
     pub d: Vec<Label>,
+    pub phase: PhaseTimes,
+    scratch: FpScratch,
 }
 
 impl<'a> Solver<'a> {
@@ -278,6 +394,8 @@ impl<'a> Solver<'a> {
             t,
             k,
             d: vec![Label::Inf; adj.len()],
+            phase: PhaseTimes::default(),
+            scratch: FpScratch::new(adj.len()),
         }
     }
 
@@ -302,30 +420,34 @@ impl<'a> Solver<'a> {
     #[allow(clippy::type_complexity)]
     fn find_pivots(&mut self, b: Label, s_list: &[u32]) -> (Vec<Vec<u32>>, Vec<u32>, Vec<u32>) {
         let adj = self.adj;
-        let mut tree_of: FxHashMap<u32, usize> = FxHashMap::default();
+        let mut sc = std::mem::take(&mut self.scratch);
+        sc.begin_call();
+        let tree_ep = sc.next_epoch();
+        let q_ep = sc.next_epoch();
+        let w_ep = sc.next_epoch();
+        let prior_ep = sc.next_epoch();
+
         let mut trees: Vec<Tree> = Vec::new();
         let mut q_list: Vec<u32> = Vec::new();
-        let mut q_set: FxHashSet<u32> = FxHashSet::default();
         let mut w_list: Vec<u32> = Vec::new();
-        let mut w_set: FxHashSet<u32> = FxHashSet::default();
 
         for &x in s_list {
-            if tree_of.contains_key(&x) {
+            if sc.tree_stamp[x as usize] == tree_ep {
                 continue;
             }
-            let mut heap: BinaryHeap<Reverse<(Lab, u32)>> = BinaryHeap::new();
-            heap.push(Reverse((self.d[x as usize].fin(), x)));
-            let mut k_vert: Vec<u32> = vec![x];
-            let mut k_set: FxHashSet<u32> = FxHashSet::default();
-            k_set.insert(x);
-            // v -> (u, v), latest valid tree edge into v. Insertion-ordered
-            // like the reference's dict: an overwrite keeps the original slot.
-            let mut k_parent_order: Vec<(u32, u32)> = Vec::new();
-            let mut k_parent_idx: FxHashMap<u32, usize> = FxHashMap::default();
+            let k_ep = sc.next_epoch();
+            let kp_ep = sc.next_epoch();
+            sc.heap.clear();
+            sc.k_vert.clear();
+            sc.k_parent_order.clear();
+            sc.heap.push(Reverse((self.d[x as usize].fin(), x)));
+            sc.k_vert.push(x);
+            sc.k_stamp[x as usize] = k_ep;
             let mut merged = false;
 
-            'search: while !heap.is_empty() && (k_set.len() as u64) < self.k {
-                let Reverse((lab, u)) = heap.pop().expect("heap non-empty");
+            // |K| == k_vert.len(): both grow by one on every first insert.
+            'search: while !sc.heap.is_empty() && (sc.k_vert.len() as u64) < self.k {
+                let Reverse((lab, u)) = sc.heap.pop().expect("heap non-empty");
                 if Label::Fin(lab) != self.d[u as usize] {
                     continue; // stale lazy-deletion entry
                 }
@@ -333,54 +455,56 @@ impl<'a> Solver<'a> {
                     if !self.relax(u, v, w, b) {
                         continue;
                     }
-                    if k_set.insert(v) {
-                        k_vert.push(v);
+                    let vi = v as usize;
+                    if sc.k_stamp[vi] != k_ep {
+                        sc.k_stamp[vi] = k_ep;
+                        sc.k_vert.push(v);
                     }
-                    match k_parent_idx.entry(v) {
-                        std::collections::hash_map::Entry::Occupied(e) => {
-                            k_parent_order[*e.get()] = (u, v);
-                        }
-                        std::collections::hash_map::Entry::Vacant(e) => {
-                            e.insert(k_parent_order.len());
-                            k_parent_order.push((u, v));
-                        }
+                    // v -> (u, v), latest valid tree edge into v; an
+                    // overwrite keeps the original slot (dict semantics).
+                    if sc.kp_stamp[vi] == kp_ep {
+                        sc.k_parent_order[sc.kp_slot[vi] as usize] = (u, v);
+                    } else {
+                        sc.kp_stamp[vi] = kp_ep;
+                        sc.kp_slot[vi] = sc.k_parent_order.len() as u32;
+                        sc.k_parent_order.push((u, v));
                     }
-                    if let Some(&j) = tree_of.get(&v) {
+                    if sc.tree_stamp[vi] == tree_ep {
                         // Contact: merge K into existing tree j; x abandoned.
-                        let tree = &mut trees[j];
-                        for &kv in &k_vert {
-                            tree_of.insert(kv, j);
-                            if tree.set.insert(kv) {
-                                tree.vert.push(kv);
-                            }
+                        let j = sc.tree_id[vi];
+                        for &kv in &sc.k_vert {
+                            sc.tree_stamp[kv as usize] = tree_ep;
+                            sc.tree_id[kv as usize] = j;
                         }
-                        tree.edges.extend(k_parent_order.iter().copied());
+                        trees[j as usize]
+                            .edges
+                            .extend_from_slice(&sc.k_parent_order);
                         merged = true;
                         break 'search;
                     }
-                    heap.push(Reverse((self.d[v as usize].fin(), v)));
+                    sc.heap.push(Reverse((self.d[vi].fin(), v)));
                 }
             }
 
             if merged {
                 continue; // nothing reported for a merged search
             }
-            if k_set.len() as u64 >= self.k {
-                let j = trees.len();
-                for &kv in &k_vert {
-                    tree_of.insert(kv, j);
+            if sc.k_vert.len() as u64 >= self.k {
+                let j = trees.len() as u32;
+                for &kv in &sc.k_vert {
+                    sc.tree_stamp[kv as usize] = tree_ep;
+                    sc.tree_id[kv as usize] = j;
                 }
                 trees.push(Tree {
-                    vert: k_vert,
-                    set: k_set,
-                    edges: k_parent_order,
+                    edges: sc.k_parent_order.clone(),
                     root: x,
                 });
             } else {
                 q_list.push(x);
-                q_set.insert(x);
-                for &kv in &k_vert {
-                    if w_set.insert(kv) {
+                sc.q_stamp[x as usize] = q_ep;
+                for &kv in &sc.k_vert {
+                    if sc.w_stamp[kv as usize] != w_ep {
+                        sc.w_stamp[kv as usize] = w_ep;
                         w_list.push(kv);
                     }
                 }
@@ -388,21 +512,36 @@ impl<'a> Solver<'a> {
         }
 
         let mut p_lists: Vec<Vec<u32>> = Vec::new();
-        let mut prior: FxHashSet<u32> = FxHashSet::default();
         for tree in &trees {
-            for group in partition_tree(&tree.edges, tree.root, self.k as usize) {
-                let gset: FxHashSet<u32> = group.iter().copied().collect();
+            let groups = phase!(
+                self,
+                partition,
+                partition_tree(&tree.edges, tree.root, self.k as usize)
+            );
+            for group in groups {
+                let g_ep = sc.next_epoch();
+                for &gv in &group {
+                    sc.group_stamp[gv as usize] = g_ep;
+                }
                 let p_j: Vec<u32> = s_list
                     .iter()
                     .copied()
-                    .filter(|v| gset.contains(v) && !q_set.contains(v) && !prior.contains(v))
+                    .filter(|&v| {
+                        let vi = v as usize;
+                        sc.group_stamp[vi] == g_ep
+                            && sc.q_stamp[vi] != q_ep
+                            && sc.prior_stamp[vi] != prior_ep
+                    })
                     .collect();
-                prior.extend(gset);
+                for &gv in &group {
+                    sc.prior_stamp[gv as usize] = prior_ep;
+                }
                 if !p_j.is_empty() {
                     p_lists.push(p_j); // QUESTIONS.md Q2: empty P_j dropped
                 }
             }
         }
+        self.scratch = sc;
         (p_lists, q_list, w_list)
     }
 
@@ -436,12 +575,12 @@ impl<'a> Solver<'a> {
 
     pub fn bmssp(&mut self, b: Label, s_list: &[u32], level: u64) -> (Label, Vec<u32>, BlockDs) {
         if level == 0 {
-            return self.base_case(b, s_list);
+            return phase!(self, base_case, self.base_case(b, s_list));
         }
         let adj = self.adj;
         let t = self.t;
         let mut ds = BlockDs::new(t.saturating_mul(pow2_sat((level - 1) * t)), b);
-        let (mut p_lists, _q, w_list) = self.find_pivots(b, s_list);
+        let (mut p_lists, _q, w_list) = phase!(self, find_pivots, self.find_pivots(b, s_list));
 
         let mut piv: Vec<Option<u32>> = Vec::with_capacity(p_lists.len()); // None = dead
         let mut piv_of: FxHashMap<u32, usize> = FxHashMap::default(); // current pivot -> j
@@ -471,7 +610,7 @@ impl<'a> Solver<'a> {
         let mut j_pending: BTreeSet<usize> = BTreeSet::new(); // the paper's J
 
         while (u_log.len() as u64) <= limit && ds.non_empty() {
-            let (si_keys, b_i) = ds.pull();
+            let (si_keys, b_i) = phase!(self, ds_pull, ds.pull());
             let mut si: Vec<u32> = si_keys.clone();
             let mut si_set: FxHashSet<u32> = si_keys.iter().copied().collect();
             for &x in &si_keys {
@@ -485,64 +624,70 @@ impl<'a> Solver<'a> {
             }
 
             let (b_pi, u_i, ds_i) = self.bmssp(b_i, &si, level - 1);
-            ds.merge(&ds_i);
+            phase!(self, ds_merge, ds.merge(&ds_i));
 
-            for &u in &u_i {
-                // pivot bookkeeping pass (lines 16-20)
-                let Some(j) = member.remove(&u) else { continue };
-                let pos = p_lists[j]
-                    .iter()
-                    .position(|&x| x == u)
-                    .expect("member map mirrors P_j contents");
-                p_lists[j].remove(pos);
-                if piv[j] == Some(u) {
-                    piv_of.remove(&u);
-                    if !p_lists[j].is_empty() {
-                        j_pending.insert(j);
-                    } else {
-                        piv[j] = None; // pivot dies with its set
+            phase!(self, pivot_bookkeeping, {
+                for &u in &u_i {
+                    // pivot bookkeeping pass (lines 16-20)
+                    let Some(j) = member.remove(&u) else { continue };
+                    let pos = p_lists[j]
+                        .iter()
+                        .position(|&x| x == u)
+                        .expect("member map mirrors P_j contents");
+                    p_lists[j].remove(pos);
+                    if piv[j] == Some(u) {
+                        piv_of.remove(&u);
+                        if !p_lists[j].is_empty() {
+                            j_pending.insert(j);
+                        } else {
+                            piv[j] = None; // pivot dies with its set
+                        }
                     }
                 }
-            }
+            });
 
-            for &u in &u_i {
-                // relax sweep (lines 21-26)
-                for &(v, w) in &adj[u as usize] {
-                    if self.relax(u, v, w, b) && self.d[v as usize] >= b_i {
-                        ds.insert(v, self.d[v as usize].fin());
-                        if let Some(&j) = member.get(&v) {
-                            if !j_pending.contains(&j) {
-                                if let Some(pj) = piv[j] {
-                                    if self.d[pj as usize] > self.d[v as usize] {
-                                        piv_of.remove(&pj);
-                                        piv[j] = Some(v);
-                                        piv_of.insert(v, j);
+            phase!(self, relax_sweep, {
+                for &u in &u_i {
+                    // relax sweep (lines 21-26), incl. DS inserts
+                    for &(v, w) in &adj[u as usize] {
+                        if self.relax(u, v, w, b) && self.d[v as usize] >= b_i {
+                            ds.insert(v, self.d[v as usize].fin());
+                            if let Some(&j) = member.get(&v) {
+                                if !j_pending.contains(&j) {
+                                    if let Some(pj) = piv[j] {
+                                        if self.d[pj as usize] > self.d[v as usize] {
+                                            piv_of.remove(&pj);
+                                            piv[j] = Some(v);
+                                            piv_of.insert(v, j);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
+            });
 
-            for &j in &j_pending {
-                // re-selection (lines 27-29), ascending j
-                if p_lists[j].is_empty() {
-                    // QUESTIONS.md Q8: P_j emptied after j entered J; the
-                    // paper's argmin is over an empty set here. Pivot dies.
-                    piv[j] = None;
-                    continue;
-                }
-                let mut p = p_lists[j][0];
-                for &v in &p_lists[j][1..] {
-                    if self.d[v as usize] < self.d[p as usize] {
-                        p = v;
+            phase!(self, pivot_bookkeeping, {
+                for &j in &j_pending {
+                    // re-selection (lines 27-29), ascending j
+                    if p_lists[j].is_empty() {
+                        // QUESTIONS.md Q8: P_j emptied after j entered J; the
+                        // paper's argmin is over an empty set here. Pivot dies.
+                        piv[j] = None;
+                        continue;
                     }
+                    let mut p = p_lists[j][0];
+                    for &v in &p_lists[j][1..] {
+                        if self.d[v as usize] < self.d[p as usize] {
+                            p = v;
+                        }
+                    }
+                    piv[j] = Some(p);
+                    piv_of.insert(p, j);
+                    ds.insert(p, self.d[p as usize].fin());
                 }
-                piv[j] = Some(p);
-                piv_of.insert(p, j);
-                ds.insert(p, self.d[p as usize].fin());
-            }
+            });
 
             b_prime = b_pi;
             u_set.extend(u_i.iter().copied());
@@ -550,25 +695,28 @@ impl<'a> Solver<'a> {
             j_pending.clear();
         }
 
-        for &x in s_list {
-            // premature vertices go back to the frontier (line 33)
-            if b_prime <= self.d[x as usize] && self.d[x as usize] < b {
-                ds.insert(x, self.d[x as usize].fin());
-            }
-        }
-        let w_prime: Vec<u32> = w_list
-            .iter()
-            .copied()
-            .filter(|&x| !u_set.contains(&x) && self.d[x as usize] < b_prime)
-            .collect();
-        for &u in &w_prime {
-            // final relax from completed arborescences
-            for &(v, w) in &adj[u as usize] {
-                if self.relax(u, v, w, b) && self.d[v as usize] >= b_prime {
-                    ds.insert(v, self.d[v as usize].fin());
+        let w_prime = phase!(self, boundary_sweeps, {
+            for &x in s_list {
+                // premature vertices go back to the frontier (line 33)
+                if b_prime <= self.d[x as usize] && self.d[x as usize] < b {
+                    ds.insert(x, self.d[x as usize].fin());
                 }
             }
-        }
+            let w_prime: Vec<u32> = w_list
+                .iter()
+                .copied()
+                .filter(|&x| !u_set.contains(&x) && self.d[x as usize] < b_prime)
+                .collect();
+            for &u in &w_prime {
+                // final relax from completed arborescences
+                for &(v, w) in &adj[u as usize] {
+                    if self.relax(u, v, w, b) && self.d[v as usize] >= b_prime {
+                        ds.insert(v, self.d[v as usize].fin());
+                    }
+                }
+            }
+            w_prime
+        });
         u_log.extend_from_slice(&w_prime);
         (b_prime, u_log, ds)
     }
@@ -589,6 +737,10 @@ pub struct RunResult {
     pub settle: Vec<u32>,
     /// Readback: shortest-path lengths for original vertices.
     pub dist: Vec<f64>,
+    /// Per-phase wall clock (all zeros unless built with `phase-timer`).
+    pub phase_times: PhaseTimes,
+    /// Total wall clock of the run (zero unless built with `phase-timer`).
+    pub total: f64,
 }
 
 /// Full run per SPEC "Output readback": degree-reduce, BMSSP from the
@@ -602,22 +754,35 @@ pub fn sssp_run(
     override_params: Option<(u64, u64, u64)>,
 ) -> RunResult {
     let m = edges.len();
-    let (delta, t, k, l_top, red) = match override_params {
-        None => {
-            let (d0, _, _, _) = choose_params(n, m, 0);
-            let r = degree_reduce(n, edges, d0);
-            let (d1, t1, k1, l1) = choose_params(n, m, r.n2);
-            (d1, t1, k1, l1, r)
-        }
+    #[cfg(feature = "phase-timer")]
+    let total_t0 = std::time::Instant::now();
+
+    // The delta used for the reduction: the reference computes it before
+    // reducing, and the formula does not depend on n2, so hoisting it out
+    // of the branch below is a no-op.
+    let pre_delta = match override_params {
+        None => choose_params(n, m, 0).0,
+        Some((df, _, _)) => df,
+    };
+    #[cfg(feature = "phase-timer")]
+    let reduce_t0 = std::time::Instant::now();
+    let red = degree_reduce(n, edges, pre_delta);
+    #[cfg(feature = "phase-timer")]
+    let reduce_secs = reduce_t0.elapsed().as_secs_f64();
+
+    let (delta, t, k, l_top) = match override_params {
+        None => choose_params(n, m, red.n2),
         Some((df, tf, kf)) => {
-            let r = degree_reduce(n, edges, df);
-            let log_n2 = (r.n2.max(2) as f64).log2().max(1.0);
-            let lf = (log_n2 / tf as f64).ceil() as u64;
-            (df, tf, kf, lf, r)
+            let log_n2 = (red.n2.max(2) as f64).log2().max(1.0);
+            (df, tf, kf, (log_n2 / tf as f64).ceil() as u64)
         }
     };
 
     let mut solver = Solver::new(&red.adj, t, k);
+    #[cfg(feature = "phase-timer")]
+    {
+        solver.phase.reduce = reduce_secs;
+    }
     let s2 = red.cycle_of[source].0;
     solver.d[s2 as usize] = Label::Fin(Lab {
         len: 0.0,
@@ -638,6 +803,10 @@ pub fn sssp_run(
             Label::Inf => f64::INFINITY,
         });
     }
+    #[cfg(feature = "phase-timer")]
+    let total = total_t0.elapsed().as_secs_f64();
+    #[cfg(not(feature = "phase-timer"))]
+    let total = 0.0;
     RunResult {
         delta,
         t,
@@ -647,5 +816,7 @@ pub fn sssp_run(
         labels: solver.d,
         settle,
         dist,
+        phase_times: solver.phase.clone(),
+        total,
     }
 }

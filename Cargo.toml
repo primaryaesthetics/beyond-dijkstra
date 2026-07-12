@@ -8,6 +8,14 @@ description = "Single-source shortest paths: production Dijkstra plus the first 
 license = "MIT"
 repository = "https://github.com/primaryaesthetics/beyond-dijkstra"
 
+[features]
+default = []
+# Wall-clock phase attribution inside the solver (degree reduction,
+# FindPivots, partition, base case, DS operations, relax sweeps). Zero
+# overhead when off; results are unchanged when on. Used by
+# `examples/profile_phases.rs`.
+phase-timer = []
+
 [dependencies]
 # Deterministic fast hashing for bookkeeping maps/sets. Iteration order of
 # these containers is never observed (membership/get/remove only; the one

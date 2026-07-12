@@ -1,5 +1,10 @@
 # Benchmarks — mainline baseline (pre-optimization)
 
+> Epoch note: the table below is the FIRST epoch (the untouched faithful
+> port). The current mainline state after optimization passes lives in
+> OPTIMIZATION.md's per-pass tables (latest: pass 3 — 182× @1e5,
+> 170× @1e6, 38× NY). Prose quoting "the" ratio must name its epoch.
+
 Method: same-process ratios only (`examples/bench_fast.rs` — both methods
 in one binary invocation, median of 5 runs after a warmup, distances
 cross-checked bit-exactly inside the binary). Absolute times are quoted

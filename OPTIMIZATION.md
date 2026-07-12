@@ -85,6 +85,79 @@ phase attribution (port the phase-timer pattern) BEFORE any further
 structural work; then scratch-buffer reuse across recursion levels
 (proven-safe category) wherever the profile points.
 
+## Phase attribution (after pass 2)
+
+`cargo run --release --features phase-timer --example profile_phases`;
+raw record `benchmarks/results/profile_phases_after_pass2.txt`:
+
+| input | find_pivots | of it: partition | base_case | relax sweep | rest |
+|---|---|---|---|---|---|
+| random 1e5 | 79.9% | 1.7% | 5.3% | 8.0% | ~7% |
+| random 1e6 | 87.7% | ~2% | 2.6% | 4.8% | ~5% |
+| USA-road-d.NY | 27.8% | — | 20.6% | 24.5% | ~27% |
+
+On random graphs the local Dijkstra searches inside FindPivots are the
+whole story (the tree partition is noise); NY is spread evenly. So the
+next structural pass targets the search inner loop, and NY conclusions
+should not be drawn from random-graph passes.
+
+## Pass 3 — FindPivots: epoch-stamped membership + scratch reuse
+
+**Claim.** Replacing FindPivots' per-call/per-search hash maps and sets
+(`tree_of`, `k_set`, `k_parent_idx`, `q_set`, `w_set`, `prior`, `gset`,
+per-tree `set`) with solver-owned flat arrays stamped by a monotone epoch
+counter, and reusing the search heap/vectors across searches, changes no
+observable output.
+
+**Proof sketch.**
+
+1. Every replaced structure is observed ONLY through membership queries
+   (`contains`/`insert`-dedup/`get`) — never iterated. The orders that
+   reach the output all come from Vecs that stay untouched (`k_vert`,
+   `k_parent_order`, `q_list`, `w_list`, `s_list`, tree/group order).
+   An epoch-stamped array answers every membership query identically
+   (stamp[v] == current epoch ⟺ v inserted since this set instance began);
+   distinct set instances take distinct epochs, so stale stamps can never
+   leak across searches, calls, or groups.
+2. `|K|` loop threshold: `k_vert.len()` equals the old `k_set.len()` —
+   both grow by exactly one on every first-time insert (x seeds both).
+3. Per-tree `vert`/`set` elimination: the reference's per-tree vertex
+   list is write-only (only `edges` and `root` are ever read), and its
+   set existed solely to dedup that list; the membership that actually
+   matters flows through `tree_of`, which the stamps implement. Dropping
+   write-only state is observation-free.
+4. Scratch reuse (heap, `k_vert`, `k_parent_order`): cleared before every
+   search; a cleared container is observationally a fresh one (proven-safe
+   category). The edge buffer of a newly formed tree is cloned out — a
+   Vec clone is elementwise-identical.
+5. Epoch space (u32): at every call start, if fewer than 2³¹ epochs
+   remain, all stamp arrays are zeroed and the counter restarts (no
+   stamps are live between calls); a single call exhausting 2³¹ epochs
+   is impossible without ≥ 2³¹ heap operations first, and `next_epoch`
+   panics loudly rather than alias. Correctness never rests on wrap
+   being unreachable. Scratch cost: eight u32 words per reduced vertex.
+
+**Classification.** Behavior-neutral. **Gate:** full differential test.
+
+**Result.** Gate green. Raw records
+`benchmarks/results/bench_fast_pass3_*.txt`:
+
+| input | before (pass 2) | after | speedup |
+|---|---|---|---|
+| random 1e5 | 238× | 182× | 1.31× |
+| random 1e6 | 240× | 170× | 1.41× |
+| USA-road-d.NY | 42× | 38× | 1.11× |
+
+Post-pass profile (`profile_phases_after_pass3.txt`, 1e6): find_pivots
+is still 82.8% — but its representation overhead is gone; what remains
+is the recursion's intrinsic volume (every call runs a bounded local
+search from every frontier vertex; Σ|S| across all calls × per-search
+work). Constant-shaving the frozen mainline further has visibly
+diminishing returns; the next big lever is algorithm-level and belongs
+to the variants track — first candidate no-degree-reduction, which
+would shrink the working graph 8× (n2 = 8e6 → n = 1e6 on the random
+family) before any search starts.
+
 ## Rejected / known-noise ideas
 
 (carried from the first project so they are not re-tried blindly:
