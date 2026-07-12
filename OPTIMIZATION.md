@@ -57,6 +57,34 @@ scale — per-operation constants elsewhere (recursion bookkeeping,
 allocation churn, FindPivots) now carry the profile. Phase attribution
 before the next structural pass.
 
+## Pass 2 — mimalloc as the global allocator
+
+**Claim.** Swapping the global allocator changes no observable output.
+
+**Proof sketch.** The allocator decides where memory lives, never what
+is computed; no code path reads addresses, capacities beyond reserves,
+or allocation order. Proven-safe category from the first project (same
+recursion shape: tens of millions of small short-lived Vec/map
+allocations per run).
+
+**Classification.** Behavior-neutral. **Gate:** full differential test.
+
+**Result.** Gate green. Raw records
+`benchmarks/results/bench_fast_pass2_*.txt`:
+
+| input | before (pass 1) | after | speedup |
+|---|---|---|---|
+| random 1e5 | 270× | 238× | 1.13× |
+| random 1e6 | 258× | 240× | 1.08× |
+| USA-road-d.NY | 65× | 42× | 1.56× |
+
+NY gains the most — tiny frontiers mean the run is dominated by
+constructing and dropping small per-call structures, exactly the
+allocation pattern mimalloc is good at. Next candidates, in order:
+phase attribution (port the phase-timer pattern) BEFORE any further
+structural work; then scratch-buffer reuse across recursion levels
+(proven-safe category) wherever the profile points.
+
 ## Rejected / known-noise ideas
 
 (carried from the first project so they are not re-tried blindly:

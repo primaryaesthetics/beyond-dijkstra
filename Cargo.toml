@@ -14,6 +14,11 @@ repository = "https://github.com/primaryaesthetics/beyond-dijkstra"
 # hash-map iteration, BlockDs::merge, feeds a commutative keep-min insert),
 # so the hasher cannot change results — enforced by the differential gate.
 rustc-hash = "2"
+# Global allocator. The BMSSP recursion makes millions of small,
+# short-lived Vec/map allocations per run; mimalloc handles that pattern
+# far better than system heaps. Allocator choice cannot affect results
+# (differential gate re-verified after the swap - OPTIMIZATION.md pass 2).
+mimalloc = { version = "0.1", default-features = false }
 
 [profile.release]
 opt-level = 3

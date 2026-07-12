@@ -11,3 +11,6 @@
 pub mod dijkstra;
 pub mod label;
 pub mod solver;
+
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;

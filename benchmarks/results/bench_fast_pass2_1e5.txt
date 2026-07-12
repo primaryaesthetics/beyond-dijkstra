@@ -1,0 +1,13 @@
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.9
+   Compiling cc v1.2.67
+   Compiling libmimalloc-sys v0.1.49
+   Compiling mimalloc v0.1.52
+   Compiling beyond_dijkstra v0.1.0 (/Users/kirakabaeva/Documents/GitHub/beyond-dijkstra)
+    Finished `release` profile [optimized] target(s) in 5.17s
+     Running `target/release/examples/bench_fast 100000`
+graph: random m=4n, n=100000
+n=100000, m=400000
+params: delta=3 t=6 k=3 l_top=4 n2=800040
+dijkstra median    0.010 s
+mainline median    2.271 s   (238.10x dijkstra)
