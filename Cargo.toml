@@ -1,0 +1,30 @@
+[package]
+name = "beyond_dijkstra"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+authors = ["Nikolai Khobotov <nicholaask@gmail.com>"]
+description = "Single-source shortest paths: production Dijkstra plus the first implementation of the Duan-Mao-Shu-Yin O(m sqrt(log n log log n)) directed SSSP algorithm (arXiv:2602.07868)"
+license = "MIT"
+repository = "https://github.com/primaryaesthetics/beyond-dijkstra"
+
+[dependencies]
+# Deterministic fast hashing for bookkeeping maps/sets. Iteration order of
+# these containers is never observed (membership/get/remove only; the one
+# hash-map iteration, BlockDs::merge, feeds a commutative keep-min insert),
+# so the hasher cannot change results — enforced by the differential gate.
+rustc-hash = "2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+
+# The differential / property tests run the recursion on graphs with up to
+# ~1.5e4 edges before reduction; unoptimized debug builds make that
+# needlessly slow. Keep debug assertions on but optimize.
+[profile.test]
+opt-level = 2
+
+[profile.dev]
+opt-level = 2

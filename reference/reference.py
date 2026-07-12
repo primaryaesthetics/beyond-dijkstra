@@ -366,21 +366,40 @@ class Solver:
 
 
 # ---------------------------------------------------------------------------
-# Public entry point.
+# Public entry points.
 
-def sssp_lengths(n, edges, s):
-    """Shortest-path lengths from s per arXiv:2602.07868 (reference)."""
-    delta, t, k, l_top = choose_params(n, len(edges), 0)
-    n2, adj2, cycle_of = degree_reduce(n, edges, delta)
-    _, t, k, l_top = choose_params(n, len(edges), n2)
+def sssp_instrumented(n, edges, s, override=None):
+    """Full run with the differential-gate observables exposed.
+
+    Returns (lengths, labels, settle, params, n2): per-original-vertex
+    lengths, the final label array over the reduced graph, the top-level
+    call's U list (the settlement log), and (delta, t, k, l_top).
+
+    ``override`` forces (delta, t, k) — the harness's deep-recursion
+    regime; l_top always follows the formula.
+    """
+    if override is None:
+        delta, _, _, _ = choose_params(n, len(edges), 0)
+        n2, adj2, cycle_of = degree_reduce(n, edges, delta)
+        delta, t, k, l_top = choose_params(n, len(edges), n2)
+    else:
+        delta, t, k = override
+        n2, adj2, cycle_of = degree_reduce(n, edges, delta)
+        log_n2 = max(1.0, math.log2(max(2, n2)))
+        l_top = math.ceil(log_n2 / t)
 
     solver = Solver(n2, adj2, t, k)
     s2 = cycle_of[s][0]
     solver.d[s2] = (0.0, 0, s2, -1)
-    solver.bmssp(LABEL_INF, [s2], l_top)
+    _, settle, _ = solver.bmssp(LABEL_INF, [s2], l_top)
 
     out = []
     for v in range(n):
         best = min(solver.d[x] for x in cycle_of[v])
         out.append(best[0])
-    return out
+    return out, solver.d, settle, (delta, t, k, l_top), n2
+
+
+def sssp_lengths(n, edges, s):
+    """Shortest-path lengths from s per arXiv:2602.07868 (reference)."""
+    return sssp_instrumented(n, edges, s)[0]
