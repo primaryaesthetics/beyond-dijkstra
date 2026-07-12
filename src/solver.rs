@@ -101,12 +101,16 @@ pub fn degree_reduce(n: usize, edges: &[(u32, u32, f64)], delta: u64) -> Reduced
 // Data structure D (SPEC "Data structure D", Lemma 3.4). Keyed map with
 // keep-smaller dedup; Pull returns keys ascending by value plus the tightest
 // separating bound. Block internals are complexity-only and not modeled
-// (same choice as the reference).
+// (same choice as the reference); the value-ordered tree replaces the
+// reference's sort-on-pull — behavior-neutral by OPTIMIZATION.md pass 1
+// (stored values are unique across keys because curr is a value component,
+// so ascending tree order is exactly the reference's sorted order).
 
 pub struct BlockDs {
     m_cap: u64,
     b: Label,
-    map: FxHashMap<u32, Lab>,
+    by_key: FxHashMap<u32, Lab>,
+    by_val: std::collections::BTreeMap<Lab, u32>,
 }
 
 impl BlockDs {
@@ -114,46 +118,59 @@ impl BlockDs {
         BlockDs {
             m_cap,
             b,
-            map: FxHashMap::default(),
+            by_key: FxHashMap::default(),
+            by_val: std::collections::BTreeMap::new(),
         }
     }
 
     pub fn insert(&mut self, key: u32, val: Lab) {
-        let slot = self.map.entry(key).or_insert(val);
-        if val < *slot {
-            *slot = val;
+        match self.by_key.entry(key) {
+            std::collections::hash_map::Entry::Occupied(mut e) => {
+                if val < *e.get() {
+                    self.by_val.remove(e.get());
+                    e.insert(val);
+                    let evicted = self.by_val.insert(val, key);
+                    debug_assert!(evicted.is_none(), "values are unique across keys");
+                }
+            }
+            std::collections::hash_map::Entry::Vacant(e) => {
+                e.insert(val);
+                let evicted = self.by_val.insert(val, key);
+                debug_assert!(evicted.is_none(), "values are unique across keys");
+            }
         }
     }
 
     /// Hash-map iteration order is unobservable here: keep-min per key is
-    /// order-independent, and the target map's own order is never read
-    /// except through the sorted `pull`.
+    /// order-independent, and the target's own order is never read except
+    /// through the value-ordered `pull`.
     pub fn merge(&mut self, other: &BlockDs) {
-        for (&k, &v) in &other.map {
+        for (&k, &v) in &other.by_key {
             self.insert(k, v);
         }
     }
 
     pub fn pull(&mut self) -> (Vec<u32>, Label) {
-        let mut items: Vec<(u32, Lab)> = self.map.iter().map(|(&k, &v)| (k, v)).collect();
-        // Values are unique across keys (curr is part of the value), so this
-        // unstable sort realizes a total order.
-        items.sort_unstable_by(|a, b| a.1.cmp(&b.1));
         let m = usize::try_from(self.m_cap).unwrap_or(usize::MAX);
-        let take = items.len().min(m);
-        for &(key, _) in &items[..take] {
-            self.map.remove(&key);
+        let take = self.by_key.len().min(m);
+        let mut keys = Vec::with_capacity(take);
+        for _ in 0..take {
+            let (_val, key) = self.by_val.pop_first().expect("take <= |D|");
+            self.by_key.remove(&key);
+            debug_assert_eq!(self.by_key.len(), self.by_val.len());
+            keys.push(key);
         }
-        let bound = if items.len() > m {
-            Label::Fin(items[m].1)
-        } else {
-            self.b
+        // Remainder non-empty iff |D| exceeded M; its minimum is then the
+        // (M+1)-th smallest of the pre-pull content — the reference's bound.
+        let bound = match self.by_val.first_key_value() {
+            Some((&val, _)) => Label::Fin(val),
+            None => self.b,
         };
-        (items[..take].iter().map(|&(k, _)| k).collect(), bound)
+        (keys, bound)
     }
 
     pub fn non_empty(&self) -> bool {
-        !self.map.is_empty()
+        !self.by_key.is_empty()
     }
 }
 
