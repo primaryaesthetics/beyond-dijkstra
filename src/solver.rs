@@ -73,7 +73,7 @@ pub fn choose_params(n: usize, m: usize, n2: usize) -> (u64, u64, u64, u64) {
 /// only ever gate comparisons against list lengths (the reference computes
 /// them as exact big ints, but any value above every reachable length is
 /// equivalent).
-fn pow2_sat(e: u64) -> u64 {
+pub(crate) fn pow2_sat(e: u64) -> u64 {
     if e >= 63 {
         u64::MAX
     } else {

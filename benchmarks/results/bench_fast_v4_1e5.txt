@@ -1,0 +1,23 @@
+   Compiling beyond_dijkstra v0.1.0 (/Users/kirakabaeva/Documents/GitHub/beyond-dijkstra)
+warning: variable does not need to be mutable
+   --> examples/bench_fast.rs:175:9
+    |
+175 |     let mut bench_fast_engine = |hl: u64| -> f64 {
+    |         ----^^^^^^^^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `beyond_dijkstra` (example "bench_fast") generated 1 warning (run `cargo fix --example "bench_fast" -p beyond_dijkstra` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 3.84s
+     Running `target/release/examples/bench_fast 100000`
+graph: random m=4n, n=100000
+n=100000, m=400000
+params: delta=3 t=6 k=3 l_top=4 n2=800040
+v1 params: delta=3 t=5 k=3 l_top=4
+dijkstra     median    0.007 s
+mainline     median    1.627 s   (218.64x dijkstra)
+no-transform median    0.053 s   (7.18x dijkstra, 0.03x of mainline)
+fast L=0     median    0.039 s   (5.21x dijkstra, 0.73x of no-transform)
+fast L=top   median    0.019 s   (2.61x dijkstra)

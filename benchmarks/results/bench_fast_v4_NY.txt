@@ -1,0 +1,22 @@
+warning: variable does not need to be mutable
+   --> examples/bench_fast.rs:175:9
+    |
+175 |     let mut bench_fast_engine = |hl: u64| -> f64 {
+    |         ----^^^^^^^^^^^^^^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `beyond_dijkstra` (example "bench_fast") generated 1 warning (run `cargo fix --example "bench_fast" -p beyond_dijkstra` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running `target/release/examples/bench_fast 0 benchmarks/data/USA-road-d.NY.gr`
+graph: benchmarks/data/USA-road-d.NY.gr
+n=264346, m=733846
+params: delta=3 t=6 k=3 l_top=4 n2=1467692
+v1 params: delta=3 t=6 k=3 l_top=4
+dijkstra     median    0.011 s
+mainline     median    0.423 s   (38.75x dijkstra)
+no-transform median    0.098 s   (8.96x dijkstra, 0.23x of mainline)
+fast L=0     median    0.078 s   (7.16x dijkstra, 0.80x of no-transform)
+fast L=top   median    0.027 s   (2.46x dijkstra)

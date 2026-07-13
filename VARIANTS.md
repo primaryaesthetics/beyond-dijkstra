@@ -267,3 +267,98 @@ degree reduction) → 3.8× (drop the recursion) → what remains is
 Dijkstra with more expensive bookkeeping. No configuration of this
 implementation family beats Dijkstra at storable sizes — consistent
 with the ASSESSMENT.md hypothesis (bounds cross near n ≈ 2^1000).
+
+## V4 — fast engine: packed u128 labels, lazy SoA heaps, CSR (on V1/V3)
+
+Epoch note: V1–V3 numbers above are their own recorded epoch and stay
+authoritative for the verdict chain; V4 attacks the label-machinery
+residual named by V3 and is measured as a NEW epoch. The frozen
+mainline is untouched.
+
+**Claim A (packed order).** The 4-tuple lexicographic order is realized
+exactly by a single u128 key `(len.to_bits() << 64) | (hops << 32) |
+curr` plus a pred side-array consulted only on key equality:
+
+1. IEEE-754: for non-negative, non-NaN doubles, the total order of bit
+   patterns (as unsigned) equals the numeric order; lengths are finite
+   sums of non-negative weights, so `len.to_bits()` is order-exact.
+   (-0.0 cannot arise: no negative weights, and 0.0 + 0.0 = +0.0.)
+2. hops < n ≤ 2³² and curr < n ≤ 2³² (asserted loudly at entry), so the
+   packed fields never overlap; lexicographic (len, hops, curr) compare
+   equals the u128 unsigned compare.
+3. pred participates in the 4-tuple order only when (len, hops, curr)
+   are all equal — i.e. between two labels of the SAME vertex. Cross-
+   vertex comparisons (heap order, DS value order, bound separators
+   between distinct vertices) are always decided by curr at the latest.
+   So a side-array `pred+1` (0 encoding the source's −1, which is
+   smaller than every real pred, matching −1 < any id) consulted only
+   on u128 equality reproduces every comparison the reference makes:
+   relax's cand-vs-d[v] (curr always equal there), and the rare
+   bound-vs-candidate tie where the bound is a label of the same
+   vertex.
+
+**Claim B (lazy-heap D).** The keyed keep-min structure D is realized
+by (key→value hash map) + (SoA min-heap of (u128 value, vertex) with
+lazy deletion), where an entry is live iff its value equals the map's
+CURRENT stored value for that vertex:
+
+1. The map is unchanged from the gated pass-1 representation — dedup
+   semantics (keep smallest inserted value per key) are its property.
+2. The heap holds one entry per insert; superseded entries (a smaller
+   value was inserted later) go stale because the map moved on. Pull =
+   pop live entries ascending — the map's value set in ascending order,
+   which is exactly the reference's sorted-pull.
+3. **The trap this design must and does avoid:** liveness is checked
+   against the map's stored value, NOT against d[v]. d[v] can drop
+   below the stored value without a DS insert (the parent sweep's
+   `d[v] ≥ B_i` guard skips the insert) — the reference still pulls v
+   at the stored value, so a d-based staleness check would silently
+   drop v from a child's frontier and break completeness. Map-based
+   liveness reproduces the reference exactly.
+4. Merge = fold of inserts (push on improve-or-new), order-independent
+   per key as before. Separator = the next live minimum, peeked by
+   popping dead entries first — the same "smallest remaining stored
+   value, else construction B" the reference returns.
+
+**Other engineering (no semantic content):** CSR adjacency (flat
+indptr/head/weight arrays) instead of Vec<Vec>; SoA 4-ary heaps for the
+FindPivots searches keyed by u128 (stale check `key != dk[u]` is the
+reference's `lab != d[u]` verbatim); the epoch-stamp scratch of
+mainline pass 3 carried over.
+
+**Classification.** Class 2 relative to the reference observables
+(settlement order may shift only where pred used to order same-key
+duplicates inside heaps — unobservable in Tier 2); distances must stay
+bit-exact vs Dijkstra. Gate: Tier 2, full matrix (all generator
+regimes, 1e6-edge tie-rich, star family, Q10 minimum-slack stress),
+plus the top-level totality assert.
+
+**Falsification review.** PENDING — the independent review run was cut
+off externally before producing a verdict and must be re-run before V4
+is relied on for anything beyond recorded measurements. Known traps
+already addressed in the design (each also covered by the gate): the
+pulled-then-reinserted-at-equal-value case (map removal on pull makes
+the old heap entry dead; a re-insert restores the key so either
+duplicate serves), the dead-entry-undercut case for the separator (a
+dead entry's value strictly exceeds its vertex's live value, and every
+map update pushes a fresh entry, so skipping dead entries cannot skip
+the true minimum), and full pred fidelity in heap entries and staleness
+checks (entries carry (key, pred+1)).
+
+**Result.** Tier-2 gate green across the full matrix (all generator
+regimes at L ∈ {0, 1, 99} incl. forced deep recursion, 1e6-edge
+tie-rich at L ∈ {0, 2, 99}, star family, Q10 minimum-slack stress).
+Same-process medians, raw records `benchmarks/results/bench_fast_v4_*`:
+
+| input | V1 engine (same run) | fast L=0 | fast L=l_top |
+|---|---|---|---|
+| random 1e5 | 7.18× | 5.21× | **2.61×** |
+| random 1e6 | 5.81× | 5.27× | **2.75×** |
+| USA-road-d.NY | 8.96× | 7.16× | **2.46×** |
+
+The packed-label engine cuts the full-recursion algorithm by 9–27% and
+the label-machinery residual (V3's headline) from 3.8–4.5× to
+**2.5–2.8×**: more than a third of what V3 attributed to "the price of
+4-tuple labels" was representation, not principle. The verdict itself
+does not move — even the best engineered member of the family stays
+~2.5× behind the crate's Dijkstra at every storable size.

@@ -7,7 +7,7 @@
 
 mod common;
 
-use beyond_dijkstra::variants::no_transform;
+use beyond_dijkstra::variants::{fast, no_transform};
 
 fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
     let expect = common::dijkstra_lengths(n, edges, source);
@@ -27,6 +27,18 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
             &hyf.dist,
             &expect,
             &format!("{tag} (hybrid L={hl}, forced t=k=2)"),
+        );
+    }
+    // V4 fast engine across the same regimes.
+    for hl in [0u64, 1, 99] {
+        let fa = fast::sssp(n, edges, source, hl, None);
+        assert_dists(n, &fa.dist, &expect, &format!("{tag} (fast L={hl})"));
+        let faf = fast::sssp(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(
+            n,
+            &faf.dist,
+            &expect,
+            &format!("{tag} (fast L={hl}, forced t=k=2)"),
         );
     }
 }
@@ -52,6 +64,11 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
         // path together with a live parent loop above it.
         let hy = no_transform::sssp_hybrid(g.n, &g.edges, g.source, 1, g.override_params);
         assert_dists(g.n, &hy.dist, &expect, &format!("seed {seed} (hybrid L=1)"));
+        // V4 fast engine, full recursion and interior hybrid.
+        for hl in [0u64, 1] {
+            let fa = fast::sssp(g.n, &g.edges, g.source, hl, g.override_params);
+            assert_dists(g.n, &fa.dist, &expect, &format!("seed {seed} (fast L={hl})"));
+        }
     }
 }
 
@@ -96,6 +113,15 @@ fn tie_rich_million_edge_stress() {
             &format!("tie-rich 1e6-edge stress (hybrid L={hl})"),
         );
     }
+    for hl in [0u64, 2, 99] {
+        let fa = fast::sssp(n, &edges, 0, hl, None);
+        assert_dists(
+            n,
+            &fa.dist,
+            &expect,
+            &format!("tie-rich 1e6-edge stress (fast L={hl})"),
+        );
+    }
 }
 
 /// Q10 stress: zero-heavy tie-rich graphs sized just under the l_top
@@ -119,6 +145,8 @@ fn q10_resettlement_pressure() {
         for hl in [0u64, 1, 2] {
             let run = no_transform::sssp_hybrid(n, &edges, 0, hl, Some((3, 2, 2)));
             assert_dists(n, &run.dist, &expect, &format!("q10 n={n} L={hl}"));
+            let fa = fast::sssp(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &fa.dist, &expect, &format!("q10 n={n} L={hl} (fast)"));
         }
     }
 }

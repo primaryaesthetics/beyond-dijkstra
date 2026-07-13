@@ -11,7 +11,7 @@
 
 use beyond_dijkstra::dijkstra;
 use beyond_dijkstra::solver::sssp_run;
-use beyond_dijkstra::variants::no_transform;
+use beyond_dijkstra::variants::{fast, no_transform};
 use std::time::Instant;
 
 struct SplitMix64 {
@@ -172,11 +172,39 @@ fn main() {
         .count();
     assert_eq!(v1_mismatches, 0, "v1 distances diverge from dijkstra");
 
+    let mut bench_fast_engine = |hl: u64| -> f64 {
+        let mut times = Vec::new();
+        for _ in 0..6 {
+            let t0 = Instant::now();
+            let run = fast::sssp(n, &edges, 0, hl, None);
+            times.push(t0.elapsed().as_secs_f64());
+            let bad = dist
+                .iter()
+                .zip(run.dist.iter())
+                .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+                .count();
+            assert_eq!(bad, 0, "fast(L={hl}) distances diverge from dijkstra");
+        }
+        times.remove(0); // warmup
+        median(times)
+    };
+    let f0 = bench_fast_engine(0);
+    let ftop = bench_fast_engine(99);
+
     println!("dijkstra     median {dj:8.3} s");
     println!("mainline     median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
     println!(
         "no-transform median {v1:8.3} s   ({:.2}x dijkstra, {:.2}x of mainline)",
         v1 / dj,
         v1 / bf
+    );
+    println!(
+        "fast L=0     median {f0:8.3} s   ({:.2}x dijkstra, {:.2}x of no-transform)",
+        f0 / dj,
+        f0 / v1
+    );
+    println!(
+        "fast L=top   median {ftop:8.3} s   ({:.2}x dijkstra)",
+        ftop / dj
     );
 }

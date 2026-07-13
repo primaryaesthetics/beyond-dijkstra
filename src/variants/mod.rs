@@ -4,4 +4,5 @@
 //! settlement order not pinned. Claims, proof sketches, and measurements
 //! live in VARIANTS.md.
 
+pub mod fast;
 pub mod no_transform;
