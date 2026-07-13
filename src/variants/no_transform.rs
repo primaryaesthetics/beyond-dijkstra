@@ -33,6 +33,19 @@ pub fn sssp(
     source: usize,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
+    sssp_hybrid(n, edges, source, 0, override_params)
+}
+
+/// V3 (VARIANTS.md): V1 with levels ≤ `hybrid_level` running the base
+/// case at the level's own cutoff. `hybrid_level` = 0 is V1 itself;
+/// ≥ l_top makes the whole run one bounded tuple-label Dijkstra.
+pub fn sssp_hybrid(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> VariantRun {
     #[cfg(feature = "phase-timer")]
     let total_t0 = std::time::Instant::now();
     let (delta, t, k, l_top) = match override_params {
@@ -51,13 +64,22 @@ pub fn sssp(
     }
 
     let mut solver = Solver::new(&adj, t, k);
+    solver.hybrid_level = hybrid_level;
     solver.d[source] = Label::Fin(Lab {
         len: 0.0,
         hops: 0,
         curr: source as u32,
         pred: -1,
     });
-    solver.bmssp(Label::Inf, &[source as u32], l_top);
+    let (b_final, _settle, ds_top) = solver.bmssp(Label::Inf, &[source as u32], l_top);
+    // Totality assert (QUESTIONS.md Q10) — same as the mainline entry:
+    // a partial top-level execution would return silently wrong
+    // distances; fail loudly instead.
+    assert!(
+        b_final == Label::Inf && !ds_top.non_empty(),
+        "top-level BMSSP exited partially (re-settlement volume exceeded \
+         the |U| cutoff) — see QUESTIONS.md Q10"
+    );
 
     let dist = solver
         .d

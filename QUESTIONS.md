@@ -119,6 +119,32 @@ Practical consequence for this repo: correctness testing must drive the
 top-level entry only; property tests that call bmssp mid-recursion with
 synthetic frontiers can fail (or pass) without indicting anything.
 
+## Q10 — top-level totality is unproved: re-settlements count against the |U| cutoff. OPEN
+
+Found during the V3 falsification review; applies to the paper as
+written, at every hybrid level including the unmodified algorithm. The
+top call is a full execution only if the |U| ≤ t³·2^(l_top·t) cutoff
+never fires, and t³·2^(l_top·t) ≥ t³·n. But U counts settlement EVENTS,
+not vertices: a Q3 escape (a label below the returned B′ that the child
+left in D) lets a vertex settle with a stale label, improve later, and
+settle again. The paper bounds neither the count of such re-settlements
+nor argues the cutoff has slack for them. Empirically (248 adversarial
+cells over zero-heavy/tie-rich graphs, all hybrid levels, forced deep
+recursion): zero mismatches and zero top-level partials, but up to
+0.3–0.5 duplicate settlements per vertex, roughly linear in n — against
+a worst-case slack of (t³−1)·n ≈ 7n at the l_top sawtooth minimum
+(n just below 2^(l_top·t), t = 2). A ~5× empirical margin with no
+proof. If the cutoff ever fired, the run would return silently wrong
+distances.
+
+Mitigation in this repo: both entry points now assert the top call
+returned B′ = ∞ and D = ∅ — the only silent failure mode is loud at
+zero cost. Sub-finding: a base-case pull that empties D returns
+bound = B, and later relaxations can refill D, so a child can return
+B′ = B with D ≠ ∅ — contradicting Lemma 3.1's "full execution ⇒ D = ∅"
+(Q3 sub-case; the parent handles it). Letter/note material: the missing
+lemma is a bound on re-settlements per vertex.
+
 ## Q7 — nEdges overflow bound. NOTE
 
 nEdges strictly increases along relaxations and is bounded by the longest

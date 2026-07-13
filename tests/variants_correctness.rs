@@ -16,6 +16,19 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
     // The forced-small-parameter regime drives the recursion deepest.
     let forced = no_transform::sssp(n, edges, source, Some((3, 2, 2)));
     assert_dists(n, &forced.dist, &expect, &format!("{tag} (forced t=k=2)"));
+    // V3 hybrid at interior and total levels (99 >= any l_top: one
+    // bounded tuple-label Dijkstra).
+    for hl in [1u64, 2, 99] {
+        let hy = no_transform::sssp_hybrid(n, edges, source, hl, None);
+        assert_dists(n, &hy.dist, &expect, &format!("{tag} (hybrid L={hl})"));
+        let hyf = no_transform::sssp_hybrid(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(
+            n,
+            &hyf.dist,
+            &expect,
+            &format!("{tag} (hybrid L={hl}, forced t=k=2)"),
+        );
+    }
 }
 
 fn assert_dists(n: usize, got: &[f64], expect: &[f64], tag: &str) {
@@ -35,6 +48,10 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
         let expect = common::dijkstra_lengths(g.n, &g.edges, g.source);
         let run = no_transform::sssp(g.n, &g.edges, g.source, g.override_params);
         assert_dists(g.n, &run.dist, &expect, &format!("seed {seed}"));
+        // V3 hybrid at an interior level exercises the base-case-at-l>0
+        // path together with a live parent loop above it.
+        let hy = no_transform::sssp_hybrid(g.n, &g.edges, g.source, 1, g.override_params);
+        assert_dists(g.n, &hy.dist, &expect, &format!("seed {seed} (hybrid L=1)"));
     }
 }
 
@@ -70,6 +87,40 @@ fn tie_rich_million_edge_stress() {
     let expect = common::dijkstra_lengths(n, &edges, 0);
     let run = no_transform::sssp(n, &edges, 0, None);
     assert_dists(n, &run.dist, &expect, "tie-rich 1e6-edge stress");
+    for hl in [2u64, 99] {
+        let hy = no_transform::sssp_hybrid(n, &edges, 0, hl, None);
+        assert_dists(
+            n,
+            &hy.dist,
+            &expect,
+            &format!("tie-rich 1e6-edge stress (hybrid L={hl})"),
+        );
+    }
+}
+
+/// Q10 stress: zero-heavy tie-rich graphs sized just under the l_top
+/// sawtooth minimum at forced t = 2, where the |U| cutoff's slack over n
+/// is smallest (limit = 8n). Re-settlements (Q3 escapes) count against
+/// that cutoff; the entry points' totality assert turns any overflow
+/// into a loud failure, and this family maximizes the pressure.
+#[test]
+fn q10_resettlement_pressure() {
+    for &(n, mult) in &[(4094usize, 6), (16382, 4)] {
+        let m = mult * n;
+        let mut r = common::SplitMix64::new(0x0010_C0DE + n as u64);
+        let mut edges = Vec::with_capacity(m);
+        for _ in 0..m {
+            let u = (r.next_u64() % n as u64) as u32;
+            let v = (r.next_u64() % n as u64) as u32;
+            let w = if r.next_u64() % 3 == 0 { 1.0 } else { 0.0 }; // zero-heavy
+            edges.push((u, v, w));
+        }
+        let expect = common::dijkstra_lengths(n, &edges, 0);
+        for hl in [0u64, 1, 2] {
+            let run = no_transform::sssp_hybrid(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &run.dist, &expect, &format!("q10 n={n} L={hl}"));
+        }
+    }
 }
 
 // --- hub/star family (V1 falsification review) -------------------------

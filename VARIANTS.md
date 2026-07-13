@@ -179,3 +179,91 @@ is the honest headline of this sweep — parameter tuning buys 10–24%,
 not a different verdict. Hybrid-oracle-style variants (replace the
 bottom of the recursion with plain Dijkstra) are the natural next probe
 of exactly this signature.
+
+## V3 — hybrid oracle: base case promoted to levels ≤ L (on V1)
+
+**Claim.** For any level l, replacing the recursive BMSSP call by the
+paper's own base case (Algorithm 4: bounded lazy Dijkstra over the
+keyed M = 1 structure) run with cutoff |U| ≤ t³·2^(l·t) — instead of
+the l = 0 cutoff t³ — preserves the Lemma 3.1 contract the parent
+consumes, hence final distances. The hybrid knob L ∈ [0, l_top] replaces
+all levels ≤ L; L = 0 is the paper's algorithm, L = l_top is bounded
+tuple-label Dijkstra over the whole graph.
+
+**Classification.** Class 2 (structure-changing: recursion levels are
+removed; distances must stay exact). Gate: Tier 2.
+
+**Proof sketch.**
+
+1. Algorithm 4 IS the level-0 instance of the family: its cutoff t³
+   equals t³·2^(l·t) at l = 0, and the while-condition has the same
+   shape as Algorithm 3's |U| ≤ t³·2^(l·t) check. The paper's base-case
+   argument (settling in non-decreasing 4-tuple order from the seeds;
+   on cutoff, B′ = the next-smallest stored value separates settled
+   from pending; returned D = relaxed-but-unsettled keys) nowhere uses
+   the numeric value of the cutoff — it only needs cutoff ≥ 1 so the
+   loop makes progress. The value t³ enters Lemma 3.9's charging and
+   the |U| = O(t³) size bound — the parent consumes those only in time
+   accounting; its control flow (extend U, check own limit, propagate
+   B′) is size-agnostic.
+2. The parent's Lemma 3.1 precondition on the child (⟨∅, S_i⟩ frontier
+   for Ũ(B_i, S_i)) is exactly what the base case requires; nothing in
+   the substitution changes how S_i is formed.
+3. Q3's known contract wrinkle (D may hold values < B′ after the final
+   relax sweep) exists at l = 0 already and self-heals in the parent
+   pull loop for the same reason at any level; the volume grows with
+   the cutoff but the mechanism is unchanged. (Watched by the Tier-2
+   tie-rich and zero-weight tests.)
+4. Termination/totality: unchanged — the top-level cutoff still exceeds
+   n, so the top call remains a full execution.
+
+**Falsification review** (independent fresh-context pass; verdict
+HOLDS-BUT-GAP, no break). What it established beyond the sketch:
+
+- The S re-insert asymmetry (Algorithm 3 line 33 has no Algorithm 4
+  counterpart) is benign in the safe direction: the base case seeds ALL
+  of S into D and keys leave only via Pull-into-U, so D ⊇ S \ U holds
+  structurally — the exact property Lemma 3.7's induction consumes; a
+  Q3-class member (d[x] < B′, x ∉ U) is dropped by Algorithm 3's guard
+  but retained by Algorithm 4. Strictly more conservative.
+- The parent sweep's `d[v] ≥ B_i` insert guard stays exhaustive over a
+  huge base-case child because pulled 4-tuples strictly increase within
+  a base case (nEdges grows even at w = 0), so any sub-B_i parent
+  relaxation is an exact-equality no-op on a key the child already
+  covered.
+- L = l_top is provable outright: the cutoff never fires (|U| ≤ n),
+  no re-settlement is possible, no reliance on Q3 self-healing — the
+  degenerate member is the safest.
+- THE GAP is mainline-inherited, now named as QUESTIONS.md **Q10**:
+  top-level totality is unproved because re-settlements count against
+  the |U| cutoff (empirical margin ~5× at the worst sawtooth point,
+  248 adversarial cells clean). Closed operationally: both entry
+  points now assert B′ = ∞ ∧ D = ∅ at top level (silent-failure mode
+  made loud, zero cost), plus a zero-heavy tie-rich stress family at
+  the minimum-slack size in the Tier-2 gate.
+
+**Result.** Tier-2 gate green (hybrid levels 1/2/total across all
+regimes incl. forced deep recursion and the 1e6-edge tie-rich stress;
+mainline differential gate re-verified — the hybrid_level=0 default is
+bit-neutral). L-sweep, median of 3, every cell distance-checked; raw
+records `benchmarks/results/sweep_hybrid_{1e6,NY}.txt`:
+
+| input | params | L=0 (V1) | interior L | L=l_top (pure base case) |
+|---|---|---|---|---|
+| random 1e6 | prescription (l_top=4) | 5.50× | 6.19 / 5.24 / 4.45× | **3.76×** |
+| random 1e6 | t=12, k=6 (l_top=2) | 5.18× | 4.45× | **3.83×** |
+| USA-road-d.NY | prescription (l_top=4) | 9.39× | 8.04 / 6.60 / 5.50× | **4.49×** |
+| USA-road-d.NY | t=12, k=6 (l_top=2) | 7.84× | 5.64× | **4.54×** |
+
+Monotone to the end on both inputs and both parameter settings: every
+level of recursion removed makes it faster, and the family's optimum is
+its degenerate member — Algorithm 4 alone over the whole graph, i.e. a
+bounded Dijkstra on 4-tuple labels over the keyed M = 1 structure. The
+residual 3.8–4.5× against the crate's Dijkstra is the price of the
+label machinery itself (32-byte lexicographic tuples + ordered-map
+operations vs a flat f64 4-ary heap), not of any algorithmic idea. This
+completes the verdict chain: 191× (faithful mainline) → 5.8× (drop the
+degree reduction) → 3.8× (drop the recursion) → what remains is
+Dijkstra with more expensive bookkeeping. No configuration of this
+implementation family beats Dijkstra at storable sizes — consistent
+with the ASSESSMENT.md hypothesis (bounds cross near n ≈ 2^1000).

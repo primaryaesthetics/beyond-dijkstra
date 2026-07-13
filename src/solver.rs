@@ -384,6 +384,11 @@ pub struct Solver<'a> {
     k: u64,
     pub d: Vec<Label>,
     pub phase: PhaseTimes,
+    /// Levels ≤ this run the base case with the level's cutoff instead of
+    /// recursing (VARIANTS.md V3). 0 = the paper's algorithm: level 0 is
+    /// the base case with cutoff t³·2⁰ = t³, bit-identical to Algorithm 4,
+    /// so the mainline differential gate pins this default.
+    pub hybrid_level: u64,
     scratch: FpScratch,
 }
 
@@ -395,6 +400,7 @@ impl<'a> Solver<'a> {
             k,
             d: vec![Label::Inf; adj.len()],
             phase: PhaseTimes::default(),
+            hybrid_level: 0,
             scratch: FpScratch::new(adj.len()),
         }
     }
@@ -547,7 +553,7 @@ impl<'a> Solver<'a> {
 
     // -- Base case (SPEC "Base case", Algorithm 4) ------------------------
 
-    fn base_case(&mut self, b: Label, s_list: &[u32]) -> (Label, Vec<u32>, BlockDs) {
+    fn base_case(&mut self, b: Label, s_list: &[u32], cutoff: u64) -> (Label, Vec<u32>, BlockDs) {
         let adj = self.adj;
         let mut ds = BlockDs::new(1, b);
         for &x in s_list {
@@ -555,7 +561,6 @@ impl<'a> Solver<'a> {
         }
         let mut u_log: Vec<u32> = Vec::new();
         let mut bound = b;
-        let cutoff = self.t * self.t * self.t;
         while ds.non_empty() && (u_log.len() as u64) <= cutoff {
             let (keys, nb) = ds.pull();
             bound = nb;
@@ -574,8 +579,12 @@ impl<'a> Solver<'a> {
     // -- BMSSP (SPEC "BMSSP", Algorithm 3) --------------------------------
 
     pub fn bmssp(&mut self, b: Label, s_list: &[u32], level: u64) -> (Label, Vec<u32>, BlockDs) {
-        if level == 0 {
-            return phase!(self, base_case, self.base_case(b, s_list));
+        if level <= self.hybrid_level {
+            // The level's own |U| cutoff, t³·2^(l·t); at level 0 this is
+            // exactly Algorithm 4's t³.
+            let t = self.t;
+            let cutoff = (t * t * t).saturating_mul(pow2_sat(level * t));
+            return phase!(self, base_case, self.base_case(b, s_list, cutoff));
         }
         let adj = self.adj;
         let t = self.t;
@@ -790,7 +799,17 @@ pub fn sssp_run(
         curr: s2,
         pred: -1,
     });
-    let (_, settle, _) = solver.bmssp(Label::Inf, &[s2], l_top);
+    let (b_final, settle, ds_top) = solver.bmssp(Label::Inf, &[s2], l_top);
+    // Totality assert (QUESTIONS.md Q10): the top-level call must be a
+    // full execution. The paper's limit t³·2^(l_top·t) exceeds n, but
+    // re-settlements (Q3 escapes) also count against it and no bound on
+    // them is proved — if the limit ever fires, distances would be
+    // silently wrong; fail loudly instead.
+    assert!(
+        b_final == Label::Inf && !ds_top.non_empty(),
+        "top-level BMSSP exited partially (re-settlement volume exceeded \
+         the |U| cutoff) — see QUESTIONS.md Q10"
+    );
 
     let mut dist = Vec::with_capacity(n);
     for &(start, c) in &red.cycle_of {

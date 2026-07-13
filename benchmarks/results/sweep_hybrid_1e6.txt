@@ -1,0 +1,17 @@
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running `target/release/examples/sweep_hybrid 1000000`
+graph: random m=4n, n=1000000
+n=1000000, m=4000000
+dijkstra median   0.2092 s
+--- params: prescription (l_top=4) ---
+   L   median s     x dj
+   0     1.1509     5.50
+   1     1.2938     6.19
+   2     1.0962     5.24
+   3     0.9299     4.45
+   4     0.7872     3.76
+--- params: sweep-best (t=12, k=6) (l_top=2) ---
+   L   median s     x dj
+   0     1.0836     5.18
+   1     0.9301     4.45
+   2     0.8009     3.83

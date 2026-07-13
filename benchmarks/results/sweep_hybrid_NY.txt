@@ -1,0 +1,17 @@
+    Finished `release` profile [optimized] target(s) in 0.00s
+     Running `target/release/examples/sweep_hybrid 0 benchmarks/data/USA-road-d.NY.gr`
+graph: benchmarks/data/USA-road-d.NY.gr
+n=264346, m=733846
+dijkstra median   0.0103 s
+--- params: prescription (l_top=4) ---
+   L   median s     x dj
+   0     0.0965     9.39
+   1     0.0826     8.04
+   2     0.0678     6.60
+   3     0.0565     5.50
+   4     0.0461     4.49
+--- params: sweep-best (t=12, k=6) (l_top=2) ---
+   L   median s     x dj
+   0     0.0805     7.84
+   1     0.0579     5.64
+   2     0.0466     4.54
