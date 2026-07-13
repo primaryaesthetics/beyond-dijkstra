@@ -418,6 +418,13 @@ pub struct Solver<'a> {
     /// escape channel). false = the paper's Algorithm 4 as written; the
     /// mainline differential gate pins this default.
     pub fixed_base: bool,
+    /// VARIANTS.md V8: per-vertex settled bit — settled vertices are
+    /// never adopted (relax rejects), re-frontiered (pulls drop them),
+    /// or re-settled (W′ excludes them). false = the paper's algorithm;
+    /// the mainline differential gate pins this default.
+    pub settled_dedup: bool,
+    /// V8 state: set at each settlement event when `settled_dedup` is on.
+    settled: Vec<bool>,
     /// How many base-case returns the V5 cap actually lowered (0 when
     /// `fixed_base` is off) — experiment instrumentation.
     pub base_cap_hits: u64,
@@ -466,6 +473,8 @@ impl<'a> Solver<'a> {
             phase: PhaseTimes::default(),
             hybrid_level: 0,
             fixed_base: false,
+            settled_dedup: false,
+            settled: vec![false; adj.len()],
             base_cap_hits: 0,
             #[cfg(feature = "verify-contract")]
             viol_bound_base: 0,
@@ -488,6 +497,12 @@ impl<'a> Solver<'a> {
     }
 
     fn relax(&mut self, u: u32, v: u32, w: f64, b: Label) -> bool {
+        if self.settled_dedup && self.settled[v as usize] {
+            // V8: a settled vertex is complete — an improving candidate is
+            // impossible and an exact-tie re-store is a no-op; reject both
+            // so the vertex is never re-adopted.
+            return false;
+        }
         let du = self.d[u as usize].fin(); // relaxation source is always reached
         let cand = Label::Fin(Lab {
             len: du.len + w,
@@ -683,7 +698,13 @@ impl<'a> Solver<'a> {
             let (keys, nb) = ds.pull();
             bound = nb;
             let u = keys[0];
+            if self.settled_dedup && self.settled[u as usize] {
+                continue; // V8: stale entry of a settled vertex — drop
+            }
             u_log.push(u);
+            if self.settled_dedup {
+                self.settled[u as usize] = true;
+            }
             #[cfg(feature = "q11-trace")]
             if self.trace_vertex == Some(u) {
                 self.trace_settles += 1;
@@ -797,6 +818,9 @@ impl<'a> Solver<'a> {
                 // pivot expansion (line 13), P_j stored order
                 let Some(&j) = piv_of.get(&x) else { continue };
                 for &v in &p_lists[j] {
+                    if self.settled_dedup && self.settled[v as usize] {
+                        continue; // V8: settled members are not re-frontiered
+                    }
                     if self.d[v as usize] < b_i && si_set.insert(v) {
                         si.push(v);
                         #[cfg(feature = "q11-trace")]
@@ -808,6 +832,11 @@ impl<'a> Solver<'a> {
                 }
             }
 
+            if self.settled_dedup {
+                // V8: pulled keys that are already settled expanded their
+                // P_j above but do not seed the child.
+                si.retain(|&x| !self.settled[x as usize]);
+            }
             let (b_pi, u_i, ds_i) = self.bmssp(b_i, &si, level - 1);
             phase!(self, ds_merge, ds.merge(&ds_i));
             #[cfg(feature = "q11-trace")]
@@ -907,6 +936,9 @@ impl<'a> Solver<'a> {
         let w_prime = phase!(self, boundary_sweeps, {
             for &x in s_list {
                 // premature vertices go back to the frontier (line 33)
+                if self.settled_dedup && self.settled[x as usize] {
+                    continue; // V8
+                }
                 if b_prime <= self.d[x as usize] && self.d[x as usize] < b {
                     ds.insert(x, self.d[x as usize].fin());
                     #[cfg(feature = "q11-trace")]
@@ -922,8 +954,17 @@ impl<'a> Solver<'a> {
             let w_prime: Vec<u32> = w_list
                 .iter()
                 .copied()
-                .filter(|&x| !u_set.contains(&x) && self.d[x as usize] < b_prime)
+                .filter(|&x| {
+                    !u_set.contains(&x)
+                        && self.d[x as usize] < b_prime
+                        && !(self.settled_dedup && self.settled[x as usize])
+                })
                 .collect();
+            if self.settled_dedup {
+                for &x in &w_prime {
+                    self.settled[x as usize] = true; // V8: W′ settles
+                }
+            }
             #[cfg(feature = "q11-trace")]
             if let Some(tv) = self.trace_vertex {
                 if w_prime.contains(&tv) {

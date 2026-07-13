@@ -642,3 +642,96 @@ mechanism that adopts never-settled vertices also re-adopts
 already-settled ones — Q11's duplicate settlements are the built-in
 price of the `≤`, unavoidable by any local tightening of Relax. A
 discriminating variant needs an explicit settled bit (V8, next).
+
+## V8 — explicit settled bit: stop re-adopting completed vertices
+
+V7 established that the `≤` cannot be tightened because it is the
+adoption mechanism for early-labeled, never-settled vertices. V8 keeps
+the `≤` and adds the discrimination the algorithm lacks: a per-vertex
+settled bit, set at each settlement event (base-case pull, W′ append),
+after which the vertex is never adopted, re-frontiered, or re-settled.
+
+**Changes** (flag `settled_dedup`, Solver engine):
+1. Relax into a settled vertex: reject.
+2. Pulled keys that are settled are dropped from S_i (base case: pulled
+   and skipped without logging) — AFTER the pivot expansion runs, so a
+   settled pivot still pulls its unsettled P_j members along.
+3. Pivot expansion and the line-33 premature re-insert skip settled
+   vertices; the W′ filter excludes them (u_set becomes global).
+
+**Claim.** If every settlement in the paper's algorithm settles a
+COMPLETE vertex (Lemma 3.7's clause under reachable states — Q9's
+closure), then V8 preserves final distances exactly, and duplicate
+settlements are zero by construction.
+
+**Proof sketch.**
+1. A settled-complete vertex v can never receive an improving
+   candidate (its label is minimal over walks), so rejecting relaxes
+   into v changes no label — only control flow.
+2. Every out-edge of v is offered at unbounded ancestor bounds
+   regardless of re-adoption: v's settlement propagates through U up
+   its OWN ancestor chain to the top call, and every level's
+   line-21..26 sweep relaxes all of v's out-edges at that level's
+   bound, ending at B = ∞. This is V7's failed step 3 made valid: for
+   SETTLED vertices the chain exists — V7 died precisely on vertices
+   with no chain, which V8 does not touch.
+3. Dropping v from pulls/W′/expansion removes only work items whose
+   label effects are subsumed by items 1–2.
+
+**Contrapositive value.** The claim leans on settled ⟹ complete. If
+that ever fails on a reachable state, V8 freezes a wrong label and the
+Tier-2 gate goes red — so a green gate over the full matrix is an
+empirical test of the paper's completeness claims themselves, and a red
+gate would be a counterexample to them: either outcome is a result.
+
+**Classification.** Class 2: distance-preserving claim,
+structure-changing (settlement log shrinks to distinct vertices; D
+contents and recursion shape change). Gate: Tier-2 full matrix (Solver
+engine; V4 fast engine out of scope).
+
+**Measurement plan.** Duplicates (expect exactly 0 — by construction);
+wall-clock vs V1 on the tie-rich/zero-heavy family (the settled bit
+also skips the paranoid re-work Q11 documented, so this is the one
+Q11-informed speedup candidate); note that under V8 the pinned
+event-count |U| guard and the paper's set-count guard coincide.
+
+**Result.** Tier-2 gate GREEN over the full matrix (three generator
+regimes, tie-rich 1.02e6-edge stress, star/hub family, Q10 zero-heavy
+min-slack pressure), with `dup_settlements == 0` asserted on every V8
+run — distances bit-exact vs Dijkstra throughout. By the contrapositive
+above, this is the strongest empirical evidence so far that every
+settlement of the paper's algorithm settles a complete vertex on
+reachable states. Recorded run `benchmarks/results/dup_settlements_v8.txt`
+(V1 = paper engine, medians of 3, same process, one machine):
+
+| input | n | paper dups | V8 dups | V1 ms | V8 ms |
+|---|---|---|---|---|---|
+| zero-heavy min-slack | 4 094 | 5 | 0 | 11.3 | 5.8 |
+| zero-heavy min-slack | 16 382 | 608 | 0 | 35.4 | 23.4 |
+| tie-rich 0..3 | 170 000 | 5 074 | 0 | 694.2 | 600.9 |
+| zero-heavy large | 500 000 | 149 | 0 | 1 730.4 | 1 433.4 |
+| float-random | 500 000 | 664 | 0 | 1 723.7 | 1 638.4 |
+
+Two findings beyond the expected zero-dups:
+
+1. **Duplicates happen on continuous weights too** — 664 at n = 5e5
+   float-random (0.0013/n). Q11's "consistent with dup ≈ 0 on
+   float-random" hypothesis line is corrected: the re-adoption channel
+   needs only a same-edge re-offer at an unchanged source label (exact
+   tuple equality regardless of weight structure); tie-rich inputs
+   amplify it ~25x, they do not create it.
+2. **V8 is the first variant of this project that is both a math
+   repair and a measured speedup**: consistently faster on every
+   input, roughly −13…−17% on the zero-heavy/tie-rich family and −5%
+   on float-random (run-to-run spread is large on the small inputs;
+   the direction never flipped). The win has two parts: no duplicate
+   settlement work, and the early exit in Relax for settled targets —
+   which fires on every input, ties or not. Porting the bit into the
+   V4 fast engine is the natural next optimization step; queued.
+
+Consequence for the missing re-settlement lemma (Q11): V8 shows the
+duplicates are OPERATIONALLY removable with one bit while preserving
+distances — so the paper's design has a nearby correct-and-honest
+variant whose |U| accounting is exact (event count = distinct count,
+our pinned guard and the paper's set guard coincide). What remains
+genuinely open is bounding the duplicates of the algorithm AS WRITTEN.

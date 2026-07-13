@@ -48,6 +48,21 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
         let f5 = fast::sssp_fixed(n, edges, source, hl, Some((3, 2, 2)));
         assert_dists(n, &f5.dist, &expect, &format!("{tag} (v5-fast L={hl})"));
     }
+    // V8 settled bit, natural and deepest-recursion regimes; duplicate
+    // settlements must be zero by construction.
+    for hl in [0u64, 1] {
+        let v8 = no_transform::sssp_v8(n, edges, source, hl, None);
+        assert_dists(n, &v8.dist, &expect, &format!("{tag} (v8 L={hl})"));
+        assert_eq!(v8.dup_settlements, 0, "{tag} (v8 L={hl}): dups");
+        let v8f = no_transform::sssp_v8(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(
+            n,
+            &v8f.dist,
+            &expect,
+            &format!("{tag} (v8 L={hl}, forced t=k=2)"),
+        );
+        assert_eq!(v8f.dup_settlements, 0, "{tag} (v8f L={hl}): dups");
+    }
 }
 
 fn assert_dists(n: usize, got: &[f64], expect: &[f64], tag: &str) {
@@ -81,6 +96,10 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
         assert_dists(g.n, &v5.dist, &expect, &format!("seed {seed} (v5)"));
         let f5 = fast::sssp_fixed(g.n, &g.edges, g.source, 0, g.override_params);
         assert_dists(g.n, &f5.dist, &expect, &format!("seed {seed} (v5-fast)"));
+        // V8 settled bit (full recursion), zero duplicates by construction.
+        let v8 = no_transform::sssp_v8(g.n, &g.edges, g.source, 0, g.override_params);
+        assert_dists(g.n, &v8.dist, &expect, &format!("seed {seed} (v8)"));
+        assert_eq!(v8.dup_settlements, 0, "seed {seed} (v8): dups");
     }
 }
 
@@ -161,6 +180,9 @@ fn q10_resettlement_pressure() {
             assert_dists(n, &fa.dist, &expect, &format!("q10 n={n} L={hl} (fast)"));
             let v5 = no_transform::sssp_v5(n, &edges, 0, hl, Some((3, 2, 2)));
             assert_dists(n, &v5.dist, &expect, &format!("q10 n={n} L={hl} (v5)"));
+            let v8 = no_transform::sssp_v8(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &v8.dist, &expect, &format!("q10 n={n} L={hl} (v8)"));
+            assert_eq!(v8.dup_settlements, 0, "q10 n={n} L={hl} (v8): dups");
         }
     }
 }

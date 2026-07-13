@@ -38,7 +38,7 @@ pub fn sssp(
     source: usize,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, 0, false, override_params)
+    sssp_full(n, edges, source, 0, false, false, override_params)
 }
 
 /// V3 (VARIANTS.md): V1 with levels ≤ `hybrid_level` running the base
@@ -51,7 +51,7 @@ pub fn sssp_hybrid(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, hybrid_level, false, override_params)
+    sssp_full(n, edges, source, hybrid_level, false, false, override_params)
 }
 
 /// V5 (VARIANTS.md): like `sssp_hybrid`, with the fixed base case
@@ -63,7 +63,19 @@ pub fn sssp_v5(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, hybrid_level, true, override_params)
+    sssp_full(n, edges, source, hybrid_level, true, false, override_params)
+}
+
+/// V8 (VARIANTS.md): like `sssp_hybrid`, with the per-vertex settled bit
+/// (settled vertices are never re-adopted, re-frontiered, or re-settled).
+pub fn sssp_v8(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> VariantRun {
+    sssp_full(n, edges, source, hybrid_level, false, true, override_params)
 }
 
 fn sssp_full(
@@ -72,6 +84,7 @@ fn sssp_full(
     source: usize,
     hybrid_level: u64,
     fixed_base: bool,
+    settled_dedup: bool,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
     #[cfg(feature = "phase-timer")]
@@ -94,6 +107,7 @@ fn sssp_full(
     let mut solver = Solver::new(&adj, t, k);
     solver.hybrid_level = hybrid_level;
     solver.fixed_base = fixed_base;
+    solver.settled_dedup = settled_dedup;
     solver.d[source] = Label::Fin(Lab {
         len: 0.0,
         hops: 0,

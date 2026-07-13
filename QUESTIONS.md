@@ -279,7 +279,19 @@ re-acceptance is the enabling channel that (a) carried the vertex into
 the sibling subtree's trees for settlement #1 and (b) keeps completed
 vertices indistinguishable from live ones afterwards; and the extra U
 event is emitted by Algorithm 3's own W′ path, whose completeness
-filter is call-local. Consequence stands as measured: Lemma 3.8's items
+filter is call-local.
+
+Correction (2026-07-13, V8 measurement): the earlier "consistent with
+dup ≈ 0 on float-random weights" line was wrong — 664 duplicates
+measured at n = 5e5 float-random (0.0013/n, raw record
+`benchmarks/results/dup_settlements_v8.txt`). Exact tuple equality
+needs only a same-edge re-offer at an unchanged source label, which
+continuous weights do not prevent; tie-rich inputs amplify the channel
+(~25x), they do not create it. Operational closure exists: VARIANTS.md
+V8 (per-vertex settled bit) removes every duplicate while keeping
+distances bit-exact across the full matrix — and is measurably faster.
+The `≤` itself cannot be touched (V7, REJECTED — it is the adoption
+mechanism; see Q6 upgrade). Consequence stands as measured: Lemma 3.8's items
 "the U_X's at the same layer are disjoint" and "U_X is a disjoint union
 of W′_X and the children's U's" are false as stated on tie-rich inputs,
 and the |U| accounting that Lemma 3.9 and top-level totality rest on

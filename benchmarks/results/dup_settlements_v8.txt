@@ -1,0 +1,6 @@
+                       input        n paper dups    V5 dups    V8 dups  cap hits    dup/n     V1 ms     V8 ms
+         zero-heavy minslack     4094          5          5          0         0   0.0012      11.3       5.8
+         zero-heavy minslack    16382        608        608          0         0   0.0371      35.4      23.4
+               tie-rich 0..3   170000       5074       5074          0         0   0.0298     694.2     600.9
+            zero-heavy large   500000        149        149          0         0   0.0003    1730.4    1433.4
+                float-random   500000        664        664          0         0   0.0013    1723.7    1638.4
