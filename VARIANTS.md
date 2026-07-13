@@ -482,3 +482,68 @@ as stated. V5 therefore stands as a provable contract restoration with
 zero observed runtime effect — the missing re-settlement lemma the
 paper needs is about stale-entry re-frontierings in Algorithm 3, not
 about the base case.
+
+## Algorithm 3's contract, transitively: what V5 does and does not restore
+
+The write-up the V5 review's scope note asked for. Throughout, dB[D]
+means the minimum over D's STORED values (the values the data structure
+holds; current labels of stored keys can drift below them — that drift
+is exactly Q11's stale-entry phenomenon and is accounted separately).
+
+**Proposition (bound validity propagates).** Assume every child call
+returns dB[D_child] ≥ B′_child — V5 gives this for base cases; take it
+as the induction hypothesis for recursive children. Then Algorithm 3's
+own return satisfies dB[D] ≥ B′, EXCEPT through one channel: a line-29
+re-selection insert in the final iteration storing a value below B′_f
+(QUESTIONS.md Q12).
+
+*Proof.* Enumerate what D can hold at return.
+1. Leftovers never pulled: every pull removes the globally smallest
+   stored values, and the last pull's separating bound B_f lower-bounds
+   the remainder; B′ = B′_f ≤ B_f, so leftovers ≥ B′. This covers
+   low-valued inserts from EARLIER iterations too: a stored value below
+   B_f cannot survive to the end — some later pull consumes it.
+2. Merged child structures: the final iteration's D_f has
+   dB[D_f] ≥ B′_f by the hypothesis; earlier iterations' merges fall
+   under item 1.
+3. Line-24 sweep inserts: gated by candidate ≥ B_i; in the final
+   iteration B_f ≥ B′_f, earlier iterations under item 1.
+4. Line 31–33 and 36–37 post-loop inserts: gated by d ≥ B′ directly.
+5. Line-29 re-selection inserts: UNGUARDED — the only hole, live only
+   in the final iteration (earlier leaks are consumed by later pulls),
+   and reachable per Q12's two channels. ∎
+
+**Corollary (full executions).** A full execution's return always
+satisfies dB[D] ≥ B′: at loop exit D was empty, so only the gated
+post-loop inserts (item 4) populate the returned D. No appeal to
+line 29 is needed. Combined with V5 at the leaves, the bound clause of
+Lemma 3.7 holds at every level of a recursion whose loop always drains
+D — in particular along the top-level call's own spine under the
+paper's set semantics for U (QUESTIONS.md Q13: the top-level cutoff
+cannot fire, so the top call is always a full execution).
+
+**What is still missing for partial executions** is closing Q12, and
+the fix shape is already known: cap Algorithm 3's returned B′ at dB[D]
+at return, exactly as V5 does for Algorithm 4 — one O(1) peek. With
+both caps, dB[D] ≥ B′ holds unconditionally at every level by the
+proposition's induction, with no other change to the algorithm. The
+completeness half of the contract (U ⊇ Ũ(B′, S)) then follows the same
+argument as V5's step 3 — lowering B′ only shrinks the set the call
+promises to have settled, and the deferred vertices are exactly the
+ones sitting in D below the old bound, which the parent re-frontiers.
+Implementing and measuring this cap (V6) needs its own class-2
+treatment; queued.
+
+**What no bound cap restores.** The duplicate U events (Q11) are
+untouched by V5 — measured bit-identical — and would be untouched by
+V6: the stale-entry re-frontier channel operates entirely below the
+bound clauses (the trace's v5 re-settled with a CORRECT label; no
+returned bound was ever violated in that run — the cap never fired).
+So the transitive restoration upgrades Q10 only partially: the bound
+clause of Lemma 3.7 becomes provable (V5 + V6 + full-execution
+corollary), top-level totality is unconditional under the paper's own
+U semantics (Q13), but Lemma 3.8's disjoint-union accounting — and
+with it the paper's time analysis on tie-rich inputs — still lacks the
+re-settlement bound. That bound is the genuinely open mathematics; the
+concrete failure states to bound are stale-entry pulls and the pivot
+re-inserts they enable (Q11's trace).

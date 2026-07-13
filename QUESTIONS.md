@@ -119,7 +119,7 @@ Practical consequence for this repo: correctness testing must drive the
 top-level entry only; property tests that call bmssp mid-recursion with
 synthetic frontiers can fail (or pass) without indicting anything.
 
-## Q10 — top-level totality is unproved: re-settlements count against the |U| cutoff. OPEN
+## Q10 — top-level totality is unproved: re-settlements count against the |U| cutoff. REVISED (scope narrowed by Q13)
 
 Found during the V3 falsification review; applies to the paper as
 written, at every hybrid level including the unmodified algorithm. The
@@ -144,6 +144,16 @@ bound = B, and later relaxations can refill D, so a child can return
 B′ = B with D ≠ ∅ — contradicting Lemma 3.1's "full execution ⇒ D = ∅"
 (Q3 sub-case; the parent handles it). Letter/note material: the missing
 lemma is a bound on re-settlements per vertex.
+
+Addendum (2026-07-13): Q13 narrows this finding's scope. The paper's
+line 30 unions U as a SET, under which the top-level cutoff can never
+fire (|U| ≤ n₂ < t³·2^(l_top·t)) — so the totality exposure as stated
+above applies to the pinned event-count semantics of this repo's
+reference, where the entry asserts guard it. The B′ = B with D ≠ ∅
+sub-finding stands as written (it is semantics-independent). What
+re-settlements break in the paper itself is the disjoint-union
+accounting and the time analysis — see Q11 (confirmed mechanism and
+concrete Lemma 3.8 witness) and Q12 (the related bound-validity gap).
 
 ## Q11 — measured duplicate settlements contradict Lemma 3.8's disjoint-union accounting; the base case is NOT the channel. CONFIRMED (mechanism traced)
 
@@ -212,6 +222,71 @@ the pivot re-inserts they enable), not base-case B′ escapes. Still
 open: evaluate a guarded strict-< (the first project's counterexample
 warns this is exactly where cross-call equivalence intuitions die —
 full class-2 treatment required). Letter/note material, pairs with Q10.
+
+## Q12 — Line 29's unguarded insert can break Lemma 3.7's dB[D] ≥ B′ in partial executions; the invariant proof skips it. OPEN
+
+Found while writing the transitive contract-restoration argument (V5
+follow-up, VARIANTS.md). Algorithm 3 has exactly one unguarded D-insert:
+line 24 is gated by `d[u] + wuv ≥ Bi`, lines 31–37 by `≥ B′`, but the
+re-selection insert (line 29, `D.Insert(⟨pj, d[pj]⟩)`) has no bound
+check. Two channels can put d[pj] below B′_i at that point:
+
+1. **Line 23 pseudocode vs prose.** The pseudocode reads
+   `if Relax(u, v, B) and d[u] + wuv ≥ Bi` — the relaxation runs with
+   bound B and mutates d[v] even when the candidate is below Bi; only
+   the insert is gated. The prose restatement says "relax every edge
+   (u, v) such that d[u] + wuv ∈ [Bi, B)" — no sub-Bi mutations. Under
+   the pseudocode reading, a surviving member of a P_j with j ∈ J is
+   skipped by line 25's pivot update but still takes the label
+   decrease, and line 28's argmin then selects it.
+2. **Child-internal decreases (either reading).** The i-th sub-call
+   relaxes with bound Bi > B′_i and can lower a P_j member below B′_i
+   without settling it (the member was ≥ Bi at pull time, so line 13
+   left it out of S_i). The paper's own P̂ device acknowledges these
+   vertices ("d[v] may decrease but v is not in Di or Ui") and removes
+   them from P̂_j — but line 28 selects from P_j, not P̂_j.
+
+The proof of Lemma 3.7's loop invariant 2 (dB[D ∪ P] ≥ B′_i) covers
+inserts with the bare assertion "For any v added into D, d[v] ≥ B′_i" —
+no argument is offered for line 29, and the P-side bullets protect only
+vertices NOT inserted into D. If the |U| cutoff fires in the same
+iteration (partial execution), the sub-B′ entry survives to the return
+(earlier-iteration leaks are consumed by later pulls; only the final
+iteration's leak can escape), violating clause 2 of Lemma 3.7
+(B′ ≤ dB[D]) — the clause the parent's own bookkeeping consumes.
+Reference behavior: SPEC pins the pseudocode reading of line 23.
+Planned empirical check: verify-mode's per-return assert dB[D] ≥ B′
+(see Q3) — if it fires on zero-weight partial executions with the V5
+base case ON, this channel is confirmed live. Fix candidate (pairs with
+V5, same shape): cap Algorithm 3's returned B′ at dB[D] too — one O(1)
+peek at return. Letter/note material.
+
+## Q13 — the loop guard's |U|: the paper counts distinct vertices, the pinned reference counts settlement events. OPEN (pinned deviation)
+
+Line 30 is `U ← U ∪ Ui` — a set union — so line 9's `|U| ≤ t³·2^lt`
+compares distinct-vertex cardinality; W′ (line 34) is defined via
+`W \ U` on the same set. The reference pinned U as a list (the
+settlement log; SPEC "BMSSP" pins) and the guard as its length. The two
+agree exactly until a duplicate settlement (Q11) occurs; with
+duplicates, event counts cross a level's cutoff earlier than distinct
+counts. Consequences:
+
+1. **Q10's top-level exposure belongs to the pinned semantics, not the
+   paper's.** Under set counting the top-level guard can never fire:
+   |U| ≤ n₂ while the cutoff is t³·2^(l_top·t) ≥ t³·n₂ (from
+   l_top = ⌈log n₂ / t⌉), which is the paper's own remark
+   "|U| ≤ |V| = o(t³n)". The top call is a full execution
+   unconditionally — no re-settlement pressure on correctness there.
+2. **What duplicates break in the paper** is therefore not top-level
+   totality but the accounting: Lemma 3.8's disjoint unions (falsified
+   concretely — Q11) and the Σ|U_X| time analysis of Lemma 3.9, plus
+   per-level guards firing at different times than the paper's analysis
+   assumes.
+
+The deviation stays pinned (the differential gate depends on it); the
+mainline totality asserts cover its only dangerous consequence.
+Candidate micro-variant for completeness: guard on distinct count —
+expected distance-neutral, changes recursion shape on tie-rich inputs.
 
 ## Q7 — nEdges overflow bound. NOTE
 
