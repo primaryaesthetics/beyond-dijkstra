@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running `target/release/examples/bench_fast 0 benchmarks/data/USA-road-d.NY.gr`
+graph: benchmarks/data/USA-road-d.NY.gr
+n=264346, m=733846
+params: delta=3 t=6 k=3 l_top=4 n2=1467692
+v1 params: delta=3 t=6 k=3 l_top=4
+dijkstra     median    0.010 s
+mainline     median    0.406 s   (39.88x dijkstra)
+no-transform median    0.094 s   (9.26x dijkstra, 0.23x of mainline)

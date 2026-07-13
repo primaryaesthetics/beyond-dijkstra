@@ -1,9 +1,9 @@
-//! Head-to-head timing of the production Dijkstra and the mainline port of
-//! arXiv:2602.07868 on one graph (random m = 4n, weights in [0.01, 1),
-//! source 0, or a DIMACS `.gr` file). Median of five runs each after a
-//! warmup, plus a distance cross-check so a timing win can never hide a
-//! wrong answer. Same-process ratios only — absolute times are not
-//! comparable across sessions (thermal drift).
+//! Head-to-head timing of the production Dijkstra, the mainline port of
+//! arXiv:2602.07868, and the V1 no-transform variant on one graph (random
+//! m = 4n, weights in [0.01, 1), source 0, or a DIMACS `.gr` file).
+//! Median of five runs each after a warmup, plus distance cross-checks so
+//! a timing win can never hide a wrong answer. Same-process ratios only —
+//! absolute times are not comparable across sessions (thermal drift).
 //!
 //! ```text
 //! cargo run --release --example bench_fast -- [n] [gr-file]
@@ -11,6 +11,7 @@
 
 use beyond_dijkstra::dijkstra;
 use beyond_dijkstra::solver::sssp_run;
+use beyond_dijkstra::variants::no_transform;
 use std::time::Instant;
 
 struct SplitMix64 {
@@ -146,6 +147,36 @@ fn main() {
         .count();
     assert_eq!(mismatches, 0, "port distances diverge from dijkstra");
 
-    println!("dijkstra median {dj:8.3} s");
-    println!("mainline median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
+    let mut v1_times = Vec::new();
+    let mut v1_dist = Vec::new();
+    for i in 0..6 {
+        let t0 = Instant::now();
+        let run = no_transform::sssp(n, &edges, 0, None);
+        let dt = t0.elapsed().as_secs_f64();
+        v1_times.push(dt);
+        if i == 0 {
+            eprintln!(
+                "v1 params: delta={} t={} k={} l_top={}",
+                run.delta, run.t, run.k, run.l_top
+            );
+        }
+        v1_dist = run.dist;
+    }
+    v1_times.remove(0); // warmup
+    let v1 = median(v1_times);
+
+    let v1_mismatches = dist
+        .iter()
+        .zip(v1_dist.iter())
+        .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+        .count();
+    assert_eq!(v1_mismatches, 0, "v1 distances diverge from dijkstra");
+
+    println!("dijkstra     median {dj:8.3} s");
+    println!("mainline     median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
+    println!(
+        "no-transform median {v1:8.3} s   ({:.2}x dijkstra, {:.2}x of mainline)",
+        v1 / dj,
+        v1 / bf
+    );
 }

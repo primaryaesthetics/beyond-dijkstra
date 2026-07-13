@@ -94,6 +94,31 @@ violation self-heals in the parent loop rather than corrupting labels.
 Contract status stays OPEN pending an invariant-check run (verify mode)
 that asserts Lemma 3.7's properties per call.
 
+## Q9 — Lemmas 3.1/3.2/3.7 are false as standalone contracts. OPEN
+
+Found during the V1 (no-degree-reduction) falsification review, and
+independent of that variant — it concerns the paper as written. Concrete
+instance: vertices {s, x, z, v}; edges s→x (10), s→z (10), x→v (5),
+z→v (1); labels d[s] = 0, d[x] = 10 (complete), d[z] = d[v] = ∞. Call
+BMSSP(B = 20, S = {x}, l ≥ 1) with k ≥ 3. The stated precondition holds:
+⟨∅, {x}⟩ is a frontier for Ũ(20, {x}) = {x} — v's true shortest path
+(length 11, via z) avoids S entirely. But FindPivots relaxes x→v to
+d[v] = 15, the search fails (< k vertices), W = {x, v}, and the call
+returns U = {x, v} with d[v] = 15 ≠ dis(v) = 11: Lemma 3.2's "W ⊆ Ũ"
+and Lemma 3.7's "U = Ũ(B′, S) is complete" are both violated.
+
+The lemmas are true in every state reachable from a top-level run: the
+§2.5 loop keeps every incomplete-but-relevant vertex reachable from a
+complete vertex present in D ∪ P̂, and the Pull + pivot-expansion step
+forces that vertex into the child's S. This closure invariant is what
+the induction actually rides on; the lemma statements omit it. Not a
+bug in the algorithm — a gap between the stated contracts and the
+proved property. Letter/note material.
+
+Practical consequence for this repo: correctness testing must drive the
+top-level entry only; property tests that call bmssp mid-recursion with
+synthetic frontiers can fail (or pass) without indicting anything.
+
 ## Q7 — nEdges overflow bound. NOTE
 
 nEdges strictly increases along relaxations and is bounded by the longest

@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running `target/release/examples/bench_fast 1000000`
+graph: random m=4n, n=1000000
+n=1000000, m=4000000
+params: delta=3 t=6 k=3 l_top=4 n2=8000342
+v1 params: delta=3 t=6 k=3 l_top=4
+dijkstra     median    0.193 s
+mainline     median   36.790 s   (191.11x dijkstra)
+no-transform median    1.126 s   (5.85x dijkstra, 0.03x of mainline)
