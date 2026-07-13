@@ -1,0 +1,34 @@
+   Compiling beyond_dijkstra v0.1.0 (/Users/kirakabaeva/Documents/GitHub/beyond-dijkstra)
+    Finished `release` profile [optimized] target(s) in 2.93s
+     Running `target/release/examples/profile_phases 1000000 --v1`
+graph: random m=4n, n=1000000
+n=1000000, m=4000000
+V1 no-transform; params: delta=3 t=6 k=3 l_top=4
+total     1.098 s
+degree reduction                           0.000 s    0.0%
+find_pivots (incl. partition)              0.236 s   21.5%
+  of which tree partition                  0.000 s    0.0%
+base_case                                  0.004 s    0.4%
+BlockDs::pull (levels >= 1)                0.090 s    8.2%
+BlockDs::merge                             0.019 s    1.7%
+pivot bookkeeping + re-selection           0.003 s    0.3%
+relax sweep (incl. DS inserts)             0.582 s   53.0%
+boundary sweeps (S re-insert + W')         0.039 s    3.6%
+unattributed (recursion glue, alloc)       0.124 s   11.3%
+===
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running `target/release/examples/profile_phases 0 benchmarks/data/USA-road-d.NY.gr --v1`
+graph: benchmarks/data/USA-road-d.NY.gr
+n=264346, m=733846
+V1 no-transform; params: delta=3 t=6 k=3 l_top=4
+total     0.096 s
+degree reduction                           0.000 s    0.0%
+find_pivots (incl. partition)              0.012 s   12.2%
+  of which tree partition                  0.002 s    1.6%
+base_case                                  0.013 s   13.8%
+BlockDs::pull (levels >= 1)                0.008 s    8.2%
+BlockDs::merge                             0.001 s    0.5%
+pivot bookkeeping + re-selection           0.002 s    2.1%
+relax sweep (incl. DS inserts)             0.041 s   42.6%
+boundary sweeps (S re-insert + W')         0.003 s    3.2%
+unattributed (recursion glue, alloc)       0.017 s   17.4%

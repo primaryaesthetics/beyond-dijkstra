@@ -9,7 +9,7 @@
 //! carries the degree-free |U| cutoffs.
 
 use crate::label::{Lab, Label};
-use crate::solver::{choose_params, Solver};
+use crate::solver::{choose_params, PhaseTimes, Solver};
 
 pub struct VariantRun {
     pub delta: u64,
@@ -17,6 +17,10 @@ pub struct VariantRun {
     pub k: u64,
     pub l_top: u64,
     pub dist: Vec<f64>,
+    /// Per-phase wall clock (all zeros unless built with `phase-timer`).
+    pub phase_times: PhaseTimes,
+    /// Total wall clock of the run (zero unless built with `phase-timer`).
+    pub total: f64,
 }
 
 /// Shortest-path lengths from `source` on the original graph. Parameters
@@ -29,6 +33,8 @@ pub fn sssp(
     source: usize,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
+    #[cfg(feature = "phase-timer")]
+    let total_t0 = std::time::Instant::now();
     let (delta, t, k, l_top) = match override_params {
         None => choose_params(n, edges.len(), n),
         Some((df, tf, kf)) => {
@@ -61,11 +67,17 @@ pub fn sssp(
             Label::Inf => f64::INFINITY,
         })
         .collect();
+    #[cfg(feature = "phase-timer")]
+    let total = total_t0.elapsed().as_secs_f64();
+    #[cfg(not(feature = "phase-timer"))]
+    let total = 0.0;
     VariantRun {
         delta,
         t,
         k,
         l_top,
         dist,
+        phase_times: solver.phase.clone(),
+        total,
     }
 }

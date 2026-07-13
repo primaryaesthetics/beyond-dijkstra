@@ -3,15 +3,17 @@
 //! Build with the timer enabled:
 //!
 //! ```text
-//! cargo run --release --features phase-timer --example profile_phases -- [n] [gr-file]
+//! cargo run --release --features phase-timer --example profile_phases -- [n] [gr-file] [--v1]
 //! ```
 //!
 //! Same graph family as `bench_fast` (random m = 4n, weights in [0.01, 1),
 //! source 0, or a DIMACS `.gr` file). Prints wall-clock seconds attributed
-//! to each phase. One warmup + one measured run: the phase *ratios* are the
+//! to each phase; `--v1` profiles the no-transform variant instead of the
+//! mainline. One warmup + one measured run: the phase *ratios* are the
 //! product, and they are stable well within run-to-run noise.
 
-use beyond_dijkstra::solver::sssp_run;
+use beyond_dijkstra::solver::{sssp_run, PhaseTimes};
+use beyond_dijkstra::variants::no_transform;
 
 struct SplitMix64 {
     state: u64,
@@ -66,32 +68,7 @@ fn random_graph(n: usize, seed: u64) -> Vec<(u32, u32, f64)> {
     edges
 }
 
-fn main() {
-    if cfg!(not(feature = "phase-timer")) {
-        eprintln!("NOTE: built without --features phase-timer; all zeros below.");
-    }
-    let args: Vec<String> = std::env::args().collect();
-    let n: usize = args.get(1).map(|s| s.parse().unwrap()).unwrap_or(1_000_000);
-    let (n, edges) = match args.get(2) {
-        Some(path) => {
-            eprintln!("graph: {path}");
-            dimacs_graph(path)
-        }
-        None => {
-            eprintln!("graph: random m=4n, n={n}");
-            (n, random_graph(n, 0xC0FFEE))
-        }
-    };
-    eprintln!("n={n}, m={}", edges.len());
-
-    let _ = sssp_run(n, &edges, 0, None); // warmup
-    let run = sssp_run(n, &edges, 0, None);
-    eprintln!(
-        "params: delta={} t={} k={} l_top={} n2={}",
-        run.delta, run.t, run.k, run.l_top, run.n2
-    );
-
-    let p = &run.phase_times;
+fn report(p: &PhaseTimes, total: f64) {
     let phases = [
         ("degree reduction", p.reduce),
         ("find_pivots (incl. partition)", p.find_pivots),
@@ -109,17 +86,56 @@ fn main() {
         .filter(|(name, _)| !name.starts_with("  "))
         .map(|(_, s)| s)
         .sum();
-    println!("total {:9.3} s", run.total);
+    println!("total {total:9.3} s");
     for (name, secs) in phases {
         println!(
             "{name:38} {secs:9.3} s  {:5.1}%",
-            100.0 * secs / run.total.max(1e-12)
+            100.0 * secs / total.max(1e-12)
         );
     }
     println!(
         "{:38} {:9.3} s  {:5.1}%",
         "unattributed (recursion glue, alloc)",
-        run.total - accounted,
-        100.0 * (run.total - accounted) / run.total.max(1e-12)
+        total - accounted,
+        100.0 * (total - accounted) / total.max(1e-12)
     );
+}
+
+fn main() {
+    if cfg!(not(feature = "phase-timer")) {
+        eprintln!("NOTE: built without --features phase-timer; all zeros below.");
+    }
+    let mut args: Vec<String> = std::env::args().collect();
+    let v1 = args.iter().any(|a| a == "--v1");
+    args.retain(|a| a != "--v1");
+    let n: usize = args.get(1).map(|s| s.parse().unwrap()).unwrap_or(1_000_000);
+    let (n, edges) = match args.get(2) {
+        Some(path) => {
+            eprintln!("graph: {path}");
+            dimacs_graph(path)
+        }
+        None => {
+            eprintln!("graph: random m=4n, n={n}");
+            (n, random_graph(n, 0xC0FFEE))
+        }
+    };
+    eprintln!("n={n}, m={}", edges.len());
+
+    if v1 {
+        let _ = no_transform::sssp(n, &edges, 0, None); // warmup
+        let run = no_transform::sssp(n, &edges, 0, None);
+        eprintln!(
+            "V1 no-transform; params: delta={} t={} k={} l_top={}",
+            run.delta, run.t, run.k, run.l_top
+        );
+        report(&run.phase_times, run.total);
+    } else {
+        let _ = sssp_run(n, &edges, 0, None); // warmup
+        let run = sssp_run(n, &edges, 0, None);
+        eprintln!(
+            "mainline; params: delta={} t={} k={} l_top={} n2={}",
+            run.delta, run.t, run.k, run.l_top, run.n2
+        );
+        report(&run.phase_times, run.total);
+    }
 }

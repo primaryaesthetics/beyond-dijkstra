@@ -144,3 +144,38 @@ FindPivots volume that pass-3 profiling showed at 82.8%). V1's 5.8× is
 the new working floor for further variants (parameter sweeps next;
 still no crossover with Dijkstra in sight, consistent with the
 ASSESSMENT.md hypothesis — the bounds cross near n ≈ 2^1000).
+
+V1 phase profile (`profile_phases_v1.txt`): relax sweep 53.0% @1e6 /
+42.6% NY, find_pivots down to 21.5% / 12.2%, remainder spread. No
+pathological hotspot — the variant spends its time on O(m)-per-level
+relaxation work plus DS inserts, i.e. on the algorithm itself.
+
+## V2 — parameter sweep on V1 (class 3)
+
+**Claim.** None beyond validity: any t ≥ 2, k ≥ 2 with l_top = ⌈log₂n/t⌉
+is a valid instance of the schema (footnote 3 calls the prescribed
+values "best" in order-analysis terms only). The knob-sweep rule
+applies: show where the prescription sits relative to the real optimum.
+
+**Gate.** Tier 2 — every sweep cell cross-checks distances bit-exactly
+against the crate's Dijkstra inside the sweep binary itself.
+
+**Result.** Grid t ∈ {2..12} × k ∈ {2..12}, median of 3 after warmup,
+δ fixed at 3. Raw records `benchmarks/results/sweep_params_v1_{1e6,NY}.txt`:
+
+| input | prescription (t=6, k=3) | best cell | spread |
+|---|---|---|---|
+| random 1e6 | 5.82× | 5.29× (t=12, k=6, l_top=2) | prescription within 10% |
+| USA-road-d.NY | 8.65× | 6.97× (t=10, k=4, l_top=2) | prescription ~24% off |
+
+The structure of both tables is the same monotone story: performance
+improves as t grows and the recursion gets SHALLOWER, flattening once
+l_top hits 2; k is nearly irrelevant (except k = 2 with t = 2, which is
+catastrophic — 33× @1e6 at l_top = 10). The optimum sits at the edge of
+the grid where the algorithm degenerates toward "one level over base
+cases": the recursion never pays for itself at storable sizes. That is
+the same root-degeneration signature the first project ended on, and it
+is the honest headline of this sweep — parameter tuning buys 10–24%,
+not a different verdict. Hybrid-oracle-style variants (replace the
+bottom of the recursion with plain Dijkstra) are the natural next probe
+of exactly this signature.
