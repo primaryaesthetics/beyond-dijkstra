@@ -522,17 +522,30 @@ D — in particular along the top-level call's own spine under the
 paper's set semantics for U (QUESTIONS.md Q13: the top-level cutoff
 cannot fire, so the top call is always a full execution).
 
-**What is still missing for partial executions** is closing Q12, and
-the fix shape is already known: cap Algorithm 3's returned B′ at dB[D]
-at return, exactly as V5 does for Algorithm 4 — one O(1) peek. With
-both caps, dB[D] ≥ B′ holds unconditionally at every level by the
-proposition's induction, with no other change to the algorithm. The
-completeness half of the contract (U ⊇ Ũ(B′, S)) then follows the same
-argument as V5's step 3 — lowering B′ only shrinks the set the call
-promises to have settled, and the deferred vertices are exactly the
-ones sitting in D below the old bound, which the parent re-frontiers.
-Implementing and measuring this cap (V6) needs its own class-2
-treatment; queued.
+**What is still missing for partial executions is closing Q12 — and
+no local return-time repair closes it.** The first draft of this
+section proposed capping Algorithm 3's returned B′ at dB[D] the way V5
+caps Algorithm 4's; working out the sketch killed the idea, and the
+failure is itself a finding. Suppose the Q12 state occurs: the final
+iteration's re-selection stored X < B′_f while some label L with
+X < L < B′_f was already settled (by the final child or into W′).
+Then the three clauses of Lemma 3.7 are JOINTLY unsatisfiable at this
+return, whatever B′ the call reports: any B′ > X violates
+B′ ≤ dB[D]; any B′ ≤ X < L violates max dis(U) < B′. Gating the
+line-29 insert instead of capping fails in the same corner from the
+completeness side: the un-inserted pivot pj has dis(pj) ≤ d[pj] < B′,
+and if its shortest path visits S it belongs to Ũ(B′, S), which
+U = Ũ(B′, S) then requires the call to have settled — it didn't.
+Unlike Algorithm 4's Q3 defect (repaired by V5's cap with all clauses
+intact), the Q12 state admits no repair at the return boundary; a
+coherent fix must prevent the state upstream — the prose reading of
+line 23 (relax only candidates in [Bi, B)) closes the sweep channel
+but not the child-interior one — or weaken the contract statement to
+carve out final-iteration premature entries. Both options are
+statement-level mathematics, recorded in QUESTIONS.md Q12; nothing to
+implement until one is proved. Whether the state is reachable at all
+remains unobserved (the verify-mode counters stayed zero on the
+adversarial family).
 
 **What no bound cap restores.** The duplicate U events (Q11) are
 untouched by V5 — measured bit-identical — and would be untouched by

@@ -314,9 +314,23 @@ for recursive returns stayed at zero across the full adversarial
 family, both engines — the leak is reachable on the argument above but
 was not exercised by these inputs; a dedicated construction would need
 a partial execution whose final iteration re-selects a pivot lowered
-below B′_f. Fix candidate (pairs with V5, same shape): cap Algorithm
-3's returned B′ at dB[D] too — one O(1) peek at return. Letter/note
-material.
+below B′_f.
+
+Sharpening (same day, from the attempted fix): the Q12 state admits NO
+local repair at the return boundary — unlike Q3, which V5's cap fixes
+with every clause intact. If X < B′_f was stored by the final
+iteration's re-selection while some already-settled label L satisfies
+X < L < B′_f, then Lemma 3.7's clauses are jointly unsatisfiable for
+any reported B′: B′ > X breaks B′ ≤ dB[D], B′ ≤ X < L breaks
+max dis(U) < B′; and gating the insert instead leaves an unsettled
+vertex with dis < B′ that the completeness clause U = Ũ(B′, S) may
+claim. Coherent repairs are statement-level only: adopt the prose
+reading of line 23 (closes the sweep channel; the child-interior
+channel survives) or weaken clause 2 to carve out final-iteration
+premature entries whose keys' labels dropped during that iteration.
+Full argument in VARIANTS.md ("Algorithm 3's contract, transitively").
+Letter/note material — arguably the strongest single item: a
+correctness contract that cannot be locally restored.
 
 ## Q13 — the loop guard's |U|: the paper counts distinct vertices, the pinned reference counts settlement events. OPEN (pinned deviation)
 
