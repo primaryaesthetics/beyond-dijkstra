@@ -333,17 +333,27 @@ bit-exact vs Dijkstra. Gate: Tier 2, full matrix (all generator
 regimes, 1e6-edge tie-rich, star family, Q10 minimum-slack stress),
 plus the top-level totality assert.
 
-**Falsification review.** PENDING — the independent review run was cut
-off externally before producing a verdict and must be re-run before V4
-is relied on for anything beyond recorded measurements. Known traps
-already addressed in the design (each also covered by the gate): the
-pulled-then-reinserted-at-equal-value case (map removal on pull makes
-the old heap entry dead; a re-insert restores the key so either
-duplicate serves), the dead-entry-undercut case for the separator (a
-dead entry's value strictly exceeds its vertex's live value, and every
-map update pushes a fresh entry, so skipping dead entries cannot skip
-the true minimum), and full pred fidelity in heap entries and staleness
-checks (entries carry (key, pred+1)).
+**Falsification review** (independent fresh-context pass; done). Claim
+A: HOLDS-AS-ARGUED. Claim B: HOLDS-AS-ARGUED. What the review added:
+
+- The hops < 2³² packing bound needs (and has) a real argument: every
+  stored label's pred chain is a simple path — a revisit would store a
+  lexicographically larger label over a smaller one, which relax's
+  `cand ≤ d[v]` forbids and exact equality cannot rescue (hops differ).
+  Hence hops ≤ n − 1.
+- Nit: the weight guard `w ≥ 0.0` admits −0.0 (IEEE `-0.0 ≥ 0.0` is
+  true). Provably harmless: no label length can become −0.0 (source is
+  +0.0; x + (−0.0) = x for x > 0 and +0.0 + (−0.0) = +0.0), so no
+  stored key ever carries the −0.0 bit pattern and bit order remains
+  value order. Recorded rather than "fixed" — normalizing would change
+  nothing observable.
+- Claim B's load-bearing invariant, verified against the code: a map
+  write always leaves a not-yet-popped heap entry carrying the written
+  value, destroyed only by the live pop that also removes the map key;
+  the separator loop pops only dead entries. Both engines pass only
+  vertex ids out of Pull, so the child re-reads current d identically.
+  Merge's hash-order iteration is provably unobservable (single
+  occurrence per vertex; acceptance depends only on the target's entry).
 
 **Result.** Tier-2 gate green across the full matrix (all generator
 regimes at L ∈ {0, 1, 99} incl. forced deep recursion, 1e6-edge
@@ -390,16 +400,30 @@ exactly: U = Ũ(B′⁺, S) is complete, and dB[D] ≥ B′⁺.
    the pull invariant, and post-final-relax inserts strictly exceed
    label(u_last) by tuple growth. Hence label(u) ≤ label(u_last) <
    dB[D] and label(u) < B′_pull for every u ∈ U, so label(u) < B′⁺.
-3. Completeness of U up to B′⁺: suppose x ∉ U with dis-label(x) < B′⁺
-   and x's shortest path visits S. Walk the path from its last
-   S-vertex; let y be the first vertex not in U. Then y's predecessor
-   on the path is settled (or y ∈ S is a seed), so y was inserted into
-   D with a stored label ≤ its true label ≤ dis-label(x) < B′⁺ ≤
-   dB[D]. y cannot still be in D (its stored value would undercut
-   dB[D]), and the only way out of D is a Pull — which puts y in U.
+3. Completeness of U up to B′⁺ (as repaired by the falsification
+   review — the first draft's inequality ran the wrong way): suppose
+   x ∉ U with dis-label(x) < B′⁺ and x's shortest path visits S. The
+   4-tuple order makes the shortest path canonical (pred is a label
+   component, so dis-label prefixes are optimal). Walk the canonical
+   path from its last COMPLETE S-vertex (the frontier precondition
+   supplies one); let y be the first vertex not in U. Its predecessor
+   p on the path is settled with d[p] = dis-label(p), so relax(p, y)
+   offered cand = prefix-label(y) ≤ dis-label(x) < B′⁺. Either the
+   offer was accepted — then y entered D at a stored value ≤ cand
+   (keep-min, and the always-insert-on-accept makes "modified during
+   the call ⟹ present in D" airtight) — or it was rejected because
+   d[y] was already ≤ cand; but every d value is the label of a real
+   walk, and no walk-label of y is below its canonical dis-label, so
+   a rejection forces d[y] = dis-label(y) and y had already been
+   inserted when that value was set. Either way y sits in D at a value
+   < B′⁺ ≤ dB[D] — impossible — unless it was pulled, i.e. y ∈ U.
    Contradiction.
 4. Full executions are unaffected: D = ∅ ⇒ the cap is vacuous and
-   B′⁺ = B as before.
+   B′⁺ = B as before. Better: V5 restores the full-execution dichotomy
+   outright — the paper's Algorithm 4 can return B′ = B with D ≠ ∅
+   (last pull empties D, post-pull relaxes refill it, cutoff fires),
+   violating Lemma 3.1's "full ⇒ D = ∅"; with the cap, B′⁺ = B ⟺
+   D = ∅ in both directions.
 
 Consequence for Q10: inside base cases the Q3 escape channel closes —
 B′ never advances past an unsettled label, so a vertex settles at most
@@ -411,8 +435,25 @@ top-level log for V1 vs V5 on the Q10 stress family.
 
 **Classification.** Class 2 (changes the returned bound — observable
 order/recursion shape changes; distances must stay exact). Gate:
-Tier 2 full matrix. **Falsification review:** (pending, bundled with
-the V4 re-run)
+Tier 2 full matrix.
+
+**Falsification review** (done; verdict HOLDS-BUT-GAP, gap = the
+original step-3 sketch, repaired above per its findings). Highlights
+beyond the repairs: leftovers replaced by post-final-pull keep-min
+values stay strictly above the last settled label (the only relaxer
+after the last pull is u_last, and its candidates strictly exceed its
+own label), so step 2 survives replacement; unpulled seeds cannot sit
+below the last settled label (global-min pulls); and the priority
+attack — a SMALLER child B′ hurting the parent — found nothing,
+because Lemma 3.7's proof consumes B′ only through the contract
+clauses, never as "the last pull's separator". Sharper still: under
+the broken original, dB[D ∪ P] ≥ B′ was false after merges, so the
+wider W′'s completeness proof never held — the vertices V5 defers are
+exactly the ones the original was not entitled to settle. The review's
+scope note: the same analysis supports restoring Algorithm 3's
+contract transitively by induction (its own return path preserves
+dB[D] ≥ B′ once child bounds are valid) — likely provable in prose,
+queued for the write-up rather than another experiment.
 
 **Result.** Tier-2 gate green (both engines, all regimes incl. Q10
 stress). The experiment (`benchmarks/results/dup_settlements_v5.txt`,
