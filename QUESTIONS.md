@@ -92,7 +92,7 @@ are bit-exact vs Dijkstra across every suite, including the heavy-
 collision families (star/hub, zero-heavy min-slack, tie-rich stress)
 that exercise merged trees hardest.
 
-## Q6 — Relax's `<=` and duplicate DS insertions. RESOLVED (safe by design)
+## Q6 — Relax's `<=` and duplicate DS insertions. RESOLVED (safe by design) — UPGRADED: the `<=` is itself load-bearing
 
 Algorithm 1 keeps `<=` (as DMM+25's Remark 3.4 did — the source of the tie
 cascade we found there). Here the exposure is structurally closed: (a) the
@@ -103,6 +103,19 @@ multiply entries — the first project's cascade began exactly when a keyed
 dedup map was optimized away. Standing rule for the port and all variants:
 **the keyed dedup on D is load-bearing; removing it reintroduces the
 cascade bug class. Tie-rich stress test from day one.**
+
+Upgrade (2026-07-13, V7 verdict in VARIANTS.md): "idempotent store" was
+the right safety argument but undersold the role. The `<=` is the
+algorithm's ADOPTION mechanism: FindPivots labels vertices without
+taking responsibility for their out-edges, and the only way an
+early-labeled vertex later enters a D — hence ever settles, hence ever
+relaxes its own out-edges — is the exact-tie re-acceptance when its
+predecessor settles. Tightening Relax to strict-< orphans such vertices
+and loses reachability (Tier-2 seed 0, a plain float graph: vertex left
+at ∞). So the `<=` cannot be removed, and its cost — re-adopting
+already-settled vertices, i.e. Q11's duplicate settlements — is a
+built-in of the design as written, removable only by adding an explicit
+completeness marking (VARIANTS.md V8).
 
 ## Q8 — Algorithm 3 crashes when P_j empties after j entered J. CONFIRMED (paper bug)
 

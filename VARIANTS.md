@@ -560,3 +560,85 @@ with it the paper's time analysis on tie-rich inputs — still lacks the
 re-settlement bound. That bound is the genuinely open mathematics; the
 concrete failure states to bound are stale-entry pulls and the pivot
 re-inserts they enable (Q11's trace).
+
+## V7 — strict-< Relax: reject exact-tie re-stores
+
+Q11's trace showed exact-tie `≤`-re-acceptances are the channel that
+keeps completed vertices structurally alive (foreign K-trees, pivot
+re-inserts, sweep re-relaxations). This variant probes the channel from
+the other side: make Relax accept only strict improvements.
+
+**Claim.** Replacing Relax's acceptance `cand ≤ d[v]` with
+`cand < d[v]` preserves final distances exactly on every input.
+
+**Proof sketch.**
+
+1. *Label writes are invariant.* The 4-tuple order is total, so
+   cand = d[v] pins every component: pred = u and the incoming value
+   sum. An equality-accept therefore writes a value bit-identical to
+   the incumbent — under either rule, the SEQUENCE OF DISTINCT LABEL
+   VALUES at each vertex is produced solely by strict improvements.
+2. *What equality-True actually does* is control flow: it adds v to a
+   local search's K (join/merge/tree growth), re-inserts v into a D
+   (sweep sites, gated), and grows S_i expansions — never a label.
+   Dropping it can only remove relaxation OFFERS made from those
+   structural positions.
+3. *Every removed offer is re-made by the settlement chain.* A vertex
+   v settles once in its genuine chain, and its U-membership then
+   propagates upward through every ancestor call; each ancestor's
+   line-21..26 sweep re-relaxes ALL of v's out-edges at that
+   ancestor's larger bound B (visible in the Q11 trace as the
+   unwinding relax_sweep events). Any offer (v, y) that a tie-enabled
+   foreign position would have made at some bound B_A is therefore
+   also made at every ancestor bound B ≥ B_A once v's chain unwinds —
+   and keep-min acceptance is order-independent, so the final labels
+   agree. The one asymmetry — an offer made EARLIER through the tie
+   channel than the chain would make it — only moves an accepted value
+   forward in time; it cannot create or destroy a strict improvement.
+4. *The paper's own contracts shrink consistently:* R(B, U) is defined
+   over VALID relaxations, so under strict-< the set of vertices
+   Lemma 3.7 clause 3 obliges D to contain only shrinks, and Q6's
+   dedup-safety argument is unaffected (fewer inserts, same keys).
+
+The known danger zone (the first project's Remark 3.4 counterexample —
+cross-call equivalence intuitions dying on ties) is exactly step 3's
+"re-made at every ancestor bound"; the Tier-2 gate's zero-heavy and
+forced-deep-recursion families exist to break precisely that step.
+
+**Classification.** Class 2: distance-preserving intent,
+structure-changing (K shapes, D contents, settlement log all change).
+Gate: Tier-2 full matrix on the Solver engine (V4 fast engine out of
+scope for this probe).
+
+**Verdict: REJECTED — the gate went red on the FIRST seed, and not
+even on a tie-rich input.** Tier-2 `plain_graphs` seed 0 (float
+weights, n = 30, m = 28): the strict run leaves vertex 17 at ∞ while
+Dijkstra reports 1.690134. The diagnosis (trace on the failing run)
+falsifies step 3 of the sketch precisely:
+
+- Under `≤`: vertex 14 is labeled early by the top level's FindPivots
+  search (root 0); later the base case pulls 0 and re-relaxes the edge
+  0→14 — an exact-tie re-store — which is what INSERTS 14 into the
+  base case's D. It settles, its out-edge 14→17 is relaxed there, 17
+  gets its distance.
+- Under strict-<: the same re-offer is rejected, and 14 is ORPHANED —
+  its own label is correct, but it never enters any D again, so its
+  out-edges are never relaxed from a settlement, and everything whose
+  only paths run through it stays unreached.
+
+Step 3's error: "every removed offer is re-made by the settlement
+chain" assumed v's chain unwinds — but rejecting the tie is exactly
+what prevents v from EVER settling, so there is no chain to unwind.
+The relaxation offer and the settlement responsibility are the same
+mechanism, not two.
+
+**The finding (upgrade of Q6).** Relax's `≤` is load-bearing, not a
+tolerable idempotence: FindPivots sets labels without taking
+responsibility for the vertex's out-edges; responsibility transfers
+through D; and the ONLY way an early-labeled vertex enters D
+afterwards is the exact-tie re-acceptance when its predecessor
+settles. The algorithm keeps no completeness marking, so the same
+mechanism that adopts never-settled vertices also re-adopts
+already-settled ones — Q11's duplicate settlements are the built-in
+price of the `≤`, unavoidable by any local tightening of Relax. A
+discriminating variant needs an explicit settled bit (V8, next).
