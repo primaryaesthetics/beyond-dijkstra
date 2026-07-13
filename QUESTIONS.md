@@ -53,7 +53,7 @@ cannot share any other vertex with F̄_j because an earlier contact would
 have triggered the merge earlier. Multiple merges chain the same argument.
 The reference asserts acyclicity of every F̄ in debug mode anyway.
 
-## Q5 — W′ completeness when Q-arborescences overlap F̄ trees. OPEN
+## Q5 — W′ completeness when Q-arborescences overlap F̄ trees. RESOLVED (overlap harmless by argument; fragility lives elsewhere)
 
 Remark 3.3 admits that ∪F_j and the W arborescences are not disjoint.
 Lemma 3.7's proof that W′ is complete leans on ⟨W, P_ini⟩ being a frontier;
@@ -61,6 +61,36 @@ verify the argument survives a vertex sitting in both an arborescence W_j
 and a partitioned subtree F_j' (settled via the F̄ side while W thinks it
 owns it). To exercise: graphs where local searches collide heavily —
 small-diameter tie-rich inputs.
+
+Resolution (2026-07-13, by argument against the proof text). Neither
+proof uses disjointness anywhere:
+
+1. Lemma 3.2's frontier conclusion needs only that every complete
+   u ∈ S lands in some P_j or in W — membership, not exclusivity. The
+   overlap corners check out: a u skipped at line 3 (already inside an
+   F̄) is partitioned into some F_j and, being outside Q, survives into
+   P_j; a u whose own search failed is the root of its arborescence,
+   so u ∈ Q ⊆ W; a u in BOTH (failed own search, member of another
+   root's F̄) is excluded from P_j by the S \ Q filter but covered by
+   W. A vertex sitting in W_j and F_j' simultaneously satisfies the
+   frontier disjunction through either side.
+2. Lemma 3.7's W′-completeness step consumes ⟨W, P_ini⟩ only through
+   "incomplete v ∈ W′ visits a complete vertex in P_ini" and then
+   rides the loop invariant dB[D ∪ P] ≥ B′ to a contradiction with
+   d[v] < B′. No tree structure enters at all.
+
+So the overlap admitted by Remark 3.3 is harmless as such. The step's
+real weak joint is the invariant it rides: dB[D ∪ P] ≥ B′ read over
+CURRENT labels, which stale D entries falsify (a completed vertex
+sitting in D at an outdated stored value with current label < B′ —
+exactly the Q11 state; see also Q12 for the stored-value leak). Worth
+recording: if an incomplete vertex ever did enter W′, the line-36 gate
+(candidate ≥ B′) would REFUSE the repairing relaxation — the plausible
+empirical rescue is a later Q11 duplicate re-settling the upstream
+vertex. No such incomplete-W′ state has been constructed; distances
+are bit-exact vs Dijkstra across every suite, including the heavy-
+collision families (star/hub, zero-heavy min-slack, tie-rich stress)
+that exercise merged trees hardest.
 
 ## Q6 — Relax's `<=` and duplicate DS insertions. RESOLVED (safe by design)
 
