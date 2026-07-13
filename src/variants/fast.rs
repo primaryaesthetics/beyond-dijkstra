@@ -297,6 +297,11 @@ struct Fast {
     k: u64,
     hybrid_level: u64,
     fixed_base: bool,
+    /// VARIANTS.md V8: settled vertices are never re-adopted (relax
+    /// rejects), re-frontiered (pulls drop them), or re-settled (W′
+    /// excludes them).
+    settled_dedup: bool,
+    settled: Vec<bool>,
     dk: Vec<u128>,
     dp: Vec<u32>,
     scratch: Scratch,
@@ -312,6 +317,9 @@ impl Fast {
     /// 4-tuple: key compare first, pred only on key equality.
     #[inline]
     fn relax(&mut self, u: u32, v: u32, w: f64, b: Val) -> bool {
+        if self.settled_dedup && self.settled[v as usize] {
+            return false; // V8: settled targets are never re-adopted
+        }
         let du = self.dk[u as usize];
         debug_assert!(du != UNSET, "relax from an unreached vertex");
         let ck = pack(len_of(du) + w, hops_of(du) + 1, v);
@@ -462,7 +470,13 @@ impl Fast {
             let (keys, nb) = ds.pull();
             bound = nb;
             let u = keys[0];
+            if self.settled_dedup && self.settled[u as usize] {
+                continue; // V8: stale entry of a settled vertex — drop
+            }
             u_log.push(u);
+            if self.settled_dedup {
+                self.settled[u as usize] = true;
+            }
             let (start, end) = (self.indptr[u as usize], self.indptr[u as usize + 1]);
             for e in start..end {
                 let (v, w) = (self.head[e as usize], self.wt[e as usize]);
@@ -523,11 +537,19 @@ impl Fast {
             for &x in &si_keys {
                 let Some(&j) = piv_of.get(&x) else { continue };
                 for &v in &p_lists[j] {
+                    if self.settled_dedup && self.settled[v as usize] {
+                        continue; // V8: settled members are not re-frontiered
+                    }
                     if self.d_val(v) < b_i && !si_set.contains_key(&v) {
                         si_set.insert(v, ());
                         si.push(v);
                     }
                 }
+            }
+            if self.settled_dedup {
+                // V8: pulled keys that are already settled expanded their
+                // P_j above but do not seed the child.
+                si.retain(|&x| !self.settled[x as usize]);
             }
 
             let (b_pi, u_i, ds_i) = self.bmssp(b_i, &si, level - 1);
@@ -596,6 +618,9 @@ impl Fast {
         }
 
         for &x in s_list {
+            if self.settled_dedup && self.settled[x as usize] {
+                continue; // V8
+            }
             let dx = self.d_val(x);
             if b_prime <= dx && dx < b {
                 ds.insert(x, dx);
@@ -604,8 +629,17 @@ impl Fast {
         let w_prime: Vec<u32> = w_list
             .iter()
             .copied()
-            .filter(|&x| !u_set.contains_key(&x) && self.d_val(x) < b_prime)
+            .filter(|&x| {
+                !u_set.contains_key(&x)
+                    && self.d_val(x) < b_prime
+                    && !(self.settled_dedup && self.settled[x as usize])
+            })
             .collect();
+        if self.settled_dedup {
+            for &x in &w_prime {
+                self.settled[x as usize] = true; // V8: W′ settles
+            }
+        }
         for &u in &w_prime {
             let (start, end) = (self.indptr[u as usize], self.indptr[u as usize + 1]);
             for e in start..end {
@@ -641,7 +675,7 @@ pub fn sssp(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> FastRun {
-    sssp_full(n, edges, source, hybrid_level, false, override_params)
+    sssp_full(n, edges, source, hybrid_level, false, false, override_params)
 }
 
 /// V5 entry: V4 with the fixed base case (B′ capped at dB[D]).
@@ -652,7 +686,19 @@ pub fn sssp_fixed(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> FastRun {
-    sssp_full(n, edges, source, hybrid_level, true, override_params)
+    sssp_full(n, edges, source, hybrid_level, true, false, override_params)
+}
+
+/// V8 entry: V4 with the per-vertex settled bit (VARIANTS.md V8) —
+/// settled vertices are never re-adopted, re-frontiered, or re-settled.
+pub fn sssp_dedup(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> FastRun {
+    sssp_full(n, edges, source, hybrid_level, false, true, override_params)
 }
 
 fn sssp_full(
@@ -661,6 +707,7 @@ fn sssp_full(
     source: usize,
     hybrid_level: u64,
     fixed_base: bool,
+    settled_dedup: bool,
     override_params: Option<(u64, u64, u64)>,
 ) -> FastRun {
     assert!(
@@ -702,6 +749,8 @@ fn sssp_full(
         k,
         hybrid_level,
         fixed_base,
+        settled_dedup,
+        settled: vec![false; n],
         dk: vec![UNSET; n],
         dp: vec![u32::MAX; n],
         scratch: Scratch::new(n),

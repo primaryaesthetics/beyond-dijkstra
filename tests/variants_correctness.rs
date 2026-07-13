@@ -62,6 +62,10 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
             &format!("{tag} (v8 L={hl}, forced t=k=2)"),
         );
         assert_eq!(v8f.dup_settlements, 0, "{tag} (v8f L={hl}): dups");
+        // V8 in the fast engine.
+        let f8 = fast::sssp_dedup(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(n, &f8.dist, &expect, &format!("{tag} (v8-fast L={hl})"));
+        assert_eq!(f8.dup_settlements, 0, "{tag} (v8-fast L={hl}): dups");
     }
 }
 
@@ -100,6 +104,9 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
         let v8 = no_transform::sssp_v8(g.n, &g.edges, g.source, 0, g.override_params);
         assert_dists(g.n, &v8.dist, &expect, &format!("seed {seed} (v8)"));
         assert_eq!(v8.dup_settlements, 0, "seed {seed} (v8): dups");
+        let f8 = fast::sssp_dedup(g.n, &g.edges, g.source, 0, g.override_params);
+        assert_dists(g.n, &f8.dist, &expect, &format!("seed {seed} (v8-fast)"));
+        assert_eq!(f8.dup_settlements, 0, "seed {seed} (v8-fast): dups");
     }
 }
 
@@ -183,6 +190,9 @@ fn q10_resettlement_pressure() {
             let v8 = no_transform::sssp_v8(n, &edges, 0, hl, Some((3, 2, 2)));
             assert_dists(n, &v8.dist, &expect, &format!("q10 n={n} L={hl} (v8)"));
             assert_eq!(v8.dup_settlements, 0, "q10 n={n} L={hl} (v8): dups");
+            let f8 = fast::sssp_dedup(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &f8.dist, &expect, &format!("q10 n={n} L={hl} (v8-fast)"));
+            assert_eq!(f8.dup_settlements, 0, "q10 n={n} L={hl} (v8-fast): dups");
         }
     }
 }

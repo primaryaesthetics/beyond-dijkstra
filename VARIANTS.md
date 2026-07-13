@@ -735,3 +735,25 @@ distances — so the paper's design has a nearby correct-and-honest
 variant whose |U| accounting is exact (event count = distinct count,
 our pinned guard and the paper's set guard coincide). What remains
 genuinely open is bounding the duplicates of the algorithm AS WRITTEN.
+
+**Fast-engine port (same day).** The settled bit ported into the V4
+fast engine (`fast::sssp_dedup`); Tier-2 green over the full matrix
+with dup == 0 asserted. Same-process ratios on one machine (Windows
+box; its mainline constant differs wildly from the recorded mac
+numbers — only the within-run ratios below are meaningful; raw records
+`benchmarks/results/bench_fast_v8_{1e5,1e6,NY}.txt`):
+
+| input | fast L=0 | v8-fast L=0 | v8/fast | fast L=top | v8-fast L=top |
+|---|---|---|---|---|---|
+| random 1e5 | 7.96x | 5.80x | 0.73x | 3.38x | 3.35x (0.99x) |
+| random 1e6 | 4.58x | 4.45x | 0.97x | 2.59x | 2.62x (1.01x) |
+| NY road | 8.09x | 6.78x | 0.84x | 3.10x | 2.95x (0.95x) |
+
+(multipliers = engine time / same-process Dijkstra). Reading: the bit
+pays where duplicates and re-adoption pressure live — −27% at 1e5,
+−16% on the tie-rich NY road graph — and fades to noise on large
+float-random (−3% at 1e6, ±1% at L=top). The best configuration so far
+on road inputs is now v8-fast L=top at 2.95x Dijkstra (was 3.10x). The
+verdict does not move: no family member approaches Dijkstra at
+storable sizes; V8 just makes the gap honestly smaller while carrying
+its math content (zero duplicate settlements, exact |U| accounting).

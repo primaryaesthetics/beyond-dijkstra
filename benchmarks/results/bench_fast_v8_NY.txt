@@ -1,0 +1,11 @@
+dijkstra     median    0.036 s
+mainline     median    1.961 s   (54.55x dijkstra)
+no-transform median    0.349 s   (9.70x dijkstra, 0.18x of mainline)
+fast L=0     median    0.291 s   (8.09x dijkstra, 0.83x of no-transform)
+fast L=top   median    0.111 s   (3.10x dijkstra)
+v8-fast L=0  median    0.244 s   (6.78x dijkstra, 0.84x of fast L=0)
+v8-fast L=top median   0.106 s   (2.95x dijkstra, 0.95x of fast L=top)
+graph: benchmarks/data/USA-road-d.NY.gr
+n=264346, m=733846
+params: delta=3 t=6 k=3 l_top=4 n2=1467692
+v1 params: delta=3 t=6 k=3 l_top=4

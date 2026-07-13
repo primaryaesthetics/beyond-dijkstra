@@ -172,7 +172,7 @@ fn main() {
         .count();
     assert_eq!(v1_mismatches, 0, "v1 distances diverge from dijkstra");
 
-    let mut bench_fast_engine = |hl: u64| -> f64 {
+    let bench_fast_engine = |hl: u64| -> f64 {
         let mut times = Vec::new();
         for _ in 0..6 {
             let t0 = Instant::now();
@@ -191,6 +191,27 @@ fn main() {
     let f0 = bench_fast_engine(0);
     let ftop = bench_fast_engine(99);
 
+    // V8 settled bit in the fast engine (VARIANTS.md V8).
+    let bench_dedup = |hl: u64| -> f64 {
+        let mut times = Vec::new();
+        for _ in 0..6 {
+            let t0 = Instant::now();
+            let run = fast::sssp_dedup(n, &edges, 0, hl, None);
+            times.push(t0.elapsed().as_secs_f64());
+            assert_eq!(run.dup_settlements, 0, "v8-fast(L={hl}): dups");
+            let bad = dist
+                .iter()
+                .zip(run.dist.iter())
+                .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+                .count();
+            assert_eq!(bad, 0, "v8-fast(L={hl}) distances diverge from dijkstra");
+        }
+        times.remove(0); // warmup
+        median(times)
+    };
+    let d0 = bench_dedup(0);
+    let dtop = bench_dedup(99);
+
     println!("dijkstra     median {dj:8.3} s");
     println!("mainline     median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
     println!(
@@ -206,5 +227,15 @@ fn main() {
     println!(
         "fast L=top   median {ftop:8.3} s   ({:.2}x dijkstra)",
         ftop / dj
+    );
+    println!(
+        "v8-fast L=0  median {d0:8.3} s   ({:.2}x dijkstra, {:.2}x of fast L=0)",
+        d0 / dj,
+        d0 / f0
+    );
+    println!(
+        "v8-fast L=top median {dtop:7.3} s   ({:.2}x dijkstra, {:.2}x of fast L=top)",
+        dtop / dj,
+        dtop / ftop
     );
 }

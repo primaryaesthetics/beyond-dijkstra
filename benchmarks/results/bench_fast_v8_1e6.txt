@@ -1,0 +1,7 @@
+dijkstra     median    0.837 s
+mainline     median  855.144 s   (1022.26x dijkstra)
+no-transform median    4.281 s   (5.12x dijkstra, 0.01x of mainline)
+fast L=0     median    3.833 s   (4.58x dijkstra, 0.90x of no-transform)
+fast L=top   median    2.163 s   (2.59x dijkstra)
+v8-fast L=0  median    3.722 s   (4.45x dijkstra, 0.97x of fast L=0)
+v8-fast L=top median   2.190 s   (2.62x dijkstra, 1.01x of fast L=top)

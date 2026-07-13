@@ -1,0 +1,11 @@
+dijkstra     median    0.031 s
+mainline     median   13.369 s   (431.95x dijkstra)
+no-transform median    0.300 s   (9.68x dijkstra, 0.02x of mainline)
+fast L=0     median    0.246 s   (7.96x dijkstra, 0.82x of no-transform)
+fast L=top   median    0.105 s   (3.38x dijkstra)
+v8-fast L=0  median    0.179 s   (5.80x dijkstra, 0.73x of fast L=0)
+v8-fast L=top median   0.104 s   (3.35x dijkstra, 0.99x of fast L=top)
+graph: random m=4n, n=100000
+n=100000, m=400000
+params: delta=3 t=6 k=3 l_top=4 n2=800040
+v1 params: delta=3 t=5 k=3 l_top=4
