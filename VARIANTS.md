@@ -470,10 +470,15 @@ expected one:
 The cap NEVER fires: the base-case B′ undercut (Q3's channel, which
 Q10 presumed to drive re-settlements) does not materialize at return
 time on any adversarial input tried — while duplicates persist
-unchanged. The re-settlement channel is Algorithm 3's own: exact-tie
-`≤`-re-acceptances re-inserting settled vertices (see QUESTIONS.md
-Q11, which this measurement opened; it contradicts Lemma 3.8's
-disjoint-union accounting as stated). V5 therefore stands as a
-provable contract restoration with zero observed runtime effect — the
-missing re-settlement lemma the paper needs is about tie handling in
-Algorithm 3, not about the base case.
+unchanged. The re-settlement channel is Algorithm 3's own, since
+traced end-to-end (QUESTIONS.md Q11, CONFIRMED;
+`benchmarks/results/q11_trace.txt`): a stale entry in an outer D —
+left behind when the vertex's label improved and settled in a sibling
+branch — is pulled into a child frontier, exact-tie `≤`-re-acceptances
+keep the completed vertex structurally alive through FindPivots, and
+the W′ boundary append (whose u_set filter is call-local) emits the
+second U event. It contradicts Lemma 3.8's disjoint-union accounting
+as stated. V5 therefore stands as a provable contract restoration with
+zero observed runtime effect — the missing re-settlement lemma the
+paper needs is about stale-entry re-frontierings in Algorithm 3, not
+about the base case.

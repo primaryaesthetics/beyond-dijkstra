@@ -15,6 +15,11 @@ default = []
 # overhead when off; results are unchanged when on. Used by
 # `examples/profile_phases.rs`.
 phase-timer = []
+# Q11 event trace: record every event touching one chosen vertex (relax
+# acceptances, D inserts, pulls, settlements, K/W membership) with a
+# call-path snapshot. Zero overhead when off; results are unchanged when
+# on. Used by `examples/q11_trace.rs`.
+q11-trace = []
 
 [dependencies]
 # Deterministic fast hashing for bookkeeping maps/sets. Iteration order of
@@ -27,6 +32,10 @@ rustc-hash = "2"
 # far better than system heaps. Allocator choice cannot affect results
 # (differential gate re-verified after the swap - OPTIMIZATION.md pass 2).
 mimalloc = { version = "0.1", default-features = false }
+
+[[example]]
+name = "q11_trace"
+required-features = ["q11-trace"]
 
 [profile.release]
 opt-level = 3

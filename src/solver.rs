@@ -51,6 +51,19 @@ macro_rules! phase {
 }
 
 // ---------------------------------------------------------------------------
+// Q11 event trace (feature `q11-trace`; zero overhead when off). One chosen
+// vertex; every event touching it is recorded with a call-path snapshot so a
+// duplicate settlement can be traced end-to-end (QUESTIONS.md Q11).
+
+#[cfg(feature = "q11-trace")]
+fn fmt_label(l: Label) -> String {
+    match l {
+        Label::Fin(l) => format!("({}, h{}, v{}, p{})", l.len, l.hops, l.curr, l.pred),
+        Label::Inf => "INF".into(),
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Parameters (SPEC "Parameters"; clamps per QUESTIONS.md Q1).
 
 /// Mirror of `choose_params`: all logs base 2, `int()` truncation for delta.
@@ -212,6 +225,11 @@ impl BlockDs {
     /// at return time).
     pub fn peek_min(&self) -> Option<Lab> {
         self.by_val.first_key_value().map(|(&v, _)| v)
+    }
+
+    /// Stored value for `key`, if present (trace introspection only).
+    pub fn get(&self, key: u32) -> Option<Lab> {
+        self.by_key.get(&key).copied()
     }
 }
 
@@ -403,7 +421,27 @@ pub struct Solver<'a> {
     /// How many base-case returns the V5 cap actually lowered (0 when
     /// `fixed_base` is off) — experiment instrumentation.
     pub base_cap_hits: u64,
+    /// Q11 trace: the vertex whose events are recorded (None = off).
+    #[cfg(feature = "q11-trace")]
+    pub trace_vertex: Option<u32>,
+    /// Q11 trace: recorded events, in order.
+    #[cfg(feature = "q11-trace")]
+    pub trace_events: Vec<String>,
+    #[cfg(feature = "q11-trace")]
+    trace_stack: Vec<String>,
+    #[cfg(feature = "q11-trace")]
+    trace_site: &'static str,
+    #[cfg(feature = "q11-trace")]
+    trace_settles: usize,
     scratch: FpScratch,
+}
+
+#[cfg(feature = "q11-trace")]
+impl<'a> Solver<'a> {
+    fn tr(&mut self, msg: String) {
+        self.trace_events
+            .push(format!("{msg}\n        in {}", self.trace_stack.join(" / ")));
+    }
 }
 
 impl<'a> Solver<'a> {
@@ -417,6 +455,16 @@ impl<'a> Solver<'a> {
             hybrid_level: 0,
             fixed_base: false,
             base_cap_hits: 0,
+            #[cfg(feature = "q11-trace")]
+            trace_vertex: None,
+            #[cfg(feature = "q11-trace")]
+            trace_events: Vec::new(),
+            #[cfg(feature = "q11-trace")]
+            trace_stack: Vec::new(),
+            #[cfg(feature = "q11-trace")]
+            trace_site: "",
+            #[cfg(feature = "q11-trace")]
+            trace_settles: 0,
             scratch: FpScratch::new(adj.len()),
         }
     }
@@ -430,6 +478,17 @@ impl<'a> Solver<'a> {
             pred: u as i64,
         });
         if cand <= self.d[v as usize] && cand < b {
+            #[cfg(feature = "q11-trace")]
+            if self.trace_vertex == Some(v) {
+                let eq = cand == self.d[v as usize];
+                self.tr(format!(
+                    "RELAX-ACCEPT{} at {}: u={u} w={w} cand={} old={}",
+                    if eq { " [exact-tie re-store]" } else { "" },
+                    self.trace_site,
+                    fmt_label(cand),
+                    fmt_label(self.d[v as usize]),
+                ));
+            }
             self.d[v as usize] = cand;
             true
         } else {
@@ -441,6 +500,10 @@ impl<'a> Solver<'a> {
 
     #[allow(clippy::type_complexity)]
     fn find_pivots(&mut self, b: Label, s_list: &[u32]) -> (Vec<Vec<u32>>, Vec<u32>, Vec<u32>) {
+        #[cfg(feature = "q11-trace")]
+        {
+            self.trace_site = "find_pivots";
+        }
         let adj = self.adj;
         let mut sc = std::mem::take(&mut self.scratch);
         sc.begin_call();
@@ -481,6 +544,10 @@ impl<'a> Solver<'a> {
                     if sc.k_stamp[vi] != k_ep {
                         sc.k_stamp[vi] = k_ep;
                         sc.k_vert.push(v);
+                        #[cfg(feature = "q11-trace")]
+                        if self.trace_vertex == Some(v) {
+                            self.tr(format!("JOIN-K (local search root x={x})"));
+                        }
                     }
                     // v -> (u, v), latest valid tree edge into v; an
                     // overwrite keeps the original slot (dict semantics).
@@ -528,6 +595,11 @@ impl<'a> Solver<'a> {
                     if sc.w_stamp[kv as usize] != w_ep {
                         sc.w_stamp[kv as usize] = w_ep;
                         w_list.push(kv);
+                        #[cfg(feature = "q11-trace")]
+                        if self.trace_vertex == Some(kv) {
+                            let sz = sc.k_vert.len();
+                            self.tr(format!("JOIN-W (failed search root x={x}, |K|={sz})"));
+                        }
                     }
                 }
             }
@@ -570,6 +642,18 @@ impl<'a> Solver<'a> {
     // -- Base case (SPEC "Base case", Algorithm 4) ------------------------
 
     fn base_case(&mut self, b: Label, s_list: &[u32], cutoff: u64) -> (Label, Vec<u32>, BlockDs) {
+        #[cfg(feature = "q11-trace")]
+        {
+            self.trace_stack
+                .push(format!("base(B={}, cutoff={cutoff})", fmt_label(b)));
+            self.trace_site = "base_case";
+            if let Some(tv) = self.trace_vertex {
+                if s_list.contains(&tv) {
+                    let d = fmt_label(self.d[tv as usize]);
+                    self.tr(format!("SEED into base D at d={d}"));
+                }
+            }
+        }
         let adj = self.adj;
         let mut ds = BlockDs::new(1, b);
         for &x in s_list {
@@ -582,10 +666,23 @@ impl<'a> Solver<'a> {
             bound = nb;
             let u = keys[0];
             u_log.push(u);
+            #[cfg(feature = "q11-trace")]
+            if self.trace_vertex == Some(u) {
+                self.trace_settles += 1;
+                let n = self.trace_settles;
+                let d = fmt_label(self.d[u as usize]);
+                let bd = fmt_label(bound);
+                self.tr(format!("SETTLE #{n} [base-case pull] d={d} bound-after={bd}"));
+            }
             for &(v, w) in &adj[u as usize] {
                 if self.relax(u, v, w, b) {
                     // QUESTIONS.md Q3: the insert may undercut the returned bound.
                     ds.insert(v, self.d[v as usize].fin());
+                    #[cfg(feature = "q11-trace")]
+                    if self.trace_vertex == Some(v) {
+                        let d = fmt_label(self.d[v as usize]);
+                        self.tr(format!("INSERT base D (post-relax) val={d}"));
+                    }
                 }
             }
         }
@@ -597,6 +694,10 @@ impl<'a> Solver<'a> {
                     self.base_cap_hits += 1;
                 }
             }
+        }
+        #[cfg(feature = "q11-trace")]
+        {
+            self.trace_stack.pop();
         }
         (bound, u_log, ds)
     }
@@ -610,6 +711,11 @@ impl<'a> Solver<'a> {
             let t = self.t;
             let cutoff = (t * t * t).saturating_mul(pow2_sat(level * t));
             return phase!(self, base_case, self.base_case(b, s_list, cutoff));
+        }
+        #[cfg(feature = "q11-trace")]
+        {
+            let f = format!("bmssp(l={level}, B={}, |S|={})", fmt_label(b), s_list.len());
+            self.trace_stack.push(f);
         }
         let adj = self.adj;
         let t = self.t;
@@ -632,6 +738,11 @@ impl<'a> Solver<'a> {
                 member.insert(v, j);
             }
             ds.insert(p, self.d[p as usize].fin());
+            #[cfg(feature = "q11-trace")]
+            if self.trace_vertex == Some(p) {
+                let d = fmt_label(self.d[p as usize]);
+                self.tr(format!("INSERT parent D as initial pivot of P_{j} val={d}"));
+            }
         }
 
         let mut b_prime = b;
@@ -645,6 +756,14 @@ impl<'a> Solver<'a> {
 
         while (u_log.len() as u64) <= limit && ds.non_empty() {
             let (si_keys, b_i) = phase!(self, ds_pull, ds.pull());
+            #[cfg(feature = "q11-trace")]
+            if let Some(tv) = self.trace_vertex {
+                if si_keys.contains(&tv) {
+                    let bi = fmt_label(b_i);
+                    let d = fmt_label(self.d[tv as usize]);
+                    self.tr(format!("PULL into S_i (b_i={bi}) d={d}"));
+                }
+            }
             let mut si: Vec<u32> = si_keys.clone();
             let mut si_set: FxHashSet<u32> = si_keys.iter().copied().collect();
             for &x in &si_keys {
@@ -653,12 +772,24 @@ impl<'a> Solver<'a> {
                 for &v in &p_lists[j] {
                     if self.d[v as usize] < b_i && si_set.insert(v) {
                         si.push(v);
+                        #[cfg(feature = "q11-trace")]
+                        if self.trace_vertex == Some(v) {
+                            let d = fmt_label(self.d[v as usize]);
+                            self.tr(format!("EXPAND into S_i via pivot x={x} of P_{j} d={d}"));
+                        }
                     }
                 }
             }
 
             let (b_pi, u_i, ds_i) = self.bmssp(b_i, &si, level - 1);
             phase!(self, ds_merge, ds.merge(&ds_i));
+            #[cfg(feature = "q11-trace")]
+            if let Some(tv) = self.trace_vertex {
+                if let Some(val) = ds_i.get(tv) {
+                    let v = fmt_label(Label::Fin(val));
+                    self.tr(format!("MERGE-CARRY child D contains v at val={v}"));
+                }
+            }
 
             phase!(self, pivot_bookkeeping, {
                 for &u in &u_i {
@@ -681,11 +812,23 @@ impl<'a> Solver<'a> {
             });
 
             phase!(self, relax_sweep, {
+                #[cfg(feature = "q11-trace")]
+                {
+                    self.trace_site = "relax_sweep";
+                }
                 for &u in &u_i {
                     // relax sweep (lines 21-26), incl. DS inserts
                     for &(v, w) in &adj[u as usize] {
                         if self.relax(u, v, w, b) && self.d[v as usize] >= b_i {
                             ds.insert(v, self.d[v as usize].fin());
+                            #[cfg(feature = "q11-trace")]
+                            if self.trace_vertex == Some(v) {
+                                let d = fmt_label(self.d[v as usize]);
+                                let bi = fmt_label(b_i);
+                                self.tr(format!(
+                                    "INSERT parent D via relax_sweep from u={u} (d={d} >= b_i={bi})"
+                                ));
+                            }
                             if let Some(&j) = member.get(&v) {
                                 if !j_pending.contains(&j) {
                                     if let Some(pj) = piv[j] {
@@ -720,6 +863,11 @@ impl<'a> Solver<'a> {
                     piv[j] = Some(p);
                     piv_of.insert(p, j);
                     ds.insert(p, self.d[p as usize].fin());
+                    #[cfg(feature = "q11-trace")]
+                    if self.trace_vertex == Some(p) {
+                        let d = fmt_label(self.d[p as usize]);
+                        self.tr(format!("INSERT parent D as re-selected pivot of P_{j} val={d}"));
+                    }
                 }
             });
 
@@ -734,6 +882,14 @@ impl<'a> Solver<'a> {
                 // premature vertices go back to the frontier (line 33)
                 if b_prime <= self.d[x as usize] && self.d[x as usize] < b {
                     ds.insert(x, self.d[x as usize].fin());
+                    #[cfg(feature = "q11-trace")]
+                    if self.trace_vertex == Some(x) {
+                        let d = fmt_label(self.d[x as usize]);
+                        let bp = fmt_label(b_prime);
+                        self.tr(format!(
+                            "INSERT parent D as premature S-vertex, line 33 (b_prime={bp} <= d={d})"
+                        ));
+                    }
                 }
             }
             let w_prime: Vec<u32> = w_list
@@ -741,17 +897,40 @@ impl<'a> Solver<'a> {
                 .copied()
                 .filter(|&x| !u_set.contains(&x) && self.d[x as usize] < b_prime)
                 .collect();
+            #[cfg(feature = "q11-trace")]
+            if let Some(tv) = self.trace_vertex {
+                if w_prime.contains(&tv) {
+                    self.trace_settles += 1;
+                    let n = self.trace_settles;
+                    let d = fmt_label(self.d[tv as usize]);
+                    let bp = fmt_label(b_prime);
+                    let in_u = u_set.contains(&tv);
+                    self.tr(format!(
+                        "SETTLE #{n} [W′ boundary append] d={d} b_prime={bp} in-this-call-U={in_u}"
+                    ));
+                }
+                self.trace_site = "w_prime_sweep";
+            }
             for &u in &w_prime {
                 // final relax from completed arborescences
                 for &(v, w) in &adj[u as usize] {
                     if self.relax(u, v, w, b) && self.d[v as usize] >= b_prime {
                         ds.insert(v, self.d[v as usize].fin());
+                        #[cfg(feature = "q11-trace")]
+                        if self.trace_vertex == Some(v) {
+                            let d = fmt_label(self.d[v as usize]);
+                            self.tr(format!("INSERT parent D via w_prime_sweep from u={u} val={d}"));
+                        }
                     }
                 }
             }
             w_prime
         });
         u_log.extend_from_slice(&w_prime);
+        #[cfg(feature = "q11-trace")]
+        {
+            self.trace_stack.pop();
+        }
         (b_prime, u_log, ds)
     }
 }

@@ -145,7 +145,7 @@ B′ = B with D ≠ ∅ — contradicting Lemma 3.1's "full execution ⇒ D = �
 (Q3 sub-case; the parent handles it). Letter/note material: the missing
 lemma is a bound on re-settlements per vertex.
 
-## Q11 — measured duplicate settlements contradict Lemma 3.8's disjoint-union accounting; the base case is NOT the channel. OPEN
+## Q11 — measured duplicate settlements contradict Lemma 3.8's disjoint-union accounting; the base case is NOT the channel. CONFIRMED (mechanism traced)
 
 Follow-up to Q10 with new measurements (raw record
 benchmarks/results/dup_settlements_v5.txt). Two facts:
@@ -161,20 +161,57 @@ benchmarks/results/dup_settlements_v5.txt). Two facts:
    are bit-identical with and without the V5 fix.
 
 So the re-settlement channel is inside Algorithm 3 itself, not the base
-case. Mechanism hypothesis (consistent with the tie-density scaling and
-with dup ≈ 0 on float-random weights): Relax's `≤` accepts an exact
-4-tuple tie as True (Q6 called this idempotent store "harmless"), which
-re-inserts an already-settled vertex into D; keyed dedup bounds the
-blowup but the vertex is pulled and SETTLED AGAIN — one extra U event
-per exact-tie re-acceptance. Consequence: Lemma 3.8's items "the U_X's
-at the same layer are disjoint" and "U_X is a disjoint union of W′_X
-and the children's U's" are false as stated on tie-rich inputs, and the
-|U| accounting that Lemma 3.9 and the top-level totality rest on counts
-these extra events with no bound in the paper. Next steps: trace one
-duplicate end-to-end to confirm the mechanism; evaluate a guarded
-strict-< (the first project's counterexample warns this is exactly
-where cross-call equivalence intuitions die — full class-2 treatment
-required). Letter/note material, pairs with Q10.
+case. The initial hypothesis blamed Relax's `≤` accepting an exact
+4-tuple tie as True (Q6's "idempotent store"), re-inserting a settled
+vertex into D to be pulled and settled again.
+
+**Mechanism addendum (traced end-to-end; raw record
+`benchmarks/results/q11_trace.txt`, driver `examples/q11_trace.rs`,
+`q11-trace` build feature).** The first duplicated vertex of the
+zero-heavy min-slack run (v5 at n = 4094, log positions 2571 and 3595
+of 4087) shows a chain the hypothesis only partially anticipated:
+
+1. **Seed — a stale D entry, no tie involved.** v5 is first reached at
+   value (1, h7) and legitimately inserted into the level-5 call's D.
+   Its label then improves to (0, h7) inside a sibling subtree's
+   FindPivots, and v5 settles THERE (base case, settlement #1). The
+   level-5 D still holds (1, h7): keyed keep-min dedup is per-D-
+   instance, and nothing in the paper deletes or updates entries of
+   vertices completed in other branches — there is no cross-level
+   decrease-key.
+2. **Re-frontier.** The level-5 final pull surfaces the stale entry and
+   hands the already-complete v5 to a child's frontier S. Pull has no
+   completeness check — the disjointness items of Lemma 3.8 implicitly
+   assume D never yields a completed vertex, and this pull falsifies
+   exactly that.
+3. **The complete vertex stays structurally alive.** Exact-tie
+   `≤`-re-acceptances (the Q6 channel — same edge, identical tuple)
+   make relax() return True from and into completed vertices, so v5's
+   local searches still grow K-trees: it roots trees, becomes an
+   initial pivot at levels 4 and 3 (two more D inserts of a complete
+   vertex), and keeps descending.
+4. **Second U event via W′, not the base case.** At level 2 its search
+   finally fails (|K| = 1 < k), v5 joins W; the W′ filter excludes only
+   THIS call's u_set — settlement #1 happened in a different branch and
+   is invisible — and d[v5] < B′ holds, so the line-34 boundary append
+   emits v5 into U again (settlement #2).
+
+So the confirmed picture: the duplicate's seed is a stale outer-D entry
+pulled after an out-of-band improvement + settlement; exact-tie
+re-acceptance is the enabling channel that (a) carried the vertex into
+the sibling subtree's trees for settlement #1 and (b) keeps completed
+vertices indistinguishable from live ones afterwards; and the extra U
+event is emitted by Algorithm 3's own W′ path, whose completeness
+filter is call-local. Consequence stands as measured: Lemma 3.8's items
+"the U_X's at the same layer are disjoint" and "U_X is a disjoint union
+of W′_X and the children's U's" are false as stated on tie-rich inputs,
+and the |U| accounting that Lemma 3.9 and top-level totality rest on
+counts these extra events with no bound in the paper. The missing lemma
+must bound re-frontierings of completed vertices (stale-entry pulls and
+the pivot re-inserts they enable), not base-case B′ escapes. Still
+open: evaluate a guarded strict-< (the first project's counterexample
+warns this is exactly where cross-call equivalence intuitions die —
+full class-2 treatment required). Letter/note material, pairs with Q10.
 
 ## Q7 — nEdges overflow bound. NOTE
 
