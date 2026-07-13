@@ -384,6 +384,57 @@ mainline totality asserts cover its only dangerous consequence.
 Candidate micro-variant for completeness: guard on distinct count —
 expected distance-neutral, changes recursion shape on tie-rich inputs.
 
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN (the central open mathematics of this audit)
+
+What the paper needs and never states or proves:
+
+> **Lemma (missing).** The total number of settlement events across all
+> calls of a top-level run — Σ_X |U_X| counted with the multiplicity of
+> repeated vertices across calls — exceeds the number of distinct
+> settled vertices by at most [some bound].
+
+Lemma 3.8's disjoint-union items silently assume the excess is zero;
+Q11 measured and traced it nonzero (and the V8 control row shows it is
+not even a tie artifact: 664 duplicate events at n = 5e5 float-random).
+Everything in Lemma 3.9's time accounting that sums |U_X| over layers
+rests on this missing bound.
+
+What is established about the excess (2026-07-13, V7/V8 experiments +
+trace):
+
+1. **Channels, exhaustively** (trace-verified): a duplicate settlement
+   of v consumes either a stale D entry of v (created before v's
+   settlement, pulled after) or a W′ membership in a call whose
+   call-local u_set cannot see v's settlement. Post-settlement D
+   entries of v arise only from (i) same-edge exact-tie re-offers from
+   pred(v)'s own settlement events passing the ≥ B_i / ≥ B′ gates,
+   (ii) pivot re-inserts while a re-frontiered v descends (≤ l_top per
+   descent), (iii) line-33 premature re-inserts.
+2. **Why naive induction fails**: channel (i) charges duplicates of v
+   to settlement events of pred(v), giving the recursion
+   dup(v) ≤ l_top · (1 + dup(pred(v))) + …, which unrolls
+   exponentially along pred chains. The observed excess is tiny
+   (0.0003–0.037 events/vertex) because the ≥ B_i / ≥ B′ gates refuse
+   most re-offers — any real proof must exploit the gates, not the
+   chain structure. We do not have that proof.
+3. **The `≤` cannot be removed** (V7, REJECTED with a reachability
+   counterexample): rejecting exact ties orphans never-settled
+   vertices. So the excess cannot be eliminated by tightening Relax.
+4. **One bit eliminates it exactly** (V8, Tier-2 green, measured
+   faster): a per-vertex settled marking removes every duplicate while
+   preserving distances across the full adversarial matrix, making the
+   missing lemma trivially true (excess = 0) for the marked variant.
+   V8's own safety assumption — every settlement settles a complete
+   vertex — is exactly Lemma 3.7's completeness clause under the Q9
+   closure, and the green matrix is empirical support for it.
+
+Status: the bound for the algorithm AS WRITTEN remains open — this is
+the strongest candidate for an original mathematical contribution, and
+the letter should present it as: here is the gap (Q11), here is why it
+is not locally repairable by bound arithmetic (Q12) or by touching
+Relax (V7), here is the measured magnitude, and here is the one-bit
+repair with proofs-modulo-one-clause (V8).
+
 ## Q7 — nEdges overflow bound. NOTE
 
 nEdges strictly increases along relaxations and is bounded by the longest
