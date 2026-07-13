@@ -1,0 +1,15 @@
+Q3 demonstrator (base case, t=2, cutoff 8, B=len 100):
+                      engine  bound viol   rec viol  dichotomy  cap hits
+         paper (Algorithm 4)           1          0          0         0
+               V5 fixed base           0          0          0         1
+
+adversarial family (full runs, counters over all returns):
+                       input        n engine   base viol   rec viol  dichotomy  cap hits
+         zero-heavy minslack     4094  paper           0          0          0         0
+         zero-heavy minslack     4094     V5           0          0          0         0
+         zero-heavy minslack    16382  paper           0          0          0         0
+         zero-heavy minslack    16382     V5           0          0          0         0
+               tie-rich 0..3   170000  paper           0          0          0         0
+               tie-rich 0..3   170000     V5           0          0          0         0
+            zero-heavy large   500000  paper           0          0          0         0
+            zero-heavy large   500000     V5           0          0          0         0

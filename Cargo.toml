@@ -20,6 +20,13 @@ phase-timer = []
 # call-path snapshot. Zero overhead when off; results are unchanged when
 # on. Used by `examples/q11_trace.rs`.
 q11-trace = []
+# Contract verification: count per-return violations of Lemma 3.7's
+# bound clause (dB[D] >= B', stored values) and of Lemma 3.1's
+# full-execution dichotomy, at base-case and recursive returns
+# separately (QUESTIONS.md Q3, Q10, Q12). Pure observation - results
+# are unchanged when on; zero overhead when off. Used by
+# `examples/verify_contract.rs`.
+verify-contract = []
 
 [dependencies]
 # Deterministic fast hashing for bookkeeping maps/sets. Iteration order of
@@ -36,6 +43,10 @@ mimalloc = { version = "0.1", default-features = false }
 [[example]]
 name = "q11_trace"
 required-features = ["q11-trace"]
+
+[[example]]
+name = "verify_contract"
+required-features = ["verify-contract"]
 
 [profile.release]
 opt-level = 3

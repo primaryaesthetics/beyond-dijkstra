@@ -421,6 +421,18 @@ pub struct Solver<'a> {
     /// How many base-case returns the V5 cap actually lowered (0 when
     /// `fixed_base` is off) — experiment instrumentation.
     pub base_cap_hits: u64,
+    /// Contract counters (feature `verify-contract`; QUESTIONS.md Q3,
+    /// Q10, Q12): per-return violations of dB[D] ≥ B′ over stored values,
+    /// split by return site, and of the full-execution dichotomy
+    /// (B′ = B ⟺ D = ∅). Counting, not asserting — these states are
+    /// audit findings, and the runs that exhibit them still finish with
+    /// exact distances.
+    #[cfg(feature = "verify-contract")]
+    pub viol_bound_base: u64,
+    #[cfg(feature = "verify-contract")]
+    pub viol_bound_rec: u64,
+    #[cfg(feature = "verify-contract")]
+    pub viol_dichotomy: u64,
     /// Q11 trace: the vertex whose events are recorded (None = off).
     #[cfg(feature = "q11-trace")]
     pub trace_vertex: Option<u32>,
@@ -455,6 +467,12 @@ impl<'a> Solver<'a> {
             hybrid_level: 0,
             fixed_base: false,
             base_cap_hits: 0,
+            #[cfg(feature = "verify-contract")]
+            viol_bound_base: 0,
+            #[cfg(feature = "verify-contract")]
+            viol_bound_rec: 0,
+            #[cfg(feature = "verify-contract")]
+            viol_dichotomy: 0,
             #[cfg(feature = "q11-trace")]
             trace_vertex: None,
             #[cfg(feature = "q11-trace")]
@@ -695,6 +713,15 @@ impl<'a> Solver<'a> {
                 }
             }
         }
+        #[cfg(feature = "verify-contract")]
+        {
+            if matches!(ds.peek_min(), Some(m) if Label::Fin(m) < bound) {
+                self.viol_bound_base += 1;
+            }
+            if (bound == b) != !ds.non_empty() {
+                self.viol_dichotomy += 1;
+            }
+        }
         #[cfg(feature = "q11-trace")]
         {
             self.trace_stack.pop();
@@ -927,6 +954,15 @@ impl<'a> Solver<'a> {
             w_prime
         });
         u_log.extend_from_slice(&w_prime);
+        #[cfg(feature = "verify-contract")]
+        {
+            if matches!(ds.peek_min(), Some(m) if Label::Fin(m) < b_prime) {
+                self.viol_bound_rec += 1; // QUESTIONS.md Q12's leak, live
+            }
+            if (b_prime == b) != !ds.non_empty() {
+                self.viol_dichotomy += 1;
+            }
+        }
         #[cfg(feature = "q11-trace")]
         {
             self.trace_stack.pop();

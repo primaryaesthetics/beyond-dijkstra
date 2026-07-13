@@ -29,7 +29,7 @@ takes argmin over an empty set. Reference behavior: drop empty P_j before
 returning. Harmless for correctness (frontier condition still holds via
 the other P_j and W) but the pseudocode as written crashes.
 
-## Q3 — base-case B′ vs. vertices inserted after the last pull. OPEN
+## Q3 — base-case B′ vs. vertices inserted after the last pull. CONFIRMED (contract violation demonstrated; V5 is the proved fix)
 
 Algorithm 4 returns B′ from the final Pull, but the relaxations performed
 after that pull (line 8) can insert labels smaller than B′ when zero- or
@@ -123,6 +123,30 @@ weights: final distances stay bit-exact vs Dijkstra, so any dB[D] ≥ B′
 violation self-heals in the parent loop rather than corrupting labels.
 Contract status stays OPEN pending an invariant-check run (verify mode)
 that asserts Lemma 3.7's properties per call.
+
+## Q3 addendum (2026-07-13) — verify mode ran; CONFIRMED
+
+The `verify-contract` build feature counts per-return violations of the
+bound clause (dB[D] ≥ B′ over stored values, base-case and recursive
+returns separately) and of the full-execution dichotomy. Recorded run:
+`benchmarks/results/verify_contract.txt` (`examples/verify_contract.rs`).
+Two results:
+
+1. **Demonstrator (no ties needed).** A crafted star — nine leaves at
+   weights 1..9, a zero-weight edge out of leaf 8, t = 2 so the cutoff
+   is t³ = 8, B = len 100 — makes Algorithm 4 as written return
+   dB[D] = 8 < B′ = 9: one bound violation. The V5 cap returns the
+   repaired pair (zero violations, one cap hit). This is the concrete
+   Lemma 3.1/3.7 counterexample for the letter.
+2. **The adversarial family is contract-clean.** On the full
+   dup-settlement family (zero-heavy min-slack 4094/16382, tie-rich
+   170k, zero-heavy 500k; both engines) every counter is ZERO — no
+   bound violation at any base-case or recursive return, no dichotomy
+   violation. So the thousands of duplicate settlements measured there
+   (Q11) arise with all return contracts intact: the re-settlement
+   channel operates entirely below the bound clauses, and neither the
+   Q12 leak nor Q10's B′ = B-with-D ≠ ∅ sub-case is exercised by this
+   family. Q12 stays open on the argument, unobserved empirically.
 
 ## Q9 — Lemmas 3.1/3.2/3.7 are false as standalone contracts. OPEN
 
@@ -285,11 +309,14 @@ iteration (partial execution), the sub-B′ entry survives to the return
 iteration's leak can escape), violating clause 2 of Lemma 3.7
 (B′ ≤ dB[D]) — the clause the parent's own bookkeeping consumes.
 Reference behavior: SPEC pins the pseudocode reading of line 23.
-Planned empirical check: verify-mode's per-return assert dB[D] ≥ B′
-(see Q3) — if it fires on zero-weight partial executions with the V5
-base case ON, this channel is confirmed live. Fix candidate (pairs with
-V5, same shape): cap Algorithm 3's returned B′ at dB[D] too — one O(1)
-peek at return. Letter/note material.
+Empirical check ran (2026-07-13, Q3 addendum): the verify-mode counter
+for recursive returns stayed at zero across the full adversarial
+family, both engines — the leak is reachable on the argument above but
+was not exercised by these inputs; a dedicated construction would need
+a partial execution whose final iteration re-selects a pivot lowered
+below B′_f. Fix candidate (pairs with V5, same shape): cap Algorithm
+3's returned B′ at dB[D] too — one O(1) peek at return. Letter/note
+material.
 
 ## Q13 — the loop guard's |U|: the paper counts distinct vertices, the pinned reference counts settlement events. OPEN (pinned deviation)
 
