@@ -362,3 +362,77 @@ the label-machinery residual (V3's headline) from 3.8–4.5× to
 4-tuple labels" was representation, not principle. The verdict itself
 does not move — even the best engineered member of the family stays
 ~2.5× behind the crate's Dijkstra at every storable size.
+
+## V5 — fixed base case: cap B′ so the Lemma 3.1 contract actually holds
+
+This one is a proposed correction to the paper's math, not an
+engineering variant. Q3 recorded the defect: Algorithm 4 returns the B′
+of its final Pull, but the relaxations performed after that pull can
+insert labels BELOW B′ (zero/tiny weights do it systematically), so the
+returned pair violates both dB[D] ≥ B′ and U = Ũ(B′, S); Q10 recorded
+the systemic cost (unproved top-level totality via re-settlements).
+
+**The fix.** Return B′⁺ = min(B′_pull, dB[D_final]) — one extra
+min-peek of D at return time, O(1) amortized.
+
+**Claim.** With B′⁺, Algorithm 4 satisfies Lemma 3.1's contract
+exactly: U = Ũ(B′⁺, S) is complete, and dB[D] ≥ B′⁺.
+
+**Proof sketch.**
+
+1. dB[D] ≥ B′⁺ by construction (B′⁺ is capped at dB[D]).
+2. Every settled label is strictly below B′⁺. Settled labels are
+   non-decreasing along pulls (each pull takes the global minimum of
+   D's stored values, and every insert exceeds the label of the vertex
+   whose relaxation produced it — the 4-tuple grows strictly, hops
+   increments even at w = 0). The final D's values each strictly exceed
+   the last settled label: leftovers were ≥ B′_pull > label(u_last) by
+   the pull invariant, and post-final-relax inserts strictly exceed
+   label(u_last) by tuple growth. Hence label(u) ≤ label(u_last) <
+   dB[D] and label(u) < B′_pull for every u ∈ U, so label(u) < B′⁺.
+3. Completeness of U up to B′⁺: suppose x ∉ U with dis-label(x) < B′⁺
+   and x's shortest path visits S. Walk the path from its last
+   S-vertex; let y be the first vertex not in U. Then y's predecessor
+   on the path is settled (or y ∈ S is a seed), so y was inserted into
+   D with a stored label ≤ its true label ≤ dis-label(x) < B′⁺ ≤
+   dB[D]. y cannot still be in D (its stored value would undercut
+   dB[D]), and the only way out of D is a Pull — which puts y in U.
+   Contradiction.
+4. Full executions are unaffected: D = ∅ ⇒ the cap is vacuous and
+   B′⁺ = B as before.
+
+Consequence for Q10: inside base cases the Q3 escape channel closes —
+B′ never advances past an unsettled label, so a vertex settles at most
+once per base case for the Dijkstra reason. Whether Algorithm 3's OWN
+return path still leaks (its line-33 re-insert and W′ sweep are guarded
+by d ≥ B′, but merged child structures are now capped) is measured, not
+claimed: the experiment reports duplicate settlement counts in the
+top-level log for V1 vs V5 on the Q10 stress family.
+
+**Classification.** Class 2 (changes the returned bound — observable
+order/recursion shape changes; distances must stay exact). Gate:
+Tier 2 full matrix. **Falsification review:** (pending, bundled with
+the V4 re-run)
+
+**Result.** Tier-2 gate green (both engines, all regimes incl. Q10
+stress). The experiment (`benchmarks/results/dup_settlements_v5.txt`,
+`examples/dup_settlements.rs`) produced a finding better than the
+expected one:
+
+| input | n | paper dups | V5 dups | V5 cap fires |
+|---|---|---|---|---|
+| zero-heavy min-slack | 4 094 | 5 | 5 | 0 |
+| zero-heavy min-slack | 16 382 | 608 | 608 | 0 |
+| tie-rich 0..3 | 170 000 | 5 074 | 5 074 | 0 |
+| zero-heavy large | 500 000 | 149 | 149 | 0 |
+
+The cap NEVER fires: the base-case B′ undercut (Q3's channel, which
+Q10 presumed to drive re-settlements) does not materialize at return
+time on any adversarial input tried — while duplicates persist
+unchanged. The re-settlement channel is Algorithm 3's own: exact-tie
+`≤`-re-acceptances re-inserting settled vertices (see QUESTIONS.md
+Q11, which this measurement opened; it contradicts Lemma 3.8's
+disjoint-union accounting as stated). V5 therefore stands as a
+provable contract restoration with zero observed runtime effect — the
+missing re-settlement lemma the paper needs is about tie handling in
+Algorithm 3, not about the base case.

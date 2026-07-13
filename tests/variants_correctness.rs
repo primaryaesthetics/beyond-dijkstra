@@ -41,6 +41,13 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
             &format!("{tag} (fast L={hl}, forced t=k=2)"),
         );
     }
+    // V5 fixed base case, both engines, deepest-recursion regimes.
+    for hl in [0u64, 1] {
+        let v5 = no_transform::sssp_v5(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(n, &v5.dist, &expect, &format!("{tag} (v5 L={hl})"));
+        let f5 = fast::sssp_fixed(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(n, &f5.dist, &expect, &format!("{tag} (v5-fast L={hl})"));
+    }
 }
 
 fn assert_dists(n: usize, got: &[f64], expect: &[f64], tag: &str) {
@@ -69,6 +76,11 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
             let fa = fast::sssp(g.n, &g.edges, g.source, hl, g.override_params);
             assert_dists(g.n, &fa.dist, &expect, &format!("seed {seed} (fast L={hl})"));
         }
+        // V5 fixed base case (full recursion).
+        let v5 = no_transform::sssp_v5(g.n, &g.edges, g.source, 0, g.override_params);
+        assert_dists(g.n, &v5.dist, &expect, &format!("seed {seed} (v5)"));
+        let f5 = fast::sssp_fixed(g.n, &g.edges, g.source, 0, g.override_params);
+        assert_dists(g.n, &f5.dist, &expect, &format!("seed {seed} (v5-fast)"));
     }
 }
 
@@ -147,6 +159,8 @@ fn q10_resettlement_pressure() {
             assert_dists(n, &run.dist, &expect, &format!("q10 n={n} L={hl}"));
             let fa = fast::sssp(n, &edges, 0, hl, Some((3, 2, 2)));
             assert_dists(n, &fa.dist, &expect, &format!("q10 n={n} L={hl} (fast)"));
+            let v5 = no_transform::sssp_v5(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &v5.dist, &expect, &format!("q10 n={n} L={hl} (v5)"));
         }
     }
 }

@@ -145,6 +145,37 @@ B′ = B with D ≠ ∅ — contradicting Lemma 3.1's "full execution ⇒ D = �
 (Q3 sub-case; the parent handles it). Letter/note material: the missing
 lemma is a bound on re-settlements per vertex.
 
+## Q11 — measured duplicate settlements contradict Lemma 3.8's disjoint-union accounting; the base case is NOT the channel. OPEN
+
+Follow-up to Q10 with new measurements (raw record
+benchmarks/results/dup_settlements_v5.txt). Two facts:
+
+1. The V5 fixed base case (B′ capped at dB[D], restoring the Lemma 3.1
+   contract — VARIANTS.md V5, proof included) fires **zero times** on
+   every adversarial input tried (zero-heavy tie-rich at the Q10
+   minimum-slack sizes, forced deep recursion, and large random): the
+   base-case B′-undercut that Q3/Q10 presumed to be the re-settlement
+   channel never actually materializes at return time.
+2. Duplicate settlements in the top-level log exist anyway — up to
+   608 events at n = 16 382 (0.037/n) and 5 074 at n = 170 000 — and
+   are bit-identical with and without the V5 fix.
+
+So the re-settlement channel is inside Algorithm 3 itself, not the base
+case. Mechanism hypothesis (consistent with the tie-density scaling and
+with dup ≈ 0 on float-random weights): Relax's `≤` accepts an exact
+4-tuple tie as True (Q6 called this idempotent store "harmless"), which
+re-inserts an already-settled vertex into D; keyed dedup bounds the
+blowup but the vertex is pulled and SETTLED AGAIN — one extra U event
+per exact-tie re-acceptance. Consequence: Lemma 3.8's items "the U_X's
+at the same layer are disjoint" and "U_X is a disjoint union of W′_X
+and the children's U's" are false as stated on tie-rich inputs, and the
+|U| accounting that Lemma 3.9 and the top-level totality rest on counts
+these extra events with no bound in the paper. Next steps: trace one
+duplicate end-to-end to confirm the mechanism; evaluate a guarded
+strict-< (the first project's counterexample warns this is exactly
+where cross-call equivalence intuitions die — full class-2 treatment
+required). Letter/note material, pairs with Q10.
+
 ## Q7 — nEdges overflow bound. NOTE
 
 nEdges strictly increases along relaxations and is bounded by the longest

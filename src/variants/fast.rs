@@ -205,6 +205,22 @@ impl FastDs {
     fn non_empty(&self) -> bool {
         !self.map.is_empty()
     }
+
+    /// Smallest live stored value, if any (V5's return-time cap). Pops
+    /// dead entries encountered on the way — pure garbage removal.
+    fn peek_min(&mut self) -> Option<Val> {
+        loop {
+            match self.heap.peek() {
+                None => return None,
+                Some((k, p, vert)) => {
+                    if self.map.get(&vert) == Some(&(k, p)) {
+                        return Some((k, p));
+                    }
+                    self.heap.pop();
+                }
+            }
+        }
+    }
 }
 
 /// Epoch-stamped FindPivots scratch — the pass-3 pattern of the mainline.
@@ -280,6 +296,7 @@ struct Fast {
     t: u64,
     k: u64,
     hybrid_level: u64,
+    fixed_base: bool,
     dk: Vec<u128>,
     dp: Vec<u32>,
     scratch: Scratch,
@@ -454,6 +471,12 @@ impl Fast {
                 }
             }
         }
+        if self.fixed_base {
+            // V5: cap B′ at dB[D] so the returned pair honors Lemma 3.1.
+            if let Some(minv) = ds.peek_min() {
+                bound = bound.min(minv);
+            }
+        }
         (bound, u_log, ds)
     }
 
@@ -603,6 +626,9 @@ pub struct FastRun {
     pub k: u64,
     pub l_top: u64,
     pub dist: Vec<f64>,
+    /// Settlement events in the top-level log minus distinct vertices —
+    /// the Q10 re-settlement count the V5 experiment reports.
+    pub dup_settlements: usize,
 }
 
 /// V4 entry: original graph (V1 semantics), packed-label engine,
@@ -613,6 +639,28 @@ pub fn sssp(
     edges: &[(u32, u32, f64)],
     source: usize,
     hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> FastRun {
+    sssp_full(n, edges, source, hybrid_level, false, override_params)
+}
+
+/// V5 entry: V4 with the fixed base case (B′ capped at dB[D]).
+pub fn sssp_fixed(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> FastRun {
+    sssp_full(n, edges, source, hybrid_level, true, override_params)
+}
+
+fn sssp_full(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    fixed_base: bool,
     override_params: Option<(u64, u64, u64)>,
 ) -> FastRun {
     assert!(
@@ -653,6 +701,7 @@ pub fn sssp(
         t,
         k,
         hybrid_level,
+        fixed_base,
         dk: vec![UNSET; n],
         dp: vec![u32::MAX; n],
         scratch: Scratch::new(n),
@@ -660,12 +709,20 @@ pub fn sssp(
     fast.dk[source] = pack(0.0, 0, source as u32);
     fast.dp[source] = 0; // encoded -1
 
-    let (b_final, _settle, ds_top) = fast.bmssp(VAL_INF, &[source as u32], l_top);
+    let (b_final, settle, ds_top) = fast.bmssp(VAL_INF, &[source as u32], l_top);
     assert!(
         b_final == VAL_INF && !ds_top.non_empty(),
         "top-level BMSSP exited partially (re-settlement volume exceeded \
          the |U| cutoff) — see QUESTIONS.md Q10"
     );
+    let mut seen = vec![false; n];
+    let mut dup_settlements = 0usize;
+    for &v in &settle {
+        if seen[v as usize] {
+            dup_settlements += 1;
+        }
+        seen[v as usize] = true;
+    }
 
     let dist = fast
         .dk
@@ -678,5 +735,6 @@ pub fn sssp(
         k,
         l_top,
         dist,
+        dup_settlements,
     }
 }

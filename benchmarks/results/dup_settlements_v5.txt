@@ -1,0 +1,8 @@
+   Compiling beyond_dijkstra v0.1.0 (/Users/kirakabaeva/Documents/GitHub/beyond-dijkstra)
+    Finished `release` profile [optimized] target(s) in 2.80s
+     Running `target/release/examples/dup_settlements`
+                       input        n paper dups    V5 dups      dup/n  cap hits
+         zero-heavy minslack     4094          5          5     0.0012         0
+         zero-heavy minslack    16382        608        608     0.0371         0
+               tie-rich 0..3   170000       5074       5074     0.0298         0
+            zero-heavy large   500000        149        149     0.0003         0

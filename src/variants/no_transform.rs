@@ -21,6 +21,11 @@ pub struct VariantRun {
     pub phase_times: PhaseTimes,
     /// Total wall clock of the run (zero unless built with `phase-timer`).
     pub total: f64,
+    /// Settlement events in the top-level log minus distinct vertices —
+    /// the Q10 re-settlement count the V5 experiment reports.
+    pub dup_settlements: usize,
+    /// Base-case returns the V5 cap actually lowered (0 unless V5).
+    pub base_cap_hits: u64,
 }
 
 /// Shortest-path lengths from `source` on the original graph. Parameters
@@ -33,7 +38,7 @@ pub fn sssp(
     source: usize,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_hybrid(n, edges, source, 0, override_params)
+    sssp_full(n, edges, source, 0, false, override_params)
 }
 
 /// V3 (VARIANTS.md): V1 with levels ≤ `hybrid_level` running the base
@@ -44,6 +49,29 @@ pub fn sssp_hybrid(
     edges: &[(u32, u32, f64)],
     source: usize,
     hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> VariantRun {
+    sssp_full(n, edges, source, hybrid_level, false, override_params)
+}
+
+/// V5 (VARIANTS.md): like `sssp_hybrid`, with the fixed base case
+/// (B′ capped at dB[D] — the Lemma 3.1 contract restoration).
+pub fn sssp_v5(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> VariantRun {
+    sssp_full(n, edges, source, hybrid_level, true, override_params)
+}
+
+fn sssp_full(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    fixed_base: bool,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
     #[cfg(feature = "phase-timer")]
@@ -65,13 +93,14 @@ pub fn sssp_hybrid(
 
     let mut solver = Solver::new(&adj, t, k);
     solver.hybrid_level = hybrid_level;
+    solver.fixed_base = fixed_base;
     solver.d[source] = Label::Fin(Lab {
         len: 0.0,
         hops: 0,
         curr: source as u32,
         pred: -1,
     });
-    let (b_final, _settle, ds_top) = solver.bmssp(Label::Inf, &[source as u32], l_top);
+    let (b_final, settle, ds_top) = solver.bmssp(Label::Inf, &[source as u32], l_top);
     // Totality assert (QUESTIONS.md Q10) — same as the mainline entry:
     // a partial top-level execution would return silently wrong
     // distances; fail loudly instead.
@@ -80,6 +109,14 @@ pub fn sssp_hybrid(
         "top-level BMSSP exited partially (re-settlement volume exceeded \
          the |U| cutoff) — see QUESTIONS.md Q10"
     );
+    let mut seen = vec![false; n];
+    let mut dup_settlements = 0usize;
+    for &v in &settle {
+        if seen[v as usize] {
+            dup_settlements += 1;
+        }
+        seen[v as usize] = true;
+    }
 
     let dist = solver
         .d
@@ -101,5 +138,7 @@ pub fn sssp_hybrid(
         dist,
         phase_times: solver.phase.clone(),
         total,
+        dup_settlements,
+        base_cap_hits: solver.base_cap_hits,
     }
 }

@@ -207,6 +207,12 @@ impl BlockDs {
     pub fn non_empty(&self) -> bool {
         !self.by_key.is_empty()
     }
+
+    /// Smallest stored value, if any (the V5 base-case cap reads it once
+    /// at return time).
+    pub fn peek_min(&self) -> Option<Lab> {
+        self.by_val.first_key_value().map(|(&v, _)| v)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -389,6 +395,14 @@ pub struct Solver<'a> {
     /// the base case with cutoff t³·2⁰ = t³, bit-identical to Algorithm 4,
     /// so the mainline differential gate pins this default.
     pub hybrid_level: u64,
+    /// VARIANTS.md V5: cap the base case's returned B′ at the minimum
+    /// value left in D, restoring Lemma 3.1's contract (closes the Q3
+    /// escape channel). false = the paper's Algorithm 4 as written; the
+    /// mainline differential gate pins this default.
+    pub fixed_base: bool,
+    /// How many base-case returns the V5 cap actually lowered (0 when
+    /// `fixed_base` is off) — experiment instrumentation.
+    pub base_cap_hits: u64,
     scratch: FpScratch,
 }
 
@@ -401,6 +415,8 @@ impl<'a> Solver<'a> {
             d: vec![Label::Inf; adj.len()],
             phase: PhaseTimes::default(),
             hybrid_level: 0,
+            fixed_base: false,
+            base_cap_hits: 0,
             scratch: FpScratch::new(adj.len()),
         }
     }
@@ -570,6 +586,15 @@ impl<'a> Solver<'a> {
                 if self.relax(u, v, w, b) {
                     // QUESTIONS.md Q3: the insert may undercut the returned bound.
                     ds.insert(v, self.d[v as usize].fin());
+                }
+            }
+        }
+        if self.fixed_base {
+            // V5: cap B′ at dB[D] so the returned pair honors Lemma 3.1.
+            if let Some(minv) = ds.peek_min() {
+                if Label::Fin(minv) < bound {
+                    bound = Label::Fin(minv);
+                    self.base_cap_hits += 1;
                 }
             }
         }
