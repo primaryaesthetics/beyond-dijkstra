@@ -439,6 +439,15 @@ mainline totality asserts cover its only dangerous consequence.
 Candidate micro-variant for completeness: guard on distinct count —
 expected distance-neutral, changes recursion shape on tie-rich inputs.
 
+Upgrade (2026-07-15, Q14 addendum 2): the pinned event-count guard is
+not merely a deviation but a safety property — a completed run
+certifies T ≤ t³·2^(l_top·t) − n₂ on the total duplicate excess (every
+settlement event bubbles into U_top, so the top guard reads all of
+them), while the paper's set-count guard imposes NO ceiling on
+settlement events anywhere: a re-settlement cascade, if constructible,
+finishes silently with super-linear time under set semantics and
+aborts loudly under the pinned one.
+
 ## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains)
 
 What the paper needs and never states or proves:
@@ -647,6 +656,87 @@ Three readings:
    half the excess** (299 of 664) — direct confirmation that the
    same-edge re-offer needs no cross-walk ties, only an unchanged
    source label (Q11's corrected reading).
+
+## Q14 addendum 2 (2026-07-15) — the W′ cascade: bounces are polynomial, the reduction is sharp, and the paper's set semantics has no event ceiling at all
+
+Continuing the gate program into the one remaining channel. Everything
+below is again for the algorithm as written, under hypothesis (H), with
+T = total duplicate settlement events and n₂ the working vertex count.
+
+**Lemma E (bounces are rare, unconditionally).** The total number of
+line-33 re-insertions over an entire run — the "bounce" that lets one
+chain migrate up and re-descend repeatedly, the last unbounded quantity
+in the chain accounting — is less than (n₂ + T)·(l_top + 1)/t.
+
+*Proof.* Lines 31–33 emit at most |S_Y| inserts, and only when Y is a
+partial execution: a full execution has B′ = B and the guard interval
+[B′, B) is empty. A partial execution at layer l has
+|U_Y| > t³·2^(lt) settlement events, and each settlement event appears
+in |U_Y| of at most one call per layer (its creator or that creator's
+unique ancestor at the layer), so Σ_{Y at layer l} |U_Y| ≤ n₂ + T and
+there are fewer than (n₂ + T)/(t³·2^(lt)) partials at layer l. With
+|S_Y| ≤ t²·2^(lt) (§3.4 property 2), the layer-l bounce volume is
+below (n₂ + T)/t; sum over the l_top + 1 layers. ∎ (Unsettled base-case
+seeds recycled through leftover D obey the same count at level 0.)
+
+With l_top = ⌈log n₂/t⌉ this is O((n₂ + T)·log n/t²) — a lower-order
+term. Bounces are NOT the missing multiplier.
+
+**Flow corollary.** Per settlement event, Lemma A caps relax-inserts
+at outdeg ≤ δ; line-7 pivot inserts are ≤ |U_X|/k per call (Remark
+3.3); line 29 inserts once per settled pivot; Lemma E caps bounces;
+line-13 expansions follow the paper's own T2 charging at O(|U_X|) per
+call. So total D-inserts, S-memberships, and FindPivots searches are
+all bounded by poly(δ, t, l_top)·(n₂ + T): the run's entire
+bookkeeping volume is self-consistently polynomial in its own
+settlement-event count. T itself is the only quantity nothing bounds.
+
+**Why the gates stop here (the branching obstruction).** Lemma D plus
+the flow corollary give the per-vertex recursion
+
+  events(v) ≤ O(l_top) + events(pred(v))              [D channel]
+             + Σ_{q ∈ tied-anc≤k−1(v)} fails(q)        [W′ channel]
+
+with fails(q) ≤ SM(q) ≤ l_top·chains(q) + bounce share, and
+chains(q) ≤ O(l_top) + events(pred(q)). The W′ sum ranges over up to
+k − 1 ancestors, so the recursion BRANCHES with reproduction factor
+Θ(k·l_top) per k-hop window, and unrolling yields only bounds of the
+shape events(v) ≤ 2^(O((h(v)/k)·log(k·l_top))) — exponential in path
+depth. This is structural, not slack: FindPivots is the one ungated
+relaxation site, nothing stops a re-frontiered ancestor's failed
+search from re-walking a settled tied segment of up to k − 1 hops,
+each walk can re-settle up to k − 2 vertices, and each re-settlement
+seeds chains further downstream. A sub-exponential bound needs a
+resource the cascade consumes that the gates do not see; D-inserts,
+S-memberships, and bounces are all ruled out (each scales WITH the
+cascade at coefficient > 1).
+
+**The missing lemma, final form (a dichotomy).** Either (a) some
+family sustains cascade reproduction above 1 and Σ_X |U_X| grows
+super-linearly in n — then Lemma 3.9's charging, which sums |U_X|
+over calls, is false as stated and the paper's time bound fails on
+adversarial inputs; or (b) every input damps the cascade — then the
+proof needs a resource beyond the gates, and nothing in the present
+accounting supplies one. The construction shape for (a) is explicit:
+a long exact-tie path (zero- or equal-weight edges) whose k-hop
+windows are re-frontiered by periodic side triggers so every failed
+root re-sweeps its settled window; what a construction must deliver
+is the B′/partial-execution scheduling cooperating at every scale.
+The measurements are far from the cascade regime (≤ 0.037
+events/vertex; foreign-W′ ≤ 7% of duplicates) — evidence about the
+tried families, not a bound.
+
+**A ceiling the paper doesn't have (upgrades Q13).** Under the pinned
+event-count semantics the top call's own guard reads every settlement
+event (all of them bubble into U_top), so a completed run certifies
+T ≤ t³·2^(l_top·t) − n₂ unconditionally — an enforced polynomial
+ceiling on the excess, with the totality assert converting "ceiling
+exceeded" into a loud abort. Under the paper's set-count guard no
+control-flow ceiling on settlement EVENTS exists anywhere in the
+algorithm: a cascade, if constructible, completes with correct
+distances and super-linear time, silently. Q13's deviation is thereby
+upgraded from pinned convenience to a safety property. (V8 removes
+the cascade by construction under either semantics.)
 
 ## Q7 — nEdges overflow bound. NOTE
 
