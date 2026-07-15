@@ -64,6 +64,48 @@ fn fmt_label(l: Label) -> String {
 }
 
 // ---------------------------------------------------------------------------
+// Duplicate-settlement classification (feature `dup-classify`; zero overhead
+// when off). Every duplicate settlement event — a vertex re-entering the
+// settlement log — is tagged by the channel that emitted it, per the Q14
+// addendum's inventory: base-case pulls consume a D entry (seeded into the
+// base D from S, or inserted by an in-base tie relaxation), W′ appends need
+// none. For foreign-W′ appends (vertex not in the appending call's S) the
+// Lemma D prediction is tested on the spot: some pred-chain ancestor within
+// k−1 hops must be a failed root (∈ Q) of the same call.
+
+/// Duplicate settlement events by channel. `base_seeded + base_inserted +
+/// wprime_own_root + wprime_own_swept + wprime_foreign` equals the
+/// top-level log's duplicate count.
+#[cfg(feature = "dup-classify")]
+#[derive(Clone, Default, Debug)]
+pub struct DupClassCounts {
+    /// Base-case pull of an already-settled vertex that was in the base
+    /// call's seed S (a re-frontiered chain reaching level 0).
+    pub base_seeded: u64,
+    /// Base-case pull of an already-settled vertex inserted into the base
+    /// D by an in-base relaxation (an exact-tie re-store — the Lemma A/B
+    /// bottom-interval insert observed directly).
+    pub base_inserted: u64,
+    /// W′ append of an already-settled vertex in this call's S that is a
+    /// failed root (∈ Q) — the Q11 trace's pattern.
+    pub wprime_own_root: u64,
+    /// W′ append of an already-settled vertex in this call's S swept into
+    /// another root's failed arborescence.
+    pub wprime_own_swept: u64,
+    /// W′ append of an already-settled vertex NOT in this call's S — the
+    /// FindPivots channel with no D entry (Lemma D territory).
+    pub wprime_foreign: u64,
+    /// Foreign appends whose pred-chain ancestor within k−1 hops is a
+    /// failed root (∈ Q) of the same call — Lemma D's prediction (exact
+    /// on inputs without cross-walk length-and-hops ties, where the
+    /// arborescence path is the canonical pred chain).
+    pub foreign_anc_in_q: u64,
+    /// Weaker containment for the same appends: some pred-chain ancestor
+    /// within k−1 hops is in the call's S (Q ⊆ S).
+    pub foreign_anc_in_s: u64,
+}
+
+// ---------------------------------------------------------------------------
 // Parameters (SPEC "Parameters"; clamps per QUESTIONS.md Q1).
 
 /// Mirror of `choose_params`: all logs base 2, `int()` truncation for delta.
@@ -440,6 +482,14 @@ pub struct Solver<'a> {
     pub viol_bound_rec: u64,
     #[cfg(feature = "verify-contract")]
     pub viol_dichotomy: u64,
+    /// Q14 classification counters (feature `dup-classify`).
+    #[cfg(feature = "dup-classify")]
+    pub dup_class: DupClassCounts,
+    /// Observation-only settled marks for classification (never read by
+    /// control flow — the algorithm behaves identically with the feature
+    /// on).
+    #[cfg(feature = "dup-classify")]
+    first_settled: Vec<bool>,
     /// Q11 trace: the vertex whose events are recorded (None = off).
     #[cfg(feature = "q11-trace")]
     pub trace_vertex: Option<u32>,
@@ -476,6 +526,10 @@ impl<'a> Solver<'a> {
             settled_dedup: false,
             settled: vec![false; adj.len()],
             base_cap_hits: 0,
+            #[cfg(feature = "dup-classify")]
+            dup_class: DupClassCounts::default(),
+            #[cfg(feature = "dup-classify")]
+            first_settled: vec![false; adj.len()],
             #[cfg(feature = "verify-contract")]
             viol_bound_base: 0,
             #[cfg(feature = "verify-contract")]
@@ -689,6 +743,8 @@ impl<'a> Solver<'a> {
         }
         let adj = self.adj;
         let mut ds = BlockDs::new(1, b);
+        #[cfg(feature = "dup-classify")]
+        let seed_set: FxHashSet<u32> = s_list.iter().copied().collect();
         for &x in s_list {
             ds.insert(x, self.d[x as usize].fin());
         }
@@ -702,6 +758,17 @@ impl<'a> Solver<'a> {
                 continue; // V8: stale entry of a settled vertex — drop
             }
             u_log.push(u);
+            #[cfg(feature = "dup-classify")]
+            {
+                if self.first_settled[u as usize] {
+                    if seed_set.contains(&u) {
+                        self.dup_class.base_seeded += 1;
+                    } else {
+                        self.dup_class.base_inserted += 1;
+                    }
+                }
+                self.first_settled[u as usize] = true;
+            }
             if self.settled_dedup {
                 self.settled[u as usize] = true;
             }
@@ -768,7 +835,7 @@ impl<'a> Solver<'a> {
         let adj = self.adj;
         let t = self.t;
         let mut ds = BlockDs::new(t.saturating_mul(pow2_sat((level - 1) * t)), b);
-        let (mut p_lists, _q, w_list) = phase!(self, find_pivots, self.find_pivots(b, s_list));
+        let (mut p_lists, _q_list, w_list) = phase!(self, find_pivots, self.find_pivots(b, s_list));
 
         let mut piv: Vec<Option<u32>> = Vec::with_capacity(p_lists.len()); // None = dead
         let mut piv_of: FxHashMap<u32, usize> = FxHashMap::default(); // current pivot -> j
@@ -963,6 +1030,56 @@ impl<'a> Solver<'a> {
             if self.settled_dedup {
                 for &x in &w_prime {
                     self.settled[x as usize] = true; // V8: W′ settles
+                }
+            }
+            #[cfg(feature = "dup-classify")]
+            {
+                let s_set: FxHashSet<u32> = s_list.iter().copied().collect();
+                let q_set: FxHashSet<u32> = _q_list.iter().copied().collect();
+                for &x in &w_prime {
+                    if self.first_settled[x as usize] {
+                        if s_set.contains(&x) {
+                            if q_set.contains(&x) {
+                                self.dup_class.wprime_own_root += 1;
+                            } else {
+                                self.dup_class.wprime_own_swept += 1;
+                            }
+                        } else {
+                            self.dup_class.wprime_foreign += 1;
+                            // Lemma D check: walk the pred chain (labels of
+                            // complete vertices are final, so the chain is
+                            // stable) at most k−1 hops looking for a failed
+                            // root of THIS call.
+                            let (mut in_q, mut in_s) = (false, false);
+                            let mut cur = x;
+                            for _ in 0..self.k.saturating_sub(1) {
+                                let p = match self.d[cur as usize] {
+                                    Label::Fin(l) => l.pred,
+                                    Label::Inf => -1,
+                                };
+                                if p < 0 {
+                                    break;
+                                }
+                                let p = p as u32;
+                                if q_set.contains(&p) {
+                                    in_q = true;
+                                    in_s = true;
+                                    break;
+                                }
+                                if s_set.contains(&p) {
+                                    in_s = true;
+                                }
+                                cur = p;
+                            }
+                            if in_q {
+                                self.dup_class.foreign_anc_in_q += 1;
+                            }
+                            if in_s {
+                                self.dup_class.foreign_anc_in_s += 1;
+                            }
+                        }
+                    }
+                    self.first_settled[x as usize] = true;
                 }
             }
             #[cfg(feature = "q11-trace")]

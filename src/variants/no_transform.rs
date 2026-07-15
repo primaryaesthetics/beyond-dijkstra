@@ -26,6 +26,9 @@ pub struct VariantRun {
     pub dup_settlements: usize,
     /// Base-case returns the V5 cap actually lowered (0 unless V5).
     pub base_cap_hits: u64,
+    /// Q14 duplicate-settlement classification (feature `dup-classify`).
+    #[cfg(feature = "dup-classify")]
+    pub dup_class: crate::solver::DupClassCounts,
 }
 
 /// Shortest-path lengths from `source` on the original graph. Parameters
@@ -154,5 +157,7 @@ fn sssp_full(
         total,
         dup_settlements,
         base_cap_hits: solver.base_cap_hits,
+        #[cfg(feature = "dup-classify")]
+        dup_class: solver.dup_class.clone(),
     }
 }

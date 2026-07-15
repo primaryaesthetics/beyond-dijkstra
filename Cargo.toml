@@ -27,6 +27,14 @@ q11-trace = []
 # are unchanged when on; zero overhead when off. Used by
 # `examples/verify_contract.rs`.
 verify-contract = []
+# Duplicate-settlement classification (QUESTIONS.md Q14 addendum): tag
+# every duplicate settlement event as base-case pull (seeded vs
+# in-base insert), own-W' append (root vs swept), or foreign-W' append,
+# and for foreign ones test Lemma D's prediction - a pred-chain ancestor
+# within k-1 hops among the call's failed roots Q. Pure observation -
+# results are unchanged when on; zero overhead when off. Used by
+# `examples/dup_classify.rs`.
+dup-classify = []
 
 [dependencies]
 # Deterministic fast hashing for bookkeeping maps/sets. Iteration order of
@@ -47,6 +55,10 @@ required-features = ["q11-trace"]
 [[example]]
 name = "verify_contract"
 required-features = ["verify-contract"]
+
+[[example]]
+name = "dup_classify"
+required-features = ["dup-classify"]
 
 [profile.release]
 opt-level = 3

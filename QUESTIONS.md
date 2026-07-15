@@ -612,10 +612,41 @@ chain bounces (a partial child returning v unsettled migrates the
 entry up to be re-pulled), and nothing here bounds bounces. Worst-case
 aggregate from the D channel alone is O(l_top · Σ_v hops(v)) —
 polynomial but far above the measured 0.0003–0.037 events/vertex; that
-gap is the remaining open problem. Measurable next: classify each
-duplicate as chain-terminal vs foreign-W′ (Lemma D predicts foreign
-ones require a re-frontiered tied ancestor within k − 1 hops; on
-float-random inputs the ancestor must be canonical).
+gap is the remaining open problem.
+
+**Lemma D measured (same day; raw record
+`benchmarks/results/dup_classify.txt`, driver `examples/dup_classify.rs`,
+`dup-classify` build feature).** Every duplicate settlement event of
+the paper engine classified by channel on the standard adversarial
+family (totals match the recorded dup counts exactly; classification
+partitions them, asserted per run):
+
+| input | n | dups | base-seed | base-ins | own-root | own-swept | foreign | f-anc-Q |
+|---|---|---|---|---|---|---|---|---|
+| zero-heavy minslack | 4 094 | 5 | 0 | 0 | 5 | 0 | 0 | — |
+| zero-heavy minslack | 16 382 | 608 | 49 | 10 | 549 | 0 | 0 | — |
+| tie-rich 0..3 | 170 000 | 5 074 | 734 | 741 | 3 226 | 0 | 373 | 373 |
+| zero-heavy large | 500 000 | 149 | 5 | 15 | 110 | 0 | 19 | 19 |
+| float-random | 500 000 | 664 | 66 | 299 | 250 | 0 | 49 | 49 |
+
+Three readings:
+
+1. **Lemma D's prediction holds with zero exceptions**: every
+   foreign-W′ duplicate (441 across all inputs) has a pred-chain
+   ancestor within k − 1 hops that is a failed root (∈ Q) of the
+   appending call — including on the tie-rich inputs, where the
+   tied-sibling caveat was available but never needed.
+2. **The dominant channel is the Q11 trace's own pattern** (own-root:
+   a re-frontiered settled vertex whose own search fails), and
+   own-swept = 0 everywhere: a settled vertex in S is never re-settled
+   through another root's arborescence. The channel inventory
+   simplifies in practice to: chains ending at level 0 (base-seed),
+   in-base tie re-stores (base-ins — Lemma A/B's bottom-interval
+   insert observed directly), own failed roots, and Lemma D foreigners.
+3. **On continuous weights the in-base tie re-store carries almost
+   half the excess** (299 of 664) — direct confirmation that the
+   same-edge re-offer needs no cross-walk ties, only an unchanged
+   source label (Q11's corrected reading).
 
 ## Q7 — nEdges overflow bound. NOTE
 
