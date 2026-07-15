@@ -384,7 +384,7 @@ mainline totality asserts cover its only dangerous consequence.
 Candidate micro-variant for completeness: guard on distinct count —
 expected distance-neutral, changes recursion shape on tie-rich inputs.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN (the central open mathematics of this audit)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains)
 
 What the paper needs and never states or proves:
 
@@ -433,7 +433,134 @@ the strongest candidate for an original mathematical contribution, and
 the letter should present it as: here is the gap (Q11), here is why it
 is not locally repairable by bound arithmetic (Q12) or by touching
 Relax (V7), here is the measured magnitude, and here is the one-bit
-repair with proofs-modulo-one-clause (V8).
+repair with proofs-modulo-one-clause (V8). See the 2026-07-15 addendum
+below: the gate route asked for in item 2 was executed and closes the
+D-entry channel with an additive per-vertex bound; what survives of
+the open problem is exactly the FindPivots/W′ channel.
+
+## Q14 addendum (2026-07-15) — the gate argument executed: gate tiling closes the D-entry channel; FindPivots is the one ungated relaxation site
+
+Item 2 above said any real proof must exploit the ≥ B_i / ≥ B′ gates.
+Executed. Everything below is for the algorithm AS WRITTEN (paper
+pseudocode, event-count or set semantics alike) under one standing
+hypothesis:
+
+> **(H)** every settlement event settles a complete vertex — Lemma
+> 3.7's completeness clause on reachable states (the Q9 closure);
+> empirically supported by V8's green matrix (its contrapositive).
+
+**Lemma A (gate tiling: one insert per settlement event per edge).**
+Fix a settlement event ε of vertex u, occurring in call X_q whose call
+stack is X_0 ⊃ X_1 ⊃ … ⊃ X_q. The edge sweeps ε triggers offer each
+out-edge (u, v) exactly once per stack level, and the
+accept-and-insert windows are pairwise disjoint intervals:
+
+- at X_q itself: [0, B_{X_q}) if ε is a base-case pull (Algorithm 4's
+  relaxations insert into the base D with no lower gate), or
+  [B′_{X_q}, B_{X_q}) if ε is a W′ append (line 36's ≥ B′ gate);
+- at each ancestor X_j (j < q): [B_{X_{j+1}}, B_{X_j}) — ε's batch
+  rides the returned U_i through the line-30 union up the stack; each
+  ancestor sweeps the returned batch exactly once (lines 21–26), the
+  line-23 gate is ≥ B_i = B_{X_{j+1}} (the bound the child was called
+  with), and Relax's own bound is < B_{X_j}. u cannot also be swept
+  via an ancestor's W′ path: line 30 put u into that call's U before
+  line 34's W \ U filter runs.
+
+Pull bounds nest down the stack (the separator of Lemma 3.4 is ≤ the
+caller's B), so these intervals tile [0, B_{X_0}) disjointly. The
+candidate d[u] + w_uv is one fixed 4-tuple across the whole unwind (u
+is complete under (H), so its label never moves again), hence lands in
+at most ONE window: **each settlement event of u causes at most one
+D-insert per out-edge over the entire run.** ∎
+
+This is §3.4 property 6 ("any edge can be validly relaxed at most
+once") repaired to per-event form — the form that survives duplicates.
+
+**Lemma B (tie targeting).** A valid relaxation into an
+already-complete v is an exact 4-tuple tie whose source is v's
+canonical predecessor: cand = ⟨d[u].len + w, d[u].hops + 1, v, u⟩ =
+d[v] pins u = d[v].pred and pins d[u]'s length and hops to the
+canonical prefix values (cand < d[v] is impossible — labels are walk
+lengths and d[v] = dis-label(v) is their minimum). All three
+insert-relax sites (lines 23, 36, Algorithm 4's pull loop) run only
+inside a settlement event's sweep, so post-settlement gated inserts of
+v are triggered only by settlement events of pred(v), along the one
+edge (pred(v), v). ∎
+
+**Chain accounting.** Call a "chain" the lifetime of one re-frontier
+seed of a settled v: a live D entry (pulls consume it; a child
+returning v unsettled re-creates it one level up via the merge, since
+D_i ⊇ S_i \ U_i) or a surviving S/P_j membership in a stack call
+(which can spawn at most O(1) entries/descents via lines 7/13/29/33
+before converting into an entry or dying — the keyed dedup and the
+ascending pulls serialize them). Each chain ends in at most one
+duplicate settlement event: a base-case pull of v or v's own W′
+append, both of which put v into U so lines 18/31/34 stop feeding it.
+Counting chain seeds:
+
+- live at v's first settlement: at most one entry per stack D plus
+  O(1) memberships per stack call — O(l_top) seeds;
+- created after v's first settlement: only through Lemma B's channel,
+  at most ONE per settlement event of pred(v) by Lemma A — not one
+  per stack level.
+
+The second bullet is where the naive induction's exponential unroll
+dies: dup_D(v) ≤ O(l_top) + (1 + dup(pred(v))) is additive along the
+canonical predecessor chain, not multiplicative.
+
+**Lemma D (the W′ channel walks tied segments).** The one settlement
+channel needing no D entry is a W′ append of a v swept into a failed
+FindPivots arborescence of a call with v ∉ S. Every relax acceptance
+into a complete vertex pins its predecessor and its length/hops to the
+canonical prefix values (Lemma B, noting cand reads only len/hops of
+the source label), so the arborescence path from the failed root
+q ∈ Q ⊆ S to v is a minimal-(length, nEdges) path: on inputs without
+exact length-and-hops ties between distinct walks (float-random,
+almost surely) it is exactly the suffix of v's canonical path and q
+lies on v's canonical shortest path; on tie-rich inputs it is a
+tied-sibling path. Either way: a foreign W′ duplicate of v requires a
+tied-path ancestor of v within < k hops to sit in that call's S and
+fail its search, and one failed search (< k vertices) emits at most
+k − 1 duplicates total. ∎ (The Q11 trace is the non-foreign case:
+v5 ∈ S re-frontiered by its own stale entry, own search failed, own
+W′ append.)
+
+**Theorem (conditional additive bound).** Under (H), with dup_W(v)
+denoting v's W′-channel duplicates from Lemma D,
+
+  dup(v) ≤ Σ_{w on the canonical path s→v} (O(l_top) + dup_W(w)).
+
+In particular on any run where the W′ channel is silent (dup_W ≡ 0),
+dup(v) = O(l_top · (hops(v) + 1)) — per-vertex, polynomial, additive.
+The exponential blow-up of the naive recursion was an artifact of
+ignoring the gates. ∎
+
+**What Lemma A buys the time analysis.** Total gated inserts are now
+≤ Σ_u (1 + dup(u)) · outdeg(u) ≤ δ(n₂ + T), T = Σ_v dup(v) the total
+excess. Every charging step of Lemma 3.9 that duplicates falsified
+degrades additively in T — including the Σ|Q_Y| bullet, whose "at most
+δ relaxations from complete predecessors" step was circular under
+duplicates (relaxation events from complete predecessors are
+themselves multiplied by re-settlements) and is un-circularized by
+Lemma A: ≤ δ per settlement EVENT. So the missing lemma reduces to
+bounding T alone, and under V8 (T = 0 by construction) Lemma 3.8's
+disjoint unions and Lemma 3.9's accounting hold verbatim modulo (H) —
+V8 is not just operational closure, it makes the paper's analysis
+sound as stated for the marked variant.
+
+**Still open (sharpened).** Bounding dup_W for the algorithm as
+written. FindPivots is the single relaxation site with no lower gate
+(only cand < B), so Lemma A does not tile it; Lemma D reduces the
+question to counting failed-search memberships of re-frontiered tied
+ancestors within k − 1 hops, but those S-memberships feed back through
+chain bounces (a partial child returning v unsettled migrates the
+entry up to be re-pulled), and nothing here bounds bounces. Worst-case
+aggregate from the D channel alone is O(l_top · Σ_v hops(v)) —
+polynomial but far above the measured 0.0003–0.037 events/vertex; that
+gap is the remaining open problem. Measurable next: classify each
+duplicate as chain-terminal vs foreign-W′ (Lemma D predicts foreign
+ones require a re-frontiered tied ancestor within k − 1 hops; on
+float-random inputs the ancestor must be canonical).
 
 ## Q7 — nEdges overflow bound. NOTE
 
