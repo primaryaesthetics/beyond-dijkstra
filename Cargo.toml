@@ -60,6 +60,10 @@ required-features = ["verify-contract"]
 name = "dup_classify"
 required-features = ["dup-classify"]
 
+[[example]]
+name = "cascade"
+required-features = ["dup-classify"]
+
 [profile.release]
 opt-level = 3
 lto = "fat"
@@ -73,3 +77,7 @@ opt-level = 2
 
 [profile.dev]
 opt-level = 2
+
+[[example]]
+name = "cascade_trace"
+required-features = ["q11-trace"]

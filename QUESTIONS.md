@@ -738,6 +738,76 @@ distances and super-linear time, silently. Q13's deviation is thereby
 upgraded from pinned convenience to a safety property. (V8 removes
 the cascade by construction under either semantics.)
 
+## Q14 addendum 3 (2026-07-15) — the cascade construction attempted: it ignites at Θ(n) with a 100–10⁴× constant, and every super-linear knob plateaus
+
+The dichotomy of addendum 2 put on the bench. Construction (driver
+`examples/cascade.rs`, wave diagnostics `examples/cascade_trace.rs`,
+raw record `benchmarks/results/cascade.txt`): a unit-weight path
+p_1 → … → p_L (dis(p_i) = i), one decoy trigger per path vertex — an
+early relaxation s → d_i → p_i planting a stale D entry of p_i at
+value x_i above the entire path range, accepted while d[p_i] = ∞ (the
+`≤` blocks all post-settlement planting, so pre-settlement decoys are
+the only way to seed stale entries at foreign values) — plus G = 8
+ballast leaves per trigger gap. Every run distance-checked bit-exact
+against the crate's Dijkstra, up to n = 2×10⁶; the Q10/Q13 ceiling
+never tripped.
+
+**The cascade ignites.** Wave structure confirmed by trace (path
+settlements in log order form ascending runs to the path end): a
+pulled stale entry re-settles p_i in a base case, the exact-tie
+re-offer of the canonical edge re-inserts p_{i+1} below the local
+bound, and the wave rolls the full remaining path, stalling and
+resuming across base-case chunks and |U| cutoffs. Excess measured at
+0.56–3.8 events/vertex depending on parameters — two to four orders
+above every natural family tried (0.0003–0.037) — with ~80–95% of
+duplicates in the base-inserted class (the in-base tie re-store,
+Lemma A's bottom interval, exactly the wave mechanism).
+
+**Every super-linear knob plateaus.** Three independent scaling
+probes, all flat:
+
+1. L at fixed parameters: dup/n ≈ 0.59 constant, L = 50 → 800, at
+   forced (3,2,2); ≈ 1.2–2.9 at natural parameters (the variation is
+   the l_top sawtooth, not growth).
+2. Forced t = 4..7 at fixed l_top = 3, sized at the sawtooth peak
+   n = 2^(l_top·t) − 1 (testing #waves ~ n/M_top = Θ(2^t/t)): dup/n
+   = 2.96, 3.79, 3.58, 3.22 — flat, hypothesis refuted.
+3. l_top = 3, 4, 5 at fixed t = 4, and l_top = 6, 8, 10 at fixed
+   t = 2 (testing #waves ~ l_top): dup/n = 2.961, 2.918, 2.919 and
+   0.5566, 0.5583, 0.5585 — constant to three decimals over 250× in
+   n, hypothesis refuted.
+
+Waves per vertex converge to a size-independent, parameter-dependent
+constant (~5.6 at t = 2, ~30–38 at t = 4..7, non-monotone in t).
+
+**The damping force, identified empirically.** Addendum 2's
+obstruction analysis asked for "a resource the cascade consumes that
+the gates do not see"; the experiment exhibits it: CONCURRENT
+WAVEFRONT MERGING. All pre-settlement plants of one vertex collapse
+to one entry per D through the keyed dedup (coexisting entries of the
+same key keep-min); at every descent the pull re-sorts by current
+labels, so simultaneous triggers cluster into the same small-value
+batches and their waves fuse; parked fronts absorb later waves that
+catch up (a wave reaching an already-inserted front value dedups into
+it — visible in the trace as runs ending exactly where an earlier
+run's front parked). The number of separated re-frontier episodes a
+vertex can experience converges to a constant the run size cannot
+inflate. This is the concrete proof target for branch (b) of the
+dichotomy: bound concurrent live chains per vertex by the dedup
+geometry — none of D-inserts, S-memberships, or bounces (the
+resources addendum 2 ruled out), but entry COEXISTENCE.
+
+**Where the dichotomy stands.** No super-linear ignition through this
+family; three scaling laws refuted; evidence now leans branch (b) —
+but a bound is still not proved, and the constructed Θ(n) excess with
+constant ≈ 3.8 already falsifies Lemma 3.8's disjoint-union
+accounting by a material constant factor on inputs where the paper's
+analysis presumes zero. The letter's framing sharpens once more: the
+missing lemma is real (Q11), unrepairable locally (Q12/V7), reducible
+to bounding wavefront coexistence (addenda 1–3), removable by one bit
+(V8), and empirically Θ(n)-bounded with a two-orders constant under
+deliberate attack (this addendum).
+
 ## Q7 — nEdges overflow bound. NOTE
 
 nEdges strictly increases along relaxations and is bounded by the longest
