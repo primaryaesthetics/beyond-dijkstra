@@ -5,7 +5,7 @@ resolved by proof, by the authors, or empirically by the reference
 implementation. (The first project's QUESTIONS.md produced 14 entries;
 this file follows the same discipline.)
 
-## Q1 — prescribed δ is outside its own validity range on all sparse inputs. OPEN
+## Q1 — prescribed δ is outside its own validity range on all sparse inputs. RESOLVED 2026-07-15 (sharpened to ALL inputs below n = 2^4096; the clamp is provably free, claimed bounds survive within 2×)
 
 §2.1 requires 3 ≤ δ ≤ m/n. Lemma 3.9 prescribes δ = ¼·min{m/n, log log n}.
 For any graph with m/n < 12 the prescription gives δ < 3 at every size n —
@@ -17,6 +17,61 @@ practical sizes: n = 10⁶ gives t ≈ 6, k ≈ 3, log₂k ≈ 1.6 < 3 ≤ δ.
 Consequence if confirmed: the stated optimal parameterization is
 unreachable for sparse graphs; an implementation is always in the
 "analysis-degraded" regime. Candidate letter/note material.
+
+Resolution (2026-07-15) — the §3/Lemma 3.9 arithmetic re-run with the
+clamp. Four findings; the net verdict is that the complexity CLAIMS
+survive verbatim, only the prescription needs the clamp the paper
+never states.
+
+1. **The invalidity is universal, not sparse-only.** δ = ¼·min{m/n,
+   loglog n} ≥ 3 requires BOTH m ≥ 12n AND loglog n ≥ 12, i.e.
+   n ≥ 2^4096. With the paper's own constant ¼, the prescription
+   violates §2.1's 3 ≤ δ ≤ m/n on EVERY input of ANY density below
+   n = 2^4096 — the dense case is rescued by the loglog n arm only
+   past that threshold. (Constant-free reading δ = min{m/n, loglog n}:
+   dense graphs become valid at n ≥ 256, but every m < 3n graph stays
+   invalid at all n.)
+
+2. **Honest sparse complexity at forced δ = 3.** The clamped reduction
+   yields n₂ = Θ(n + m) vertices, O(m) edges, degree ≤ 3, and the §3
+   wrap-up formula reads O(m(t + log n · log t/(3t))), minimized at
+   t = Θ(√(log n · loglog n)):
+
+     T_clamp = O(m · √(log n · loglog n)).
+
+   For m = Θ(n) this equals the paper's claimed sparse bound
+   O(√(mn · log n · loglog n)) up to a constant.
+
+3. **The clamp is free in every regime (factor ≤ 2).** Write
+   L = log n · loglog n, so T_clamp = O(m√(L/3)).
+   - Sparse arm m ≤ 12n, claim O(√(mnL)) = O(m√(nL/m)): ratio
+     √(m/3n) ≤ 2, and ≤ 1 whenever m ≤ 3n.
+   - Dense arm m > 12n at n < 2^4096 (there loglog n < 12, so the
+     prescribed δ = ¼·loglog n < 3 and the clamp is active), claim
+     O(m√(log n)): ratio √(loglog n / 3) < 2 exactly because
+     loglog n < 12 in this regime.
+   - n ≥ 2^4096 with m ≥ 12n: prescription valid, clamp inactive.
+   So δ := max(3, ⌊¼·min{m/n, loglog n}⌋) — the reference behavior
+   pinned above — achieves every bound the paper claims, up to a
+   factor of 2, at every size, and coincides with the prescription
+   asymptotically.
+
+4. **The δ ≤ log k violation also costs O(1).** With constant δ = 3
+   every use of the assumption in the analysis (Lemma 3.2's simplified
+   time term, Lemma 3.9's linear-scan step T3 = C′δ|U| ≤ C′|U| log t)
+   is δ·(unit work) with δ = 3 — constant-factor slack even at the
+   sizes where log k < 3 (all n with k < 8, i.e. every practical
+   size). Footnote 1's waiver ("the algorithm also works when
+   δ > log k") is thereby quantified for the clamped regime: constants
+   only.
+
+Revised consequence: the stated optimal parameterization is indeed
+unreachable at all storable sizes, but the claimed bounds are
+achievable — the letter item is now "the prescription needs a clamp
+the paper never states, plus the two-line proof that the clamp is
+free." Caveat: "claims survive" is at the parameterization level; the
+Q11/Q14 re-settlement accounting gap is orthogonal and affects all
+parameterizations equally.
 
 ## Q2 — empty P_j after partition. OPEN
 
