@@ -14,7 +14,7 @@
 //! MEASURED OUTCOME (recorded in benchmarks/results/cascade.txt): the
 //! cascade ignites — waves roll the full path (q11-trace run structure:
 //! ascending runs to the path end) and the excess reaches 0.56–3.8 events
-//! per vertex, two to four orders above natural inputs — but every growth
+//! per vertex, one to four orders above natural inputs — but every growth
 //! knob plateaus: dup/n is flat in L at fixed parameters, flat in forced t
 //! at fixed l_top, and flat in l_top at fixed t (constant to three decimals
 //! over 250× in n). Concurrent wavefronts merge through the keyed dedup and

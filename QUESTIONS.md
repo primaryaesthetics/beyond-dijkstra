@@ -738,7 +738,7 @@ distances and super-linear time, silently. Q13's deviation is thereby
 upgraded from pinned convenience to a safety property. (V8 removes
 the cascade by construction under either semantics.)
 
-## Q14 addendum 3 (2026-07-15) — the cascade construction attempted: it ignites at Θ(n) with a 100–10⁴× constant, and every super-linear knob plateaus
+## Q14 addendum 3 (2026-07-15) — the cascade construction attempted: it ignites at Θ(n), one to four orders above natural inputs, and every super-linear knob plateaus
 
 The dichotomy of addendum 2 put on the bench. Construction (driver
 `examples/cascade.rs`, wave diagnostics `examples/cascade_trace.rs`,
@@ -758,8 +758,9 @@ pulled stale entry re-settles p_i in a base case, the exact-tie
 re-offer of the canonical edge re-inserts p_{i+1} below the local
 bound, and the wave rolls the full remaining path, stalling and
 resuming across base-case chunks and |U| cutoffs. Excess measured at
-0.56–3.8 events/vertex depending on parameters — two to four orders
-above every natural family tried (0.0003–0.037) — with ~80–95% of
+0.56–3.8 events/vertex depending on parameters — one to four orders
+above every natural family tried (0.0003–0.037; the closest same-regime
+comparison is 0.56 vs 0.037, a factor of 15) — with ~80–95% of
 duplicates in the base-inserted class (the in-base tie re-store,
 Lemma A's bottom interval, exactly the wave mechanism).
 
