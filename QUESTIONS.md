@@ -216,6 +216,12 @@ Two results:
    Q12 leak nor Q10's B′ = B-with-D ≠ ∅ sub-case is exercised by this
    family. Q12 stays open on the argument, unobserved empirically.
 
+Superseded in part (2026-07-16, Q15): item 2's cleanliness was a
+property of those inputs. The wave-escape family violates the base
+clause thousands of times and the recursive-return clause hundreds of
+times on plain positive unit weights, and V5 zeroes all of it — see
+Q15 for the mechanism and the recorded run.
+
 ## Q9 — Lemmas 3.1/3.2/3.7 are false as standalone contracts. OPEN
 
 Found during the V1 (no-degree-reduction) falsification review, and
@@ -871,6 +877,90 @@ branch-(b) proof target. What remains unproved, in order: (i) per-call
 B′ monotonicity under duplicates (attack at the wave-escape regime,
 wave length > t³·2^((l−1)t)); (ii) a bound on straddling-call creation.
 Both are now concrete, instrumented, and empirically constrained.
+
+Follow-up (2026-07-16, Q15): item (i) attacked with the escape family —
+B′ monotonicity SURVIVED (zero regressions even under forced escapes);
+the escape leaks through the bound clause instead, which fails at
+scale for the algorithm as written. So Lemma F's monotonicity
+hypothesis strengthens empirically while its bound-clause hypothesis
+narrows Lemma F's scope to the V5-repaired algorithm; item (ii) gains
+the batch-coarsening feedback as its concrete mechanism. Details and
+recorded runs in Q15.
+
+## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
+
+Built to decide Q14 addendum 4's unproved item (i): force a
+re-settlement wave longer than the child budget of the call holding its
+trigger, and watch whether B′ regresses. Construction (driver
+`examples/escape.rs`, raw record `benchmarks/results/escape.txt`): a
+settled unit-weight path p_1..p_L, a phase-A block of leaf values that
+drags the climbing leftover D to a mid-level call before the single
+decoy trigger (planted at value A above phase A while d[p_1] = ∞, with
+filler labels closing the decoy's base chunk so the plant survives
+keyed dedup) is pulled, and a phase-B block above. All runs
+distance-exact vs Dijkstra; all under the event ceiling. Five results:
+
+1. **B′ monotonicity survives even here — zero regressions in every
+   configuration.** The escape valve is not the progress measure but
+   the bound clause: the wave-carrying child keeps its high separator
+   as returned B′ and leaks the low front through the returned D.
+
+2. **Lemma 3.7's clause 2 (dB[D] ≥ B′) is violated at recursive
+   returns, in the wild, for the first time** — 366 violations at
+   L = 5 000, 988 at L = 20 000 — and Lemma 3.1's base-case clause in
+   the thousands (1 110 / 2 973), on a family with plain positive unit
+   weights: no zero-weight edges, no exact ties, no crafted stars. The
+   mechanism is Q3's undercut industrialized: a wave-carrying base
+   chunk exits at its |U| cutoff right after the post-pull relaxation
+   re-inserts the next front below the ballast-scale separator — one
+   violation per chunk, confirmed by arithmetic: V8's counts are
+   exactly ⌈wave/(t³+1)⌉ (555 = 5 000/9 at t = 2), the paper engine
+   doubles them (first wave + duplicate wave). The full-execution
+   dichotomy breaks at the same scale (up to 2 958 — Q10's sub-case,
+   previously a corner). Q3's addendum "the adversarial family is
+   contract-clean" is hereby superseded: cleanliness was a property of
+   those inputs, not of the algorithm.
+
+3. **V5's one-line cap zeroes all three counters simultaneously** —
+   base, recursive, and dichotomy violations all drop to zero, with
+   cap_hits exactly equal to the paper's base-violation count
+   (44 / 1 110 / 618 / 4 444). This is experimental confirmation of
+   the transitive contract restoration (VARIANTS.md "Algorithm 3's
+   contract, transitively"): repairing the leaves repairs every
+   recursive return above them. The recursive violations were
+   inherited Q3, not the line-29 channel — Q12 proper remains
+   unobserved even under deliberate escape pressure.
+
+4. **The Q3 leak is an accidental wave damper.** Under V5 the waves
+   roll FARTHER: 133 → 565 duplicates in the early-trigger row,
+   6 757 → 20 000 (the full path, every vertex re-settled) at
+   L = 20 000. The unrepaired algorithm's contract violation was
+   killing its own re-settlement waves — the parent's healing pull
+   consumes the leaked front out of order and strands the wave. So
+   the two defects are load-bearing on each other: fixing the Lemma
+   3.1 contract (V5) amplifies the Lemma 3.8 accounting excess on
+   escape geometry. On the cascade family (Q14 addendum 3) V5 ≈ paper
+   (313 vs 297 at L = 50; identical at natural parameters) — there
+   the damping is trigger batch-merging, not the leak. Only V8 closes
+   both defects at once.
+
+5. **Batch-coarsening is a negative feedback that self-damps
+   multi-trigger escapes** (analysis, not yet a theorem): every wave's
+   events raise the cumulative count, which raises the level the
+   leftover D climbs to, which coarsens the pull batches
+   (M = t·2^((l−1)t)), which raises the rank-separation cost of the
+   NEXT trigger linearly in consumed events. Staggered-trigger designs
+   pay ballast quadratic in the wave count and their dup/n decays.
+   This is the sharpest known damping mechanism and the refined
+   branch-(b) proof target: bound the number of rank-separated stale
+   pulls a run can afford.
+
+Consequence for Lemma F (Q14 addendum 4): its bound-clause hypothesis
+FAILS for the algorithm as written on this family, so Lemma F applies
+to the V5-repaired algorithm — where both hypotheses now hold
+empirically everywhere — and the repaired algorithm is exactly the one
+whose waves roll longest. The missing re-settlement lemma is therefore
+hardest precisely where the contracts are honest.
 
 ## Q7 — nEdges overflow bound. NOTE
 

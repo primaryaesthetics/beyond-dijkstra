@@ -1,0 +1,17 @@
+      L     E_A        n    dups   dup/n  B'-regr  v8-regr  examples (level, B' before -> after, |U_i|)
+  [paper] L=200: viol_bound_base=44 viol_bound_rec=12 viol_dichotomy=52 cap_hits=0 dups=200
+  [   V5] L=200: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=44 dups=200
+  [   V8] L=200: viol_bound_base=22 viol_bound_rec=6 viol_dichotomy=24 cap_hits=0 dups=0
+    200    3000     3711     200   0.054        0        0  
+  [paper] L=5000: viol_bound_base=1110 viol_bound_rec=366 viol_dichotomy=1469 cap_hits=0 dups=5000
+  [   V5] L=5000: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=1110 dups=5000
+  [   V8] L=5000: viol_bound_base=555 viol_bound_rec=183 viol_dichotomy=732 cap_hits=0 dups=0
+   5000    3000     8511    5000   0.587        0        0  
+  [paper] L=5000: viol_bound_base=570 viol_bound_rec=188 viol_dichotomy=735 cap_hits=0 dups=133
+  [   V5] L=5000: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=618 dups=565
+  [   V8] L=5000: viol_bound_base=555 viol_bound_rec=183 viol_dichotomy=732 cap_hits=0 dups=0
+   5000      40     5551     133   0.024        0        0  
+  [paper] L=20000: viol_bound_base=2973 viol_bound_rec=988 viol_dichotomy=2958 cap_hits=0 dups=6757
+  [   V5] L=20000: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=4444 dups=20000
+  [   V8] L=20000: viol_bound_base=2222 viol_bound_rec=737 viol_dichotomy=2952 cap_hits=0 dups=0
+  20000    3000    23511    6757   0.287        0        0  

@@ -108,6 +108,9 @@ pub struct DupClassCounts {
     /// (QUESTIONS.md Q15). The paper's Lemma 3.7/3.8 proofs implicitly
     /// require B′ to be non-decreasing across iterations.
     pub bprime_regressions: u64,
+    /// First few regressions, for the record: (call level, B′ length
+    /// before, returned B′_i length, |U_i| of the regressing iteration).
+    pub regression_examples: Vec<(u64, f64, f64, usize)>,
 }
 
 // ---------------------------------------------------------------------------
@@ -1002,6 +1005,18 @@ impl<'a> Solver<'a> {
             #[cfg(feature = "dup-classify")]
             if b_pi < b_prime {
                 self.dup_class.bprime_regressions += 1;
+                if self.dup_class.regression_examples.len() < 8 {
+                    let len_of = |l: Label| match l {
+                        Label::Fin(x) => x.len,
+                        Label::Inf => f64::INFINITY,
+                    };
+                    self.dup_class.regression_examples.push((
+                        level,
+                        len_of(b_prime),
+                        len_of(b_pi),
+                        u_i.len(),
+                    ));
+                }
             }
             b_prime = b_pi;
             u_set.extend(u_i.iter().copied());

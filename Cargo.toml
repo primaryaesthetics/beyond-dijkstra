@@ -81,3 +81,7 @@ opt-level = 2
 [[example]]
 name = "cascade_trace"
 required-features = ["q11-trace"]
+
+[[example]]
+name = "escape"
+required-features = ["dup-classify"]

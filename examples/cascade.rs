@@ -105,8 +105,8 @@ fn dijkstra_lengths(n: usize, edges: &[(u32, u32, f64)], source: usize) -> Vec<f
 
 fn main() {
     println!(
-        "{:>7} {:>8} {:>9} {:>8} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10} {:>8}",
-        "L", "n", "dups", "dup/n", "base-seed", "base-ins", "own-root", "own-swept", "foreign", "predicted", "B'-regr"
+        "{:>7} {:>8} {:>9} {:>8} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10} {:>8} {:>9}",
+        "L", "n", "dups", "dup/n", "base-seed", "base-ins", "own-root", "own-swept", "foreign", "predicted", "B'-regr", "V5-dups"
     );
     let g_ballast = 8;
     sweep_fixed_params(g_ballast);
@@ -126,12 +126,23 @@ fn sweep_fixed_params(g_ballast: usize) {
         // experiments pinned; natural params reported separately below.
         for &(tag, ov) in &[("(3,2,2)", Some((3u64, 2u64, 2u64))), ("natural", None)] {
             let result = std::panic::catch_unwind(|| no_transform::sssp_hybrid(n, &edges, 0, 0, ov));
+            // V5 comparison: the contract-repaired base case removes the
+            // accidental wave damping of the Q3 leak (see escape.rs), so
+            // its excess is expected to be LARGER on this family.
+            let v5 = std::panic::catch_unwind(|| no_transform::sssp_v5(n, &edges, 0, 0, ov));
             match result {
                 Ok(run) => {
                     assert_eq!(run.dist, oracle, "distances diverged at L={l} {tag}");
                     let c = &run.dup_class;
+                    let v5_dups = match &v5 {
+                        Ok(r) => {
+                            assert_eq!(r.dist, oracle, "V5 distances diverged at L={l} {tag}");
+                            format!("{}", r.dup_settlements)
+                        }
+                        Err(_) => "CEIL".into(),
+                    };
                     println!(
-                        "{:>7} {:>8} {:>9} {:>8.3} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10} {:>8}  {tag} dist-ok",
+                        "{:>7} {:>8} {:>9} {:>8.3} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10} {:>8} {:>9}  {tag} dist-ok",
                         l,
                         n,
                         run.dup_settlements,
@@ -143,6 +154,7 @@ fn sweep_fixed_params(g_ballast: usize) {
                         c.wprime_foreign,
                         predicted,
                         c.bprime_regressions,
+                        v5_dups,
                     );
                 }
                 Err(_) => {
