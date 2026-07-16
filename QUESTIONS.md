@@ -454,7 +454,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain)
 
 What the paper needs and never states or proves:
 
@@ -1023,6 +1023,125 @@ sketch grade: **the excess is linear in n with an n^o(1) parameter
 constant — Lemma 3.8's disjointness fails, but only by a bounded
 per-vertex factor, and the paper's totality is safe while its time
 analysis degrades by at most the same factor.**
+
+## Q14 addendum 7 (2026-07-16) — the (H) proof opened: the incomplete-restricted invariant passes its pre-test with zero violations everywhere, the freshness algebra, base-case completeness unconditional, and the two sub-lemmas that remain
+
+The route to (H) — every settlement event settles a complete vertex —
+is to re-run Lemma 3.7's induction with its falsified clause 2
+restricted to incomplete vertices. Before attempting the proof, the
+candidate invariant was instrumented and measured.
+
+**The pre-test (driver instrumentation in `src/solver.rs`, features
+`verify-contract` + `dup-classify`; raw record
+`benchmarks/results/restricted_invariant.txt`).** Counters for the
+restricted clause — "min stored value among keys of INCOMPLETE
+vertices ≥ B′" — at base-case returns, recursive returns, and the end
+of every BMSSP iteration, under two completeness proxies: *unsettled*
+(vertex not yet first-settled; a superset of incomplete, so zero here
+implies the true clause) and *incomplete* (exact: current label length
+≠ true distance, oracle-checked). Results over the full adversarial
+matrix (escape/staggered/reuse, the dup_classify five, the
+verify_contract families; paper, V5, and V8 engines):
+
+1. **The exact restricted clause holds with ZERO violations
+   everywhere** — including the escape rows where the unrestricted
+   clause fails 988/2 973 times per run. Every falsifying entry ever
+   measured belongs to a complete vertex. Strong go signal.
+2. **The unsettled proxy FAILS on escape geometry** (paper at
+   L = 20 000: 2 223/742/2 965 base/rec/iter; V8 within a few counts
+   of paper; V5 zero — its cap lowers B′ below the offending entry).
+   The counts reproduce Q15's chunk arithmetic ⌈wave/(t³+1)⌉: the
+   per-chunk Q3 undercut is the NEXT path vertex freshly relaxed at
+   its exact distance — complete but never settled. The Q3 star pins
+   the semantics in miniature (vertex 10 at len 8 < bound 9:
+   unsettled fires, exact does not). Consequence: **the invariant must
+   restrict by completeness, not settledness** — no algorithm-visible
+   event marks the boundary, which is fine for a proof (completeness
+   is the same semantic property the paper's own clauses quantify
+   over) but rules out any "settled-bit" shortcut in the induction.
+
+**The freshness algebra (proved, small).** Call an entry of key v
+*fresh* if its stored value equals the current label d[v].
+
+- *Stored dominates label*: every stored value of v in every live D is
+  ≥ d[v] — inserts store then-current labels, labels never increase,
+  keep-min and Merge only keep such values. ∎
+- *Fresh entries are minima and persist*: a fresh entry is the global
+  minimum entry of its key, survives every keep-min and every Merge,
+  and stops being fresh only when a later relaxation drops the label. ∎
+- *Label-drop inventory*: a label drop always re-inserts fresh at the
+  accepting site except at (i) FindPivots' k Bellman-Ford rounds (the
+  one ungated relaxation site — Lemma A's note), whose damage is
+  confined to W-territory of that call and repaired at its return
+  (W′ settles, lines 31–33 re-insert S-remainders at current labels,
+  Lemma 3.2's ⟨W, P⟩ covers the rest), and (ii) line-36 sweeps
+  accepting below B′ (gate refuses the insert). Line-23 re-offers
+  below B_i are exact ties — the child's clause 3 already placed the
+  fresh entry in D_i — so no drop occurs there. ∎ (inventory)
+
+**Base-case completeness is unconditional (proved).** During a base
+call no other call runs, and every in-base label drop re-inserts, so
+stored = label for every key throughout; pulls ascend by label. If a
+pulled u were incomplete, the first incomplete vertex y on u's
+shortest path has a complete predecessor z that is either already
+pulled (its sweep then fresh-inserted y at dis(y) < d[u], and
+dis(y) < B since stored_u < B — in-window) or still stored fresh at
+dis(z) ≤ dis(u) < d[u]; either way an entry strictly below u's
+contradicts u being the minimum pull, with the tuple order settling
+exact ties. So every base-case pull settles a complete vertex,
+independent of Q3 — which breaks only the bound clause. ∎
+
+**The repaired Frontier Split.** Lemma 3.6's hypothesis
+{x ∈ Y : d[x] < B_s} ⊆ Y_s is stated over labels while Pull selects by
+stored values — the stale-entry gap. But its proof consumes membership
+only for the complete covering vertex y′ with d[y′] = dis(y′) < B_s:
+if coverage is fresh, y′'s entry sits at its label and Pull captures
+it (and line 13 captures the P̂ side by labels via clause 3). So the
+sub-call precondition survives verbatim under fresh coverage. ∎
+(conditional on L1)
+
+**What remains — the proof's spine, two sub-lemmas.**
+
+- **(L1) Fresh-coverage maintenance**: at every iteration boundary,
+  every incomplete v ∈ Ũ_P has a COMPLETE coverer on its shortest
+  path holding a fresh entry in D∪P̂. Initialization is Lemma 3.2 plus
+  pivots inserted at current labels; the iteration step hands coverage
+  to the child (pull + repaired split), receives it back through the
+  child's clause 3 — which is precisely a freshness statement
+  (R(B, U) entries at d[v] = d[u] + w_uv, current labels) — plus
+  lines 31–33 at current labels, and Merge preserves fresh minima.
+  The named hole: coverers whose labels drop mid-iteration through
+  the two inventory sites of deeper active calls; both are confined
+  to those calls' W/S territory and repaired at their returns, but
+  the custody bookkeeping across the active stack is unwritten.
+- **(L2) The endgame above B′** (W′ completeness and
+  Ũ(B′, S) ⊆ U): the paper contradicts an incomplete v with
+  d[v] < B′ via dis(coverer) = d[coverer] ≥ dB[D∪P] ≥ B′ — invalid
+  under stale entries, and this consumption is FOR COMPLETE COVERERS,
+  so the restricted clause 2 alone cannot feed it. The repair must
+  show the fresh coverer u has dis(u) ≥ B′ directly: if dis(u) < B′
+  then u is complete yet unsettled (a settled-and-unwound u would
+  have completed v's path successor — Lemma A's windows tile
+  [0, B_top), so the full unwind offers the next edge validly once),
+  and an unsettled fresh entry at stored = dis(u) < B′ should have
+  been pulled and settled by a child before B′ climbed past it —
+  U_i = Ũ(B′_i, S_i) by induction. That last step consumes per-call
+  B′ monotonicity (measured universal, including every escape row —
+  Q15 finding 1 — but still unproved) and a capture argument ("B′
+  never passes an unpulled fresh entry"), which is exactly the
+  once-per-call machinery of Lemma F. For V5 the endgame must route
+  differently — V5 regresses B′ (Q15) — consistent with conservation
+  of trouble: each engine breaks exactly one hypothesis.
+
+**Status.** (H) now rests on: base-case completeness (proved above,
+unconditional) for every base pull, plus (L1) + (L2) for W′ appends
+and the induction's handoff. The pre-test's confinement result — every
+measured falsification of the paper's clause 2, on every family ever
+constructed, is complete-keyed — is the empirical statement that no
+third hole exists. Payoff unchanged: (H) proved discharges the
+standing hypothesis of Lemmas B, D, F, G, H and the linear-excess
+theorem (addendum 6), and upgrades V8 from "empirically safe" to
+"provably safe modulo (L1)/(L2)".
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
