@@ -34,6 +34,19 @@
 //!   so the leaked pair survives merge to the parent's return. wards_rec
 //!   fires for the first time on any input, and the escort (the triangle's
 //!   z_t, complete, fresh, co-resident) is found: missing_rec = 0.
+//! - Row F (merge-abort improver, k = 4; added by the cold audit of the
+//!   first five rows): the search loop has THREE exits — heap empty
+//!   (failed), |K| >= k (capped), and tree contact (merged) — and the
+//!   merged exit is a silent-completion channel the capped-only inventory
+//!   missed. The improver r improves the stale z and then contacts an
+//!   existing tree BEFORE popping z, aborting exactly like a cap: z is
+//!   complete with no entry, its successor never re-relaxed. r itself is
+//!   swept into the contacted tree's partition group, where a CHEAPER
+//!   merged root s4 becomes the pivot — mid-call custody of z is a PROXY
+//!   entry (s4's pivot insert, value <= d[r]), not an entry on z's true
+//!   path. At the boundary the proxy collapses back to direct entries:
+//!   line 33 re-inserts r (B′ <= d[r] < B), and the unpulled pivot caps
+//!   B′ <= d[s4] < d[r] < dis(z), so z is never in W′.
 //!
 //! Predictions written before the first run (per engine paper/V5/V8):
 //! rows A-D identical across engines — wards/missing all 0, settle-inc 0;
@@ -45,6 +58,16 @@
 //! B′ = 20.84375, wards 0. Part 2 (full recursion on the same graphs):
 //! distances exact on every engine, settle-inc 0, missing 0 everywhere;
 //! wards 0 on rows A-D; row E wards fire at base/iter on paper and V8.
+//!
+//! Row F predictions, written before its first run: all engines identical
+//! (no duplicate settlements, all base children full so the V5 cap never
+//! fires): B′ = 20.5, |U| = 41 (5 children x 8 pulls + x W′-settled),
+//! all counters zero; z: d = 22.125 (improved by the aborted search),
+//! not in U, no entry; x1: d = inf (the stale offer crossed B at
+//! FindPivots time, 30 + 975 >= 1000, hiding true 997.125); r: d = 21.5
+//! WITH entry 21.5 (line 33); s4: entry 21 (unpulled pivot);
+//! B′ = 20.5 <= d[s4] = 21 < d[r] = 21.5 < dis(z) = 22.125. Part 2:
+//! distance-exact, all counters zero, every engine.
 //!
 //! ```text
 //! cargo run --release --features verify-contract,dup-classify --example wprime
@@ -393,6 +416,45 @@ fn row_e() -> (Craft, u64, u32, u32) {
     (c, 3, z_t, y_t)
 }
 
+/// Row F: merge-abort improver (k = 4). x@20 ->10-> z (stale 30),
+/// z ->975-> x1 (stale cand 1005 >= B refused at FindPivots; true
+/// 22.125 + 975 = 997.125 < B hidden) — x's search FAILS at |K| = 2 < 4,
+/// so W = {x, z} and Q = {x}. g@21.75 with three leaves (+0.0625, +0.125,
+/// +0.1875) caps at |K| = 4: the contact tree. r@21.5 relaxes r -> z first
+/// (0.625: z improved to its true 22.125, joins K, pushed) and then
+/// r -> h2 (0.34375: cand 21.84375 < 21.875 accepts into the tree) — the
+/// search MERGES and aborts before popping z: z is complete, entry-less,
+/// and z -> x1 is never relaxed. s4@21 then merges the same way
+/// (0.828125: cand 21.828125 < 21.84375). The partition of the contact
+/// tree groups [h2, r, z, s4], so P_j = [r, s4] and the argmin pivot is
+/// s4@21 — r has NO entry of its own; custody of z rides s4's pivot
+/// entry. Ballast 3-leaf stars at 15.5..25 force the |U| limit exit after
+/// five children (40 > 32) at separator 20.5: s4 is never pulled, its
+/// entry caps B′ = 20.5 <= 21, and line 33 hands r a direct entry at the
+/// boundary (20.5 <= 21.5 < 1000). z is not in W′ (22.125 >= B′).
+fn row_f() -> (Craft, u64, u32, u32, u32, u32) {
+    let mut c = Craft::new();
+    let x = c.seed(20.0);
+    let z = c.vertex();
+    let x1 = c.vertex();
+    c.edge(x, z, 10.0);
+    c.edge(z, x1, 975.0);
+    let g = c.seed(21.75);
+    let h1 = c.vertex();
+    let h2 = c.vertex();
+    let h3 = c.vertex();
+    c.edge(g, h1, 0.0625);
+    c.edge(g, h2, 0.125);
+    c.edge(g, h3, 0.1875);
+    let r = c.seed(21.5);
+    c.edge(r, z, 0.625);
+    c.edge(r, h2, 0.34375);
+    let s4 = c.seed(21.0);
+    c.edge(s4, h2, 0.828125);
+    c.ballast(20, 15.5, 3);
+    (c, 4, z, x1, r, s4)
+}
+
 fn main() {
     println!("W' endgame probes (direct level-1 calls, t=2, B=len 1000):");
     println!();
@@ -486,6 +548,27 @@ fn main() {
     }
     println!();
 
+    // -- Row F ------------------------------------------------------------
+    let (cf, kf, zf, x1f, rf, s4f) = row_f();
+    let rf_res = run_direct(&cf, kf, "F: merge-abort improver, proxy pivot", move |s, bp, u, ds| {
+        format!(
+            "z: d={} in-U={} entry={}; x1: d={}; r: d={} entry={}; s4: entry={} (B'={} <= d[s4])",
+            label_len(s.d[zf as usize]),
+            u.contains(&zf),
+            len_of(ds.get(zf)),
+            label_len(s.d[x1f as usize]),
+            label_len(s.d[rf as usize]),
+            len_of(ds.get(rf)),
+            len_of(ds.get(s4f)),
+            label_len(bp),
+        )
+    });
+    println!("Row {}:", rf_res.name);
+    for l in &rf_res.engines {
+        println!("{l}");
+    }
+    println!();
+
     // -- Part 2: full recursion on the same graphs -------------------------
     println!("Part 2 -- full recursion, source 0, all engines:");
     run_full(&ca, ka, "row A");
@@ -493,4 +576,5 @@ fn main() {
     run_full(&cc, kc, "row C");
     run_full(&cd, kd, "row D");
     run_full(&ce, ke, "row E");
+    run_full(&cf, kf, "row F");
 }

@@ -1729,6 +1729,113 @@ upgraded to cover W′-settled predecessors using the separator cap and
 Lemma M), which — if it closes — discharges (H) modulo the E-c
 mid-iteration half, i.e. the last two debts merge into one.
 
+## Q14 addendum 12 (2026-07-17, fresh session) — cold audit of addendum 11: numbers and mechanisms confirmed, but the silent-completion inventory missed a fifth channel (merge-abort), probed live as row F; the anchor/window lemma statement corrected to proxy anchors with boundary collapse
+
+Item 0 of the cycle, per the standing rule that same-session math gets
+a cold re-derivation before anything builds on it. Verdict: addendum
+11's numbers are exact against `benchmarks/results/wprime.txt`, the
+re-run reproduces every row bit-for-bit on every engine, and
+mechanisms 1–4 re-derive cleanly against the port's code — but the
+channel inventory has a real gap, and closing it corrects the
+anchor/window lemma's statement before it is attempted.
+
+**Re-derivation notes (all against `src/solver.rs`, not memory).**
+
+- Mechanism 1 (pocket closure): a FAILED search's heap empties, every
+  accepted improvement re-pushes its vertex, and stale heap entries
+  are skipped at pop — so the last pop of each pocket vertex relaxes
+  all its edges at its final label. The refusal case at equal length
+  (candidate above the stored tuple because of hops/curr/pred order)
+  leaves the target len-complete, which is the completeness grade
+  (H) is stated at (addendum 8's Lemma N standing). Confirmed. One
+  sharpening: the W′ relax sweep re-offers each pocket vertex's
+  CURRENT pred edge tuple-exactly, so the above-B′ residue of a
+  closed pocket regains entries through the d ≥ B′ gate — mechanism
+  3's complementarity holds at the W′ sweep too, not just at pulls.
+- Mechanism 2 (FindPivots-time healing): same exhaustiveness
+  argument; the healing conclusion needs the improving search to
+  FAIL, which is exactly what row B builds. Confirmed as stated.
+- Mechanism 3 (complementary gates): the child's relax bound is b_i
+  and the parent sweep's insert gate is d[v] ≥ b_i, complementary by
+  the same comparison; the "v already better via another path" case
+  leaves v len-complete with custody on its own path. Confirmed.
+- Mechanism 4 (separator cap): B′ = the last child's returned bound
+  ≤ its b_i ≤ every value still stored at that pull, so an unpulled
+  anchor entry caps B′. Zero-weight paths do not break it: if
+  dis(z) = dis(r), the W′ filter's STRICT d[z] < B′ ≤ d[r] = dis(z)
+  still excludes z, and in tuple order the anchor's entry (fewer
+  hops) sits below z's label at equal length. Confirmed, slightly
+  stronger than stated.
+- Lemma M's use (keep-min cannot evict): `BlockDs::insert` keeps the
+  smaller value, `merge` is inserts, `pull` removes only pulled keys.
+  Confirmed.
+- The relabel-site inventory behind the whole argument is exhaustive:
+  `relax` has exactly four call sites — FindPivots search (no
+  insert), base case (ungated insert, the Q3 site), parent relax
+  sweep (gate d ≥ b_i), W′ sweep (gate d ≥ B′). The sub-B′ successor
+  of a W′-settled vertex, which the W′ sweep's gate refuses to
+  insert, is covered by closure: it is a member of the same failed
+  pocket and W′-settles in the same append (or was already settled).
+
+**The correction — a fifth silent-completion channel.** Addendum 11
+claimed "the only silent-completion channel left is a CAPPED tree
+search." False: the search loop has THREE exits — heap empty
+(failed), |K| ≥ k (capped), and tree contact (merged, the
+`break 'search` after an accepted relax into a tree-stamped vertex) —
+and the MERGED exit aborts an improving search exactly like a cap. An
+improver that relaxes into the stale z (z joins K, is pushed) and
+then contacts an existing tree on a later edge of the same pop
+completes z silently: z is never popped, z's successor is never
+re-relaxed. Unlike the capped case, the improver root r gets NO tree
+of its own and NO pivot entry of its own — r is swept into the
+CONTACTED tree's partition, and its P_j group may elect a cheaper
+merged root as pivot. Custody of z then rides a PROXY: an entry whose
+vertex is not on z's true path at all, at value ≤ d[r].
+
+Row F (driver updated, record re-run; predictions in the driver
+header written before the first run and confirmed exactly, every
+figure, every engine): x@20 plants the stale pocket {x, z} (z stale
+30, z → x1 refused at 1005 ≥ B, true 997.125 hidden); g@21.75 caps a
+3-leaf tree; r@21.5 improves z to its true 22.125 and merges into
+g's tree before popping z; s4@21 merges the same way; the partition
+groups [h2, r, z, s4] so P_j = [r, s4] with pivot s4@21 — r
+entry-less, z's custody on the proxy. Ballast forces the |U| limit
+exit at separator 20.5. Measured: B′ = 20.5 ≤ d[s4] = 21 < d[r] =
+21.5 < dis(z) = 22.125; z complete, entry-less, unsettled, not in W′
+(its W membership from x's failed search is filtered out by 22.125 ≥
+B′); x1 unlabeled; x W′-settles complete; all counters zero, all
+three engines identical; full recursion (n = 90) distance-exact with
+all counters zero.
+
+**The boundary-collapse fact (lemma-shaped, new).** The proxy is
+strictly mid-call state — at every call boundary custody
+re-materializes as entries: (i) line 33 hands every S-member with
+B′ ≤ d < B a direct entry (row F's r@21.5, live); (ii) an S-member
+with d < B′ is in W (failed root) and W′-settles, or was pulled; and
+(iii) B′ cannot pass an unpulled proxy entry (the separator cap),
+while consuming it pulls the pivot, whose expansion/re-selection
+re-frontiers or re-entries the represented root (pivot bookkeeping,
+lines 27–29). So "every un-walked completion has a fresh entry on
+its true path held by the active stack" is wrong as stated but right
+at boundaries: mid-call the entry may be a P_j proxy at value ≤
+dis of the represented true-path vertex; at any return boundary the
+active stack again holds direct entries whose values cap B′ below
+the dis of everything hidden.
+
+**Consequences.** Case 4 stays closed — the fifth channel is blocked
+by the same separator cap, now via the proxy — and the in-call
+inventory is complete on the code's control flow (three search
+exits + the pulled case + the base case's ungated inserts). The
+anchor/window lemma to be attempted next must be stated with proxy
+anchors and the boundary collapse, not with on-path entries: every
+un-walked completion z has a true-path vertex x′ (the healing front,
+an S-member of some active call) that is entry-held or
+P_j-represented at value ≤ dis(x′) ≤ dis(z), bound nesting carries
+the cap down the stack, and boundaries collapse proxies back to
+direct entries. The merge-channel analysis and the boundary-collapse
+fact are same-session math — flagged for cold re-derivation before
+the lemma builds on them.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a
