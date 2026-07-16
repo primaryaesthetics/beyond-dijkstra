@@ -941,6 +941,89 @@ directly: the t = 4, R = 16 staggered row has ZERO duplicates because
 deduped away — the same mechanism that Q6 documented as load-bearing
 protection, here acting as an accidental trigger suppressor).
 
+## Q14 addendum 6 (2026-07-16) — the three loopholes closed: firing altitude, gap capacity, and the reuse attack's collapse; the linear-excess theorem reaches sketch grade with no named holes
+
+Addendum 5 left the coarsening theorem conditional on three loopholes.
+All three are now closed — two by argument, the third by argument plus
+a designed adversarial experiment that failed exactly as the argument
+predicts (and failed harder, exposing one more suppression mechanism).
+Throughout: (H), the pinned Merge semantics (children's leftover Ds
+consolidate into the parent's — the paper's own Lemma 3.4 Merge), and
+K = t²·2^t.
+
+**Lemma G (firing altitude).** Any entry pulled at global settlement
+count C is pulled by a call on the active stack whose subtree contains
+every event since that call's creation; since the call has not
+exhausted, its budget t³·2^(lt) exceeds those events, so a call
+created when only n₀ events existed pulls with capacity
+M = t·2^((l−1)t) ≥ (C − n₀)/K. Custody chain: two stale entries that
+fire separately were batch-separated at the FIRST (highest) call
+whose D held both — a call at least as old as the younger plant — so
+every separation of early-planted triggers is priced at coarsening
+altitude. ∎ (sketch)
+
+This closes loophole (ii), late plants, by a squeeze: a full wave
+needs its trigger value above the whole settled range (x > dis(p_L)),
+yet the plant must precede its target's first labeling (relax-≤
+refuses inserts above the current label), so plants are early, ride
+the consolidated climb, and fire at altitude.
+
+**Lemma H (gap capacity).** Rank separation of consecutive triggers
+must be paid by entries whose STORED values lie in the value gap
+between them. Wave re-inserts cannot pay: they are stored at settled
+labels, far below trigger range — this closes loophole (i)'s
+self-payment variant, and its cross-call variant is priced at the
+common ancestor by Lemma G's custody chain. What can pay: (a) gated
+relax inserts, whose stored value equals the accepting candidate
+dis(u) + w_uv from a settlement event — at most ONE value per in-edge
+under (H); (b) pivot and line-33 inserts, which store current labels
+at progress scale and cannot reach high gaps; (c) pre-settlement
+plants. Plants are capped hard: per vertex at most one live entry per
+stack tile (the gate tiling of Lemma A puts coexisting entries of one
+key in distinct stack Ds, ≤ l_top + 1), consolidation merges of the
+climb keep-min them together, and after first settlement no re-plant
+above dis is possible (relax-≤). So gap capacity over a whole run is
+≤ (l_top + 1)·n, and edge-paid reuse (one vertex filling many gaps
+through many in-edges) is structurally impossible. ∎ (sketch)
+
+**The reuse attack (loophole (iii) inverted), run and collapsed.**
+Driver `examples/escape.rs` part 3, record `benchmarks/results/
+escape.txt`: shared ballast vertices with q in-edges from chunk-spaced
+early sources offering values in q different trigger gaps in
+descending order — the design that would gain a δ-factor if entries
+survived independently. Measured at q ∈ {8, 4, 1} (R = 8 triggers,
+L = E = 20 000, n ≈ 40k): the run collapses to EXACTLY 1.00 effective
+waves (20 000 duplicates) in every configuration, for both the paper
+engine and V5. Post-mortem identified a suppressor beyond Lemma H's
+dedup-at-birth: **wave-crossing plant erasure** — a wave that crosses
+vertex v re-inserts v at its settled label through line-33/pivot
+sites, and wherever such an insert meets the D holding v's pending
+higher plant, keep-min erases the plant. The first wave sterilizes
+later triggers over the same path. Every suppression mechanism found
+in three days of adversarial construction — batch merging, coarsening,
+plant erasure at birth chunks, wave-crossing erasure — operates in
+favor of branch (b).
+
+**Theorem (linear excess; sketch grade, no named holes).** Under (H),
+with the pinned Merge semantics, for the V5-repaired engine (and the
+paper engine, whose Q3 leak only damps further):
+
+  T ≤ √(2K·(l_top + 1)·n·L_max) + O((l_top + k)·n)
+    ≤ t·2^((t+1)/2)·√(l_top + 1)·n + lower order,
+
+where L_max ≤ n is the longest settled tie-path. The proof skeleton is
+Lemmas A, B, D, E, F, G, H plus the chain accounting; what remains to
+make it a paper-grade proof is the custody-chain formalization and the
+wave-exhaustiveness bookkeeping (every duplicate rides a wave started
+by a plant or an initial-seed stale entry). Empirical margins: the
+strongest attack achieved dup/n = 1.58 (t = 4) against a ceiling of
+≈ 22.6·√l_top; every other family sits 1–4 orders below. The missing
+re-settlement lemma of Q14, for the honest engine, is answered at
+sketch grade: **the excess is linear in n with an n^o(1) parameter
+constant — Lemma 3.8's disjointness fails, but only by a bounded
+per-vertex factor, and the paper's totality is safe while its time
+analysis degrades by at most the same factor.**
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a

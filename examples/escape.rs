@@ -194,6 +194,8 @@ fn main() {
     }
     println!();
     staggered();
+    println!();
+    reuse();
 }
 
 /// Part 2: the staggered multi-trigger escape — R rounds of (phase-A
@@ -272,6 +274,146 @@ fn staggered() {
             out[1].1,
         );
     }
+}
+
+/// Part 3: the reusable-ballast attack on the gap-capacity lemma. Each
+/// shared ballast vertex has q in-edges from chunk-spaced early sources,
+/// offering values in q DIFFERENT trigger gaps in descending order — if
+/// the entries survived independently, one vertex would fill q gaps and
+/// the coarsening ceiling would gain a δ-factor. The closure argument
+/// predicts collapse: climb consolidation merges the same key into one D,
+/// keep-min dedup erases all but the smallest offer, and relax-≤ forbids
+/// post-settlement re-plants — so only the LOWEST gap gets real entries
+/// and the upper triggers batch-merge.
+fn reuse() {
+    println!(
+        "{:>7} {:>4} {:>7} {:>3} {:>9} {:>9} {:>9} {:>8} {:>8}",
+        "L", "R", "E", "q", "n", "paper", "V5", "waves", "dup/n"
+    );
+    for &(l_path, r_trig, e_block, q) in &[
+        (20_000usize, 8usize, 20_000usize, 8usize),
+        (20_000, 8, 20_000, 4),
+        (20_000, 8, 20_000, 1), // fresh-equivalent control at reuse n
+    ] {
+        let (n, edges) = reuse_graph(l_path, r_trig, e_block, q);
+        let oracle = dijkstra_lengths(n, &edges, 0);
+        let mut adj: Vec<Vec<(u32, f64)>> = vec![Vec::new(); n];
+        for &(u, v, w) in &edges {
+            adj[u as usize].push((v, w));
+        }
+        let (t, k) = (2u64, 2u64);
+        let log_n = (n.max(2) as f64).log2().max(1.0);
+        let l_top = (log_n / t as f64).ceil() as u64;
+
+        let mut out: Vec<usize> = Vec::new();
+        for &(fixed_base, settled_dedup) in &[(false, false), (true, false), (false, true)] {
+            let mut solver = Solver::new(&adj, t, k);
+            solver.fixed_base = fixed_base;
+            solver.settled_dedup = settled_dedup;
+            solver.d[0] = Label::Fin(Lab {
+                len: 0.0,
+                hops: 0,
+                curr: 0,
+                pred: -1,
+            });
+            let (b_final, settle, ds_top) = solver.bmssp(Label::Inf, &[0], l_top);
+            assert!(b_final == Label::Inf && !ds_top.non_empty(), "top partial");
+            let dist: Vec<f64> = solver
+                .d
+                .iter()
+                .map(|lab| match lab {
+                    Label::Fin(x) => x.len,
+                    Label::Inf => f64::INFINITY,
+                })
+                .collect();
+            assert_eq!(dist, oracle, "distances diverged (reuse)");
+            let mut seen = vec![false; n];
+            let mut dups = 0usize;
+            for &v in &settle {
+                if seen[v as usize] {
+                    dups += 1;
+                }
+                seen[v as usize] = true;
+            }
+            out.push(dups);
+        }
+        assert_eq!(out[2], 0, "V8 must have zero dups");
+        println!(
+            "{:>7} {:>4} {:>7} {:>3} {:>9} {:>9} {:>9} {:>8.2} {:>8.3}",
+            l_path,
+            r_trig,
+            e_block,
+            q,
+            n,
+            out[0],
+            out[1],
+            out[0] as f64 / l_path as f64,
+            out[0] as f64 / n as f64,
+        );
+    }
+}
+
+/// Shared-ballast staggered graph: q early sources u_1..u_q (chunk-spaced
+/// via 9 spacer leaves each), E ballast vertices with q in-edges offering
+/// descending values across the top q trigger gaps; gaps below R−q+1 get
+/// no ballast (they rely on the shared vertices' final entries).
+fn reuse_graph(
+    l_path: usize,
+    r_trig: usize,
+    e_block: usize,
+    q: usize,
+) -> (usize, Vec<(u32, u32, f64)>) {
+    let mut edges: Vec<(u32, u32, f64)> = Vec::new();
+    let path0 = 11u32;
+    for g in 0..8u32 {
+        edges.push((0, 2 + g, 0.6 + 0.02 * g as f64));
+    }
+    edges.push((0, 10, 10.0));
+    edges.push((10, path0, 1.0));
+    for i in 0..(l_path as u32 - 1) {
+        edges.push((path0 + i, path0 + i + 1, 1.0));
+    }
+    let mut id = path0 + l_path as u32;
+    // Early sources with chunk-sized spacer blocks between them.
+    let mut src: Vec<(u32, f64)> = Vec::new();
+    let mut lab = 0.8f64;
+    for _ in 0..q {
+        edges.push((0, id, lab));
+        src.push((id, lab));
+        id += 1;
+        for _ in 0..9 {
+            lab += 0.002;
+            edges.push((0, id, lab));
+            id += 1;
+        }
+        lab += 0.002;
+    }
+    // Trigger values A_g = v0 + g·(E+10); gap g slots at +10+j.
+    let v0 = (l_path + 12) as f64;
+    let stride = (e_block + 10) as f64;
+    // Decoys: trigger g planted at p_g.
+    let decoy0 = id;
+    for g in 1..=r_trig {
+        let d = decoy0 + (g - 1) as u32;
+        let eps = 0.01 * g as f64;
+        edges.push((0, d, eps));
+        edges.push((d, path0 + (g - 1) as u32, (v0 + g as f64 * stride) - eps));
+    }
+    id += r_trig as u32;
+    // Shared ballast: vertex b_j offered gap (R−i+1) slot j by source u_i,
+    // i = 1..q — descending values as sources settle in order.
+    for j in 0..e_block {
+        let b = id;
+        id += 1;
+        for (i, &(u, ulab)) in src.iter().enumerate() {
+            // Source i (settling i-th) offers the gap below trigger R−i:
+            // values in (A_{R−1−i}, A_{R−i}) — descending across sources.
+            let gap = r_trig - 1 - i;
+            let val = v0 + gap as f64 * stride + 10.0 + j as f64;
+            edges.push((u, b, val - ulab));
+        }
+    }
+    (id as usize, edges)
 }
 
 /// R rounds: block_r of E leaf values, then trigger value A_r planted at
