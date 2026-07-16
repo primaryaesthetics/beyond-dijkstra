@@ -131,6 +131,68 @@ impl VHeap {
     }
 }
 
+/// SoA lazy min-heap of (key, vertex) — V9's heap: pred dropped from the
+/// order (a full key tie is the same vertex; internal duplicate order is
+/// unobservable under the settled bit), entries 20 bytes, one u128
+/// comparison.
+#[derive(Default)]
+struct KHeap {
+    k: Vec<u128>,
+    v: Vec<u32>,
+}
+
+impl KHeap {
+    fn push(&mut self, key: u128, vert: u32) {
+        self.k.push(key);
+        self.v.push(vert);
+        let mut i = self.k.len() - 1;
+        while i > 0 {
+            let parent = (i - 1) / 2;
+            if self.k[i] < self.k[parent] {
+                self.k.swap(i, parent);
+                self.v.swap(i, parent);
+                i = parent;
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn pop(&mut self) -> Option<(u128, u32)> {
+        if self.k.is_empty() {
+            return None;
+        }
+        let last = self.k.len() - 1;
+        self.k.swap(0, last);
+        self.v.swap(0, last);
+        let out = (
+            self.k.pop().expect("non-empty"),
+            self.v.pop().expect("non-empty"),
+        );
+        let len = self.k.len();
+        let mut i = 0usize;
+        loop {
+            let l = 2 * i + 1;
+            if l >= len {
+                break;
+            }
+            let mut c = l;
+            let r = l + 1;
+            if r < len && self.k[r] < self.k[l] {
+                c = r;
+            }
+            if self.k[c] < self.k[i] {
+                self.k.swap(i, c);
+                self.v.swap(i, c);
+                i = c;
+            } else {
+                break;
+            }
+        }
+        Some(out)
+    }
+}
+
 /// The keyed keep-min structure D: map + lazy heap (VARIANTS.md claim B).
 struct FastDs {
     m_cap: u64,
@@ -663,6 +725,100 @@ pub struct FastRun {
     /// Settlement events in the top-level log minus distinct vertices —
     /// the Q10 re-settlement count the V5 experiment reports.
     pub dup_settlements: usize,
+}
+
+/// V9 (VARIANTS.md): the flat top runner — the L = l_top degenerate
+/// member (one base-case call over the whole graph) with the three
+/// provably-dead components removed: no keyed map (at top level the
+/// stored value always equals the current label, because every accepted
+/// relaxation immediately inserts and no parent sweep exists), no
+/// per-pull separator (the top call is a full execution and returns
+/// B′ = B under both bound semantics; nobody reads the intermediate
+/// bounds), and no pred in the heap (a full key tie is the same vertex,
+/// whose internal duplicate order is unobservable — the settled bit
+/// skips every later pop). What remains is lazy Dijkstra over the
+/// packed 4-tuple keys: dk/dp labels + settled bits + a (u128, vertex)
+/// min-heap. Distances and the settlement log are bit-identical to
+/// `sssp_dedup` at hybrid_level ≥ l_top.
+pub fn sssp_flat(n: usize, edges: &[(u32, u32, f64)], source: usize) -> FastRun {
+    assert!(
+        (n as u64) < u32::MAX as u64,
+        "packed labels require n < 2^32 - 1"
+    );
+    let (delta, t, k, l_top) = choose_params(n, edges.len(), n);
+
+    let mut indptr = vec![0u32; n + 1];
+    for &(u, _, _) in edges {
+        indptr[u as usize + 1] += 1;
+    }
+    for i in 0..n {
+        indptr[i + 1] += indptr[i];
+    }
+    let mut head = vec![0u32; edges.len()];
+    let mut wt = vec![0f64; edges.len()];
+    let mut next = indptr.clone();
+    for &(u, v, w) in edges {
+        assert!(w >= 0.0 && w.is_finite(), "weights must be finite non-negative");
+        let slot = next[u as usize] as usize;
+        head[slot] = v;
+        wt[slot] = w;
+        next[u as usize] += 1;
+    }
+
+    let mut dk = vec![UNSET; n];
+    let mut dp = vec![u32::MAX; n];
+    let mut settled = vec![false; n];
+    let mut heap = KHeap::default();
+
+    dk[source] = pack(0.0, 0, source as u32);
+    dp[source] = 0; // encoded -1
+    heap.push(dk[source], source as u32);
+
+    let mut settle_count = 0usize;
+    while let Some((key, u)) = heap.pop() {
+        let ui = u as usize;
+        // The settled bit subsumes staleness: the first pop of a vertex
+        // carries its minimal key (heap order), every later pop is dead.
+        if settled[ui] {
+            continue;
+        }
+        debug_assert_eq!(key, dk[ui], "first pop must carry the current label");
+        settled[ui] = true;
+        settle_count += 1;
+        let (start, end) = (indptr[ui], indptr[ui + 1]);
+        for e in start..end {
+            let (v, w) = (head[e as usize], wt[e as usize]);
+            let vi = v as usize;
+            if settled[vi] {
+                continue; // V8: settled targets are never re-adopted
+            }
+            let ck = pack(len_of(key) + w, hops_of(key) + 1, v);
+            let cp = u + 1;
+            let dv = dk[vi];
+            // Strict improvement on the full 4-tuple writes and pushes;
+            // an exact tie is idempotent and the keyed dedup of the map
+            // engine would not push either — parity with sssp_dedup.
+            if ck < dv || (ck == dv && cp < dp[vi]) {
+                dk[vi] = ck;
+                dp[vi] = cp;
+                heap.push(ck, v);
+            }
+        }
+    }
+    assert!(settle_count <= n, "settled bit guarantees distinct settles");
+
+    let dist = dk
+        .iter()
+        .map(|&kk| if kk == UNSET { f64::INFINITY } else { len_of(kk) })
+        .collect();
+    FastRun {
+        delta,
+        t,
+        k,
+        l_top,
+        dist,
+        dup_settlements: 0,
+    }
 }
 
 /// V4 entry: original graph (V1 semantics), packed-label engine,

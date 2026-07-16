@@ -757,3 +757,72 @@ on road inputs is now v8-fast L=top at 2.95x Dijkstra (was 3.10x). The
 verdict does not move: no family member approaches Dijkstra at
 storable sizes; V8 just makes the gap honestly smaller while carrying
 its math content (zero duplicate settlements, exact |U| accounting).
+
+## V9 — flat top runner: the degenerate member engineered to its honest endpoint
+
+The best configuration on road inputs is v8-fast at L = l_top: the
+entire run is ONE base-case call — a bounded tuple-label Dijkstra over
+the keyed M = 1 structure. At that configuration three components of
+the engine are provably dead weight, and V9 removes them.
+
+**Claim.** For the pure top-level base case (hybrid_level ≥ l_top) with
+the settled bit, the following replacements preserve distances and the
+settlement log exactly:
+
+1. **No keyed map.** The V4 claim-B trap (d[v] can drop below the
+   stored value without a re-insert, so liveness must check the map,
+   not d) exists only because of the parent sweep's `d[v] ≥ B_i` insert
+   guard — and at L = l_top there is no parent. In the base case every
+   accepted relaxation immediately inserts d[v], so the stored value
+   equals the current label whenever the vertex is pending; the map is
+   the identity on (dk, dp) and can be deleted. Liveness = "heap entry
+   equals the current label", the crate Dijkstra's own rule.
+2. **No per-pull separator.** The top call must be a full execution
+   (Q10/Q13 assert; with the settled bit |U| ≤ n < t³·2^(l_top·t)
+   unconditionally, so the cutoff cannot fire), and a full execution
+   returns B′ = B under both the paper's and V5's semantics — the
+   per-pull bound is consumed by nobody. The loop runs to heap
+   exhaustion; the drain is asserted.
+3. **No pred in the heap.** Heap order needs pred only on a full key
+   tie, and the packed key ends in curr — a full tie is the SAME
+   vertex. Among same-vertex entries the first live pop settles it at
+   (dk, dp), the keep-min label, whichever duplicate surfaces first;
+   later ones are dead by the settled bit. Same-vertex internal order
+   is unobservable (v8-fast's map check discards the higher-pred
+   duplicate the same way), so heap entries shrink to (u128, vertex)
+   and comparisons to one u128.
+
+With all three, the runner IS lazy Dijkstra with 4-tuple labels: dk/dp
+arrays + settled bits + a lazy min-heap. That is the verdict chain's
+honest endpoint made explicit — the remaining ratio vs the crate's
+Dijkstra measures the label machinery alone (16-byte keys + hops
+bookkeeping), nothing else.
+
+**Classification.** Class 2 (representation change on top of V8's
+class-2 base; distances must stay bit-exact, dup_settlements must stay
+zero). Gate: Tier-2 full matrix, plus per-input cross-check against
+`fast::sssp_dedup` at L = 99 inside the bench harness.
+
+**Measurement plan.** bench_fast rows for flat vs v8-fast L=top vs
+Dijkstra on random 1e5/1e6 and USA-road-d.NY; second commit candidate:
+4-ary heap (the crate Dijkstra's layout) if the flat win lands.
+
+**Result.** Tier-2 gate green over the full matrix (V9 asserted
+bit-exact against Dijkstra AND against v8-fast L=top per input).
+Same-process medians on the Windows box, raw records
+`benchmarks/results/bench_fast_v9_{1e5,1e6,NY}.txt`:
+
+| input | v8-fast L=top | v9-flat | v9/v8-top |
+|---|---|---|---|
+| random 1e5 | 3.17x | **2.04x** | 0.64x |
+| random 1e6 | 3.13x | **2.21x** | 0.71x |
+| USA-road-d.NY | 3.22x | **1.90x** | 0.59x |
+
+The dead weight was real: removing the keyed map, the per-pull
+separator, and the heap's pred component cuts the best configuration
+by 29–41%. The family's best member now stands at **1.9–2.2× of the
+crate's Dijkstra** — the verdict does not flip, but the remaining gap
+is now purely the 4-tuple label itself (16-byte keys, hops
+bookkeeping, pred side-array writes) running through an identical
+algorithmic structure. Queued: 4-ary heap layout (the crate Dijkstra's
+own), the last structural difference between the two runners.

@@ -212,6 +212,22 @@ fn main() {
     let d0 = bench_dedup(0);
     let dtop = bench_dedup(99);
 
+    // V9 flat top runner (VARIANTS.md V9).
+    let mut flat_times = Vec::new();
+    for _ in 0..6 {
+        let t0 = Instant::now();
+        let run = fast::sssp_flat(n, &edges, 0);
+        flat_times.push(t0.elapsed().as_secs_f64());
+        let bad = dist
+            .iter()
+            .zip(run.dist.iter())
+            .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+            .count();
+        assert_eq!(bad, 0, "v9-flat distances diverge from dijkstra");
+    }
+    flat_times.remove(0); // warmup
+    let flat = median(flat_times);
+
     println!("dijkstra     median {dj:8.3} s");
     println!("mainline     median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
     println!(
@@ -237,5 +253,10 @@ fn main() {
         "v8-fast L=top median {dtop:7.3} s   ({:.2}x dijkstra, {:.2}x of fast L=top)",
         dtop / dj,
         dtop / ftop
+    );
+    println!(
+        "v9-flat      median {flat:8.3} s   ({:.2}x dijkstra, {:.2}x of v8-fast L=top)",
+        flat / dj,
+        flat / dtop
     );
 }

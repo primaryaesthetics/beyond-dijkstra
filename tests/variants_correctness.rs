@@ -67,6 +67,12 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
         assert_dists(n, &f8.dist, &expect, &format!("{tag} (v8-fast L={hl})"));
         assert_eq!(f8.dup_settlements, 0, "{tag} (v8-fast L={hl}): dups");
     }
+    // V9 flat top runner (VARIANTS.md): must match Dijkstra bit-exactly
+    // and the v8-fast degenerate member's distances.
+    let f9 = fast::sssp_flat(n, edges, source);
+    assert_dists(n, &f9.dist, &expect, &format!("{tag} (v9-flat)"));
+    let f8top = fast::sssp_dedup(n, edges, source, 99, None);
+    assert_dists(n, &f9.dist, &f8top.dist, &format!("{tag} (v9 vs v8-fast L=top)"));
 }
 
 fn assert_dists(n: usize, got: &[f64], expect: &[f64], tag: &str) {
@@ -107,6 +113,9 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
         let f8 = fast::sssp_dedup(g.n, &g.edges, g.source, 0, g.override_params);
         assert_dists(g.n, &f8.dist, &expect, &format!("seed {seed} (v8-fast)"));
         assert_eq!(f8.dup_settlements, 0, "seed {seed} (v8-fast): dups");
+        // V9 flat top runner.
+        let f9 = fast::sssp_flat(g.n, &g.edges, g.source);
+        assert_dists(g.n, &f9.dist, &expect, &format!("seed {seed} (v9-flat)"));
     }
 }
 
