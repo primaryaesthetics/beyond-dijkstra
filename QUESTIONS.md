@@ -809,6 +809,69 @@ to bounding wavefront coexistence (addenda 1–3), removable by one bit
 (V8), and empirically Θ(n)-bounded with a two-orders constant under
 deliberate attack (this addendum).
 
+## Q14 addendum 4 (2026-07-15) — the B′-regression hypothesis refuted by measurement; per-call monotonicity survives, the once-per-call lemma follows, and containment is the new structural picture
+
+Attempting to prove a blocking theorem ("after the first settlement
+event of v inside call X's subtree, B′_X has passed dis-label(v) and
+every gate refuses further dis-valued entries") surfaced a candidate
+counter-mechanism: the base-case interior is ungated below, so a
+re-settlement wave could return B′ = its front's small value and drag
+the parent's progress measure BACKWARDS — B′_i < B′_{i−1} — vacating
+every "≥ B′_{i−1}" step in the Lemma 3.7/3.8 proofs. A cheap counter
+(`bprime_regressions` in the dup-classify build; re-recorded runs in
+`benchmarks/results/{dup_classify,cascade}.txt`) tested it:
+
+**Zero regressions on every run.** The full adversarial family
+(thousands of duplicates) and every cascade configuration (up to
+n = 2×10⁶, dup/n up to 3.8): B′ never decreased across iterations of
+any call; the V8 control is likewise zero. The hypothesis is refuted,
+and the reason is instructive twice over:
+
+1. **Self-calibration at call creation.** A call's B′_0 is the minimum
+   LABEL among its pivots, so a re-frontiered settled vertex (stored
+   value high, label low) lowers the fresh call's starting point
+   instead of regressing an old call mid-loop. The stale pull's label
+   drop is absorbed where the paper's invariants don't look.
+2. **Containment.** A wave escaping its containing child (partial exit
+   with the front in leftover D, merged into an ancestor whose B′ has
+   already progressed past the front's value) would force a regression
+   or a bound-clause violation at that ancestor — and neither counter
+   has ever fired. The structural reason: a call whose value-window is
+   wide enough to span both the settled range and the trigger range is
+   necessarily a HIGH-level call, and its |U|-budget t³·2^(lt) grows
+   2^t-fold per level while the window widens — in every configuration
+   tested the wave burns out inside the child (needed: wave length
+   ≤ t³·2^((l−1)t); violated only around t ≥ 17 at our densities,
+   far beyond practical parameters).
+
+**Lemma F (once per call, settled-value channel; conditional).**
+Assume per-call B′ monotonicity (now empirically universal, still
+unproved under duplicates) and the bound clause. Then each call X
+sources at most ONE settlement event of v through entries stored at
+value dis-label(v): the first such event in X's subtree forces
+B′_X > dis-label(v) by max dis(U_i) < B′_i (which holds structurally
+even under duplicates), after which line-24 inserts are gated above
+it, merged child structures carry values ≥ B′_child ≥ B′_i, line 33
+is gated ≥ B′, and v's P_j membership was removed at line 18. Every
+further event of v sourced by X consumes a pre-settlement entry of v
+(stored value > dis-label(v), bounded by one per D at a time via the
+keyed dedup) or a W-membership. ∎ (This is Lemma 3.8's per-call
+disjointness salvaged in the only form that survives Q11: the Q11
+trace's double settlement consumed exactly one stale pre-settlement
+entry at stored value (1, h7) > dis-label (0, h7) — consistent.)
+
+Consequences: all events of v beyond once-per-call ride pre-settlement
+entries and W-memberships, both call-consuming resources; combined
+with wavefront merging (addendum 3) and Lemma A, the count of
+separated episodes per vertex is pinned to the number of DISTINCT
+CALLS whose window straddles dis-label(v) and that actually receive a
+pred(v)-batch — fresh-call creation via straddling pull batches is
+the true limiting resource, replacing "entry coexistence" as the
+branch-(b) proof target. What remains unproved, in order: (i) per-call
+B′ monotonicity under duplicates (attack at the wave-escape regime,
+wave length > t³·2^((l−1)t)); (ii) a bound on straddling-call creation.
+Both are now concrete, instrumented, and empirically constrained.
+
 ## Q7 — nEdges overflow bound. NOTE
 
 nEdges strictly increases along relaxations and is bounded by the longest

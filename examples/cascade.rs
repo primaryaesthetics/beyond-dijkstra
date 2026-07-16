@@ -105,8 +105,8 @@ fn dijkstra_lengths(n: usize, edges: &[(u32, u32, f64)], source: usize) -> Vec<f
 
 fn main() {
     println!(
-        "{:>7} {:>8} {:>9} {:>8} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10}",
-        "L", "n", "dups", "dup/n", "base-seed", "base-ins", "own-root", "own-swept", "foreign", "predicted"
+        "{:>7} {:>8} {:>9} {:>8} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10} {:>8}",
+        "L", "n", "dups", "dup/n", "base-seed", "base-ins", "own-root", "own-swept", "foreign", "predicted", "B'-regr"
     );
     let g_ballast = 8;
     sweep_fixed_params(g_ballast);
@@ -131,7 +131,7 @@ fn sweep_fixed_params(g_ballast: usize) {
                     assert_eq!(run.dist, oracle, "distances diverged at L={l} {tag}");
                     let c = &run.dup_class;
                     println!(
-                        "{:>7} {:>8} {:>9} {:>8.3} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10}  {tag} dist-ok",
+                        "{:>7} {:>8} {:>9} {:>8.3} {:>9} {:>9} {:>8} {:>9} {:>8} {:>10} {:>8}  {tag} dist-ok",
                         l,
                         n,
                         run.dup_settlements,
@@ -142,6 +142,7 @@ fn sweep_fixed_params(g_ballast: usize) {
                         c.wprime_own_swept,
                         c.wprime_foreign,
                         predicted,
+                        c.bprime_regressions,
                     );
                 }
                 Err(_) => {

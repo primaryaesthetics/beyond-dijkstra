@@ -63,7 +63,7 @@ fn float_graph(n: usize, mult: usize, seed: u64) -> Vec<(u32, u32, f64)> {
 
 fn main() {
     println!(
-        "{:>22} {:>8} {:>6} {:>9} {:>8} {:>8} {:>9} {:>8} {:>8} {:>8}",
+        "{:>22} {:>8} {:>6} {:>9} {:>8} {:>8} {:>9} {:>8} {:>8} {:>8} {:>8} {:>8}",
         "input",
         "n",
         "dups",
@@ -73,7 +73,9 @@ fn main() {
         "own-swept",
         "foreign",
         "f-anc-Q",
-        "f-anc-S"
+        "f-anc-S",
+        "B'-regr",
+        "v8-regr"
     );
     let cases: Vec<(String, usize, Vec<(u32, u32, f64)>, Option<(u64, u64, u64)>)> = vec![
         (
@@ -109,6 +111,8 @@ fn main() {
     ];
     for (name, n, edges, ov) in cases {
         let run = no_transform::sssp_hybrid(n, &edges, 0, 0, ov);
+        let v8 = no_transform::sssp_v8(n, &edges, 0, 0, ov);
+        assert_eq!(run.dist, v8.dist, "V8 changed distances on {name}");
         let c = &run.dup_class;
         let classified =
             c.base_seeded + c.base_inserted + c.wprime_own_root + c.wprime_own_swept
@@ -118,7 +122,7 @@ fn main() {
             "classification must partition the duplicate count on {name}"
         );
         println!(
-            "{:>22} {:>8} {:>6} {:>9} {:>8} {:>8} {:>9} {:>8} {:>8} {:>8}",
+            "{:>22} {:>8} {:>6} {:>9} {:>8} {:>8} {:>9} {:>8} {:>8} {:>8} {:>8} {:>8}",
             name,
             n,
             run.dup_settlements,
@@ -129,6 +133,8 @@ fn main() {
             c.wprime_foreign,
             c.foreign_anc_in_q,
             c.foreign_anc_in_s,
+            c.bprime_regressions,
+            v8.dup_class.bprime_regressions,
         );
     }
 }

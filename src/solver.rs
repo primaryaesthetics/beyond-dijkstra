@@ -103,6 +103,11 @@ pub struct DupClassCounts {
     /// Weaker containment for the same appends: some pred-chain ancestor
     /// within k−1 hops is in the call's S (Q ⊆ S).
     pub foreign_anc_in_s: u64,
+    /// Iterations whose returned B′_i is strictly below the call's
+    /// current B′ — regressions of the loop's progress measure
+    /// (QUESTIONS.md Q15). The paper's Lemma 3.7/3.8 proofs implicitly
+    /// require B′ to be non-decreasing across iterations.
+    pub bprime_regressions: u64,
 }
 
 // ---------------------------------------------------------------------------
@@ -994,6 +999,10 @@ impl<'a> Solver<'a> {
                 }
             });
 
+            #[cfg(feature = "dup-classify")]
+            if b_pi < b_prime {
+                self.dup_class.bprime_regressions += 1;
+            }
             b_prime = b_pi;
             u_set.extend(u_i.iter().copied());
             u_log.extend(u_i);
