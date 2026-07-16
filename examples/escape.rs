@@ -174,10 +174,11 @@ fn main() {
             ));
         }
         let (_, regr, dups, ex) = &runs[0];
+        let (_, v5_regr, v5_dups, v5_ex) = &runs[1];
         let (_, v8_regr, v8_dups, _) = &runs[2];
         assert_eq!(*v8_dups, 0, "V8 must have zero dups");
         println!(
-            "{:>7} {:>7} {:>8} {:>7} {:>7.3} {:>8} {:>8}  {}",
+            "{:>7} {:>7} {:>8} {:>7} {:>7.3} {:>8} {:>8} {:>8}({})  paper-ex: {}  V5-ex: {}",
             l_path,
             e_a,
             n,
@@ -185,7 +186,126 @@ fn main() {
             *dups as f64 / n as f64,
             regr,
             v8_regr,
-            ex
+            v5_regr,
+            v5_dups,
+            ex,
+            v5_ex
         );
     }
+    println!();
+    staggered();
+}
+
+/// Part 2: the staggered multi-trigger escape — R rounds of (phase-A
+/// block of E values, then a trigger planted at p_r), so waves fire
+/// sequentially and cannot batch-merge unless the coarsening law forces
+/// it: the block must outgrow the live pull capacity M ≈ (consumed
+/// events)/(t²·2^t), which rises by L per round. The coarsening
+/// optimization predicts a dup/n ceiling of about t·2^((t+1)/2)
+/// (≈ 5.7 at t = 2); blowing past it would refute the law.
+fn staggered() {
+    println!(
+        "{:>7} {:>4} {:>7} {:>9} {:>9} {:>9} {:>8} {:>9} {:>8} {:>8}",
+        "L", "R", "E", "n", "paper", "V5", "V5/n", "V8", "p-regr", "v5-regr"
+    );
+    for &(l_path, r_trig, e_block, t, k) in &[
+        (20_000usize, 3usize, 20_000usize, 2u64, 2u64),
+        (20_000, 8, 20_000, 2, 2),
+        (20_000, 8, 60_000, 2, 2),
+        (20_000, 16, 20_000, 2, 2),
+        (20_000, 16, 20_000, 4, 2),
+        (20_000, 64, 5_000, 4, 2),
+    ] {
+        let (n, edges) = staggered_graph(l_path, r_trig, e_block);
+        let oracle = dijkstra_lengths(n, &edges, 0);
+        let mut adj: Vec<Vec<(u32, f64)>> = vec![Vec::new(); n];
+        for &(u, v, w) in &edges {
+            adj[u as usize].push((v, w));
+        }
+        let log_n = (n.max(2) as f64).log2().max(1.0);
+        let l_top = (log_n / t as f64).ceil() as u64;
+
+        let mut out: Vec<(usize, u64)> = Vec::new();
+        for &(fixed_base, settled_dedup) in &[(false, false), (true, false), (false, true)] {
+            let mut solver = Solver::new(&adj, t, k);
+            solver.fixed_base = fixed_base;
+            solver.settled_dedup = settled_dedup;
+            solver.d[0] = Label::Fin(Lab {
+                len: 0.0,
+                hops: 0,
+                curr: 0,
+                pred: -1,
+            });
+            let (b_final, settle, ds_top) = solver.bmssp(Label::Inf, &[0], l_top);
+            assert!(b_final == Label::Inf && !ds_top.non_empty(), "top partial");
+            let dist: Vec<f64> = solver
+                .d
+                .iter()
+                .map(|lab| match lab {
+                    Label::Fin(x) => x.len,
+                    Label::Inf => f64::INFINITY,
+                })
+                .collect();
+            assert_eq!(dist, oracle, "distances diverged (staggered)");
+            let mut seen = vec![false; n];
+            let mut dups = 0usize;
+            for &v in &settle {
+                if seen[v as usize] {
+                    dups += 1;
+                }
+                seen[v as usize] = true;
+            }
+            out.push((dups, solver.dup_class.bprime_regressions));
+        }
+        assert_eq!(out[2].0, 0, "V8 must have zero dups");
+        println!(
+            "{:>7} {:>4} {:>7} {:>9} {:>9} {:>9} {:>8.3} {:>9} {:>8} {:>8}  t={t}",
+            l_path,
+            r_trig,
+            e_block,
+            n,
+            out[0].0,
+            out[1].0,
+            out[1].0 as f64 / n as f64,
+            out[2].0,
+            out[0].1,
+            out[1].1,
+        );
+    }
+}
+
+/// R rounds: block_r of E leaf values, then trigger value A_r planted at
+/// path vertex p_r (one decoy per target, planted while d[p_r] = ∞).
+fn staggered_graph(l_path: usize, r_trig: usize, e_block: usize) -> (usize, Vec<(u32, u32, f64)>) {
+    let mut edges: Vec<(u32, u32, f64)> = Vec::new();
+    let path0 = 11u32;
+    // Decoys d_r (labels 0.01·r, settle first) and fillers to close their
+    // chunks before the path gate e (label 10) settles.
+    for g in 0..8u32 {
+        edges.push((0, 2 + g, 0.6 + 0.02 * g as f64));
+    }
+    edges.push((0, 10, 10.0));
+    edges.push((10, path0, 1.0));
+    for i in 0..(l_path as u32 - 1) {
+        edges.push((path0 + i, path0 + i + 1, 1.0));
+    }
+    let mut id = path0 + l_path as u32;
+    let decoy0 = id;
+    id += r_trig as u32;
+    let mut val = (l_path + 12) as f64;
+    for r in 0..r_trig {
+        // phase block r
+        for g in 0..e_block {
+            edges.push((0, id, val + g as f64));
+            id += 1;
+        }
+        val += e_block as f64;
+        // trigger r at value A_r = val, targeting p_{r+1}
+        let d = decoy0 + r as u32;
+        let eps = 0.01 * (r + 1) as f64;
+        edges.push((0, d, eps));
+        edges.push((d, path0 + r as u32, val - eps));
+        val += 10.0;
+    }
+    (id as usize, edges)
 }

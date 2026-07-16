@@ -887,6 +887,60 @@ narrows Lemma F's scope to the V5-repaired algorithm; item (ii) gains
 the batch-coarsening feedback as its concrete mechanism. Details and
 recorded runs in Q15.
 
+## Q14 addendum 5 (2026-07-16) — the coarsening law quantified: a conditional Θ(n) theorem, its merge-onset prediction confirmed, and the honest loopholes
+
+The batch-coarsening feedback (Q15 item 5) turned into arithmetic and
+tested. Throughout K := t²·2^t (the live pull capacity is
+M ≥ C/K at cumulative event count C, because the climbing leftover D
+resides at the level l with t³·2^((l−1)t) < C ≤ t³·2^(lt) and
+M = t·2^((l−1)t)).
+
+**Conditional theorem (coarsening ⟹ linear excess).** Assume every
+pair of separately-firing wave triggers over the same path must be
+separated in pull rank by Ω(M) = Ω(C/K) other entries at firing
+progress C. Then R sequential re-waves of a length-L path force
+ballast Σ_r ≥ Σ_r (n₀ + rL)/K ≥ R²L/2K ≤ n, so the total excess
+T = R·L satisfies
+
+  T² = (R²L)·L ≤ 2K·n·L,  i.e.  T ≤ √(2K·n·L) ≤ t·2^((t+1)/2)·n.
+
+The per-vertex ceiling is dup/n ≤ √(2K·L/n) ≤ t·2^((t+1)/2) ≈ 5.7 at
+t = 2 and ≈ 22.6 at t = 4. This matches the addendum-3 plateau from
+the other side: the strongest measured excess (3.8) sits below the
+t-appropriate ceiling everywhere. Excess beyond Θ(n) requires
+re-waving the SAME vertices (disjoint fresh paths pay for themselves
+in n), so the theorem, if its hypothesis is closed, is branch (b) with
+T = O(t·2^(t/2)·n) — n^(1+o(1)) at prescription parameters, which
+still exceeds the paper's time budget asymptotically but pins the
+excess to near-linear.
+
+**The staggered experiment** (driver `examples/escape.rs` part 2, raw
+record `benchmarks/results/escape.txt`): R rounds of (phase block of
+E leaf values, trigger planted at p_r), waves firing sequentially so
+batch-merging can only come from coarsening. The law's merge-onset
+prediction r* ≈ K·E/(E+L) — beyond r* the block no longer outgrows
+the live M — is confirmed: at t = 2, E = L = 20 000 (r* = 8) the
+effective wave counts are ~6 of 8 and ~10 of 16 (119 984 and 199 938
+duplicates ≈ 6L and 10L); growing E to 60 000 (r* = 12) recovers ~7
+full waves at R = 8. Measured maxima stay far below the ceilings:
+dup/n ≤ 0.75 at t = 2, ≤ 1.58 at t = 4 (R = 64, E = 5 000; 535 996
+duplicates at n = 340 075) — the strongest staggered attack loses to
+the cascade's 2.9 and everything sits under t·2^((t+1)/2).
+
+**Loopholes that keep the theorem conditional**, named honestly:
+(i) sibling-D separation — triggers in different sibling structures
+are separated by the first wave's own events rather than rank ballast
+(the optimization then still binds through consumed-events C, but the
+accounting differs); (ii) late plants — a plant for a far path vertex
+can be made just before that vertex's first settlement, entering a
+different level structure than the early-plant analysis assumes;
+(iii) the plant-erasure effect — plants sharing a base chunk with
+their target's label insert are erased by the keyed dedup (observed
+directly: the t = 4, R = 16 staggered row has ZERO duplicates because
+26 early vertices fit inside one t³ = 64 chunk and every plant was
+deduped away — the same mechanism that Q6 documented as load-bearing
+protection, here acting as an accidental trigger suppressor).
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a
@@ -955,12 +1009,21 @@ distance-exact vs Dijkstra; all under the event ceiling. Five results:
    branch-(b) proof target: bound the number of rank-separated stale
    pulls a run can afford.
 
-Consequence for Lemma F (Q14 addendum 4): its bound-clause hypothesis
-FAILS for the algorithm as written on this family, so Lemma F applies
-to the V5-repaired algorithm — where both hypotheses now hold
-empirically everywhere — and the repaired algorithm is exactly the one
-whose waves roll longest. The missing re-settlement lemma is therefore
-hardest precisely where the contracts are honest.
+Consequence for Lemma F (Q14 addendum 4) — CORRECTED same day after
+measuring V5's own regressions (the first draft of this paragraph
+claimed V5 satisfies both hypotheses; it does not): the escape must
+break exactly one of Lemma F's two hypotheses, and WHICH one depends
+on the engine. The paper engine keeps B′ monotone and leaks through
+the bound clause; V5 keeps the bound clause and REGRESSES B′ — the
+honest cap hands the parent the front's small value, with recorded
+empty-interval witnesses (level 6, B′ 22059 → 9227 while |U_i| = 9216:
+the containment {dis(U_i)} ⊆ [B′_{i−1}, B′_i) of Lemma 3.8's proof
+instantiated on an empty interval with nine thousand events). V8
+breaks neither. A conservation of trouble: on escape inputs the
+trouble is not removable by return-boundary bookkeeping — it moves
+between the two clauses — and only removing the re-settlements
+themselves (the settled bit) removes it. The missing re-settlement
+lemma is therefore hardest precisely where the contracts are honest.
 
 ## Q7 — nEdges overflow bound. NOTE
 
