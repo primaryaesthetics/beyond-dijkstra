@@ -93,7 +93,12 @@ fn median(mut xs: Vec<f64>) -> f64 {
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let mut args: Vec<String> = std::env::args().collect();
+    // `fast-only` (any position): skip the mainline and no-transform rows
+    // (the mainline alone costs ~15 min/run at 1e6 on this box); the
+    // Dijkstra baseline and all fast-engine rows still run in-process.
+    let fast_only = args.iter().any(|a| a == "fast-only");
+    args.retain(|a| a != "fast-only");
     let n: usize = args.get(1).map(|s| s.parse().unwrap()).unwrap_or(1_000_000);
     let (n, edges) = match args.get(2) {
         Some(path) => {
@@ -122,55 +127,60 @@ fn main() {
     dj_times.remove(0); // warmup
     let dj = median(dj_times);
 
-    let mut port_times = Vec::new();
-    let mut port_dist = Vec::new();
-    for i in 0..6 {
-        let t0 = Instant::now();
-        let run = sssp_run(n, &edges, 0, None);
-        let dt = t0.elapsed().as_secs_f64();
-        port_times.push(dt);
-        if i == 0 {
-            eprintln!(
-                "params: delta={} t={} k={} l_top={} n2={}",
-                run.delta, run.t, run.k, run.l_top, run.n2
-            );
+    let (bf, v1) = if fast_only {
+        (f64::NAN, f64::NAN)
+    } else {
+        let mut port_times = Vec::new();
+        let mut port_dist = Vec::new();
+        for i in 0..6 {
+            let t0 = Instant::now();
+            let run = sssp_run(n, &edges, 0, None);
+            let dt = t0.elapsed().as_secs_f64();
+            port_times.push(dt);
+            if i == 0 {
+                eprintln!(
+                    "params: delta={} t={} k={} l_top={} n2={}",
+                    run.delta, run.t, run.k, run.l_top, run.n2
+                );
+            }
+            port_dist = run.dist;
         }
-        port_dist = run.dist;
-    }
-    port_times.remove(0); // warmup
-    let bf = median(port_times);
+        port_times.remove(0); // warmup
+        let bf = median(port_times);
 
-    let mismatches = dist
-        .iter()
-        .zip(port_dist.iter())
-        .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
-        .count();
-    assert_eq!(mismatches, 0, "port distances diverge from dijkstra");
+        let mismatches = dist
+            .iter()
+            .zip(port_dist.iter())
+            .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+            .count();
+        assert_eq!(mismatches, 0, "port distances diverge from dijkstra");
 
-    let mut v1_times = Vec::new();
-    let mut v1_dist = Vec::new();
-    for i in 0..6 {
-        let t0 = Instant::now();
-        let run = no_transform::sssp(n, &edges, 0, None);
-        let dt = t0.elapsed().as_secs_f64();
-        v1_times.push(dt);
-        if i == 0 {
-            eprintln!(
-                "v1 params: delta={} t={} k={} l_top={}",
-                run.delta, run.t, run.k, run.l_top
-            );
+        let mut v1_times = Vec::new();
+        let mut v1_dist = Vec::new();
+        for i in 0..6 {
+            let t0 = Instant::now();
+            let run = no_transform::sssp(n, &edges, 0, None);
+            let dt = t0.elapsed().as_secs_f64();
+            v1_times.push(dt);
+            if i == 0 {
+                eprintln!(
+                    "v1 params: delta={} t={} k={} l_top={}",
+                    run.delta, run.t, run.k, run.l_top
+                );
+            }
+            v1_dist = run.dist;
         }
-        v1_dist = run.dist;
-    }
-    v1_times.remove(0); // warmup
-    let v1 = median(v1_times);
+        v1_times.remove(0); // warmup
+        let v1 = median(v1_times);
 
-    let v1_mismatches = dist
-        .iter()
-        .zip(v1_dist.iter())
-        .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
-        .count();
-    assert_eq!(v1_mismatches, 0, "v1 distances diverge from dijkstra");
+        let v1_mismatches = dist
+            .iter()
+            .zip(v1_dist.iter())
+            .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+            .count();
+        assert_eq!(v1_mismatches, 0, "v1 distances diverge from dijkstra");
+        (bf, v1)
+    };
 
     let bench_fast_engine = |hl: u64| -> f64 {
         let mut times = Vec::new();
@@ -229,12 +239,14 @@ fn main() {
     let flat = median(flat_times);
 
     println!("dijkstra     median {dj:8.3} s");
-    println!("mainline     median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
-    println!(
-        "no-transform median {v1:8.3} s   ({:.2}x dijkstra, {:.2}x of mainline)",
-        v1 / dj,
-        v1 / bf
-    );
+    if !fast_only {
+        println!("mainline     median {bf:8.3} s   ({:.2}x dijkstra)", bf / dj);
+        println!(
+            "no-transform median {v1:8.3} s   ({:.2}x dijkstra, {:.2}x of mainline)",
+            v1 / dj,
+            v1 / bf
+        );
+    }
     println!(
         "fast L=0     median {f0:8.3} s   ({:.2}x dijkstra, {:.2}x of no-transform)",
         f0 / dj,
