@@ -1,0 +1,171 @@
+Escort-invariant instrumentation over the triangle family and the
+standard matrix (QUESTIONS.md Q14 addendum 10). A ward is a fresh entry
+of an incomplete key strictly below the check site's bound; for each
+ward a backward search over exactly-tight edges (dis(u) + w = dis(v) in
+f64), traversing only non-complete vertices, looks for a complete key
+holding a fresh entry in the SAME D strictly below the ward in the
+value order — the escort. escort wards base/rec/iter = wards seen per
+site; missing = wards with NO escort (any fire falsifies invariant (E)
+as stated; the search accepts a superset of canonical tight chains).
+Result: wards fire exactly where incomplete_* fired (star part 1,
+triangle stride rows — counts coincide event-for-event), and missing is
+ZERO on every family, engine, and site. All previously recorded numbers
+(triangle.txt, stale_incomplete.txt, restricted_invariant.txt)
+reproduce bit-for-bit with the escort columns stripped.
+Build: --features verify-contract,dup-classify (observation-only).
+
+===== examples/triangle.rs (star demonstrator + scaled family) =====
+Part 1a -- one base call on the star (t=2, cutoff 8, B=len 100):
+  engine      B'   D[z=10]     true z    D[y=11]     true y boundviol  cap unsett incomp  stale-inc
+   paper      50      9.25       9.25       10.5        9.5         1    0      1      1          0  settle-inc=0 escort wards/missing=1/0
+      V5    9.25      9.25       9.25       10.5        9.5         0    1      0      0          0  settle-inc=0 escort wards/missing=0/0
+      V8      50      9.25       9.25       10.5        9.5         1    0      1      1          0  settle-inc=0 escort wards/missing=1/0
+
+Part 1b -- full recursion on the star (B=INF, l_top=2):
+  [paper] dups=0 settle-inc=0 unsettled base/rec/iter=1/0/1 incomplete base/rec/iter=1/0/1 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=1/0/1 missing=0/0/0
+  [   V5] dups=0 settle-inc=0 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] dups=0 settle-inc=0 unsettled base/rec/iter=1/0/1 incomplete base/rec/iter=1/0/1 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=1/0/1 missing=0/0/0
+
+Part 2 -- the scaled family (full recursion, t=2, k=2):
+      L  stride    E_A        n    tris  per-engine counters below
+    200       0    500      702       0
+  [paper] dups=0 settle-inc=0 viol base/rec=22/6 cap=0 unsettled base/rec/iter=22/6/28 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] dups=0 settle-inc=0 viol base/rec=0/0 cap=22 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=22/6 cap=0 unsettled base/rec/iter=22/6/28 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+    200       2    500      902     100
+  [paper] dups=12 settle-inc=0 viol base/rec=25/0 cap=0 unsettled base/rec/iter=25/0/25 incomplete base/rec/iter=12/0/12 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=12/0/12 missing=0/0/0
+  [   V5] dups=12 settle-inc=0 viol base/rec=0/0 cap=25 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=12/0 cap=0 unsettled base/rec/iter=12/0/12 incomplete base/rec/iter=6/0/6 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=6/0/6 missing=0/0/0
+   5000       2   3000    13002    2500
+  [paper] dups=312 settle-inc=0 viol base/rec=625/0 cap=0 unsettled base/rec/iter=625/0/625 incomplete base/rec/iter=312/0/312 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=312/0/312 missing=0/0/0
+  [   V5] dups=312 settle-inc=0 viol base/rec=0/0 cap=625 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=294/0 cap=0 unsettled base/rec/iter=294/0/294 incomplete base/rec/iter=147/0/147 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=147/0/147 missing=0/0/0
+   5000       3   3000    11336    1667
+  [paper] dups=303 settle-inc=0 viol base/rec=454/101 cap=0 unsettled base/rec/iter=454/101/555 incomplete base/rec/iter=75/0/75 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=75/0/75 missing=0/0/0
+  [   V5] dups=303 settle-inc=0 viol base/rec=0/0 cap=454 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=416/0 cap=0 unsettled base/rec/iter=416/0/416 incomplete base/rec/iter=208/0/208 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=208/0/208 missing=0/0/0
+  20000       2   3000    43002   10000
+  [paper] dups=1250 settle-inc=0 viol base/rec=2500/0 cap=0 unsettled base/rec/iter=2500/0/2500 incomplete base/rec/iter=1250/0/1250 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=1250/0/1250 missing=0/0/0
+  [   V5] dups=1250 settle-inc=0 viol base/rec=0/0 cap=2500 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=1177/0 cap=0 unsettled base/rec/iter=1177/0/1177 incomplete base/rec/iter=588/0/588 stale-inc base/rec/iter=0/0/0 escort wards base/rec/iter=588/0/588 missing=0/0/0
+
+===== examples/escape.rs (escape + staggered + reuse) =====
+      L     E_A        n    dups   dup/n  B'-regr  v8-regr  examples (level, B' before -> after, |U_i|)
+  [paper] L=200: viol_bound_base=44 viol_bound_rec=12 viol_dichotomy=52 cap_hits=0 dups=200
+  [paper]           restricted: unsettled base/rec/iter=22/6/28  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] L=200: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=44 dups=200
+  [   V5]           restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] L=200: viol_bound_base=22 viol_bound_rec=6 viol_dichotomy=24 cap_hits=0 dups=0
+  [   V8]           restricted: unsettled base/rec/iter=22/6/28  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+    200    3000     3711     200   0.054        0        0        0(200)  paper-ex:   V5-ex: 
+  [paper] L=5000: viol_bound_base=1110 viol_bound_rec=366 viol_dichotomy=1469 cap_hits=0 dups=5000
+  [paper]           restricted: unsettled base/rec/iter=555/183/738  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] L=5000: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=1110 dups=5000
+  [   V5]           restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] L=5000: viol_bound_base=555 viol_bound_rec=183 viol_dichotomy=732 cap_hits=0 dups=0
+  [   V8]           restricted: unsettled base/rec/iter=555/183/738  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+   5000    3000     8511    5000   0.587        0        0        1(5000)  paper-ex:   V5-ex: (l5 7571->2315 |U|=2304)
+  [paper] L=5000: viol_bound_base=570 viol_bound_rec=188 viol_dichotomy=735 cap_hits=0 dups=133
+  [paper]           restricted: unsettled base/rec/iter=556/185/741  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] L=5000: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=618 dups=565
+  [   V5]           restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] L=5000: viol_bound_base=555 viol_bound_rec=183 viol_dichotomy=732 cap_hits=0 dups=0
+  [   V8]           restricted: unsettled base/rec/iter=555/183/738  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+   5000      40     5551     133   0.024        0        0        0(565)  paper-ex:   V5-ex: 
+  [paper] L=20000: viol_bound_base=2973 viol_bound_rec=988 viol_dichotomy=2958 cap_hits=0 dups=6757
+  [paper]           restricted: unsettled base/rec/iter=2223/742/2965  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] L=20000: viol_bound_base=0 viol_bound_rec=0 viol_dichotomy=0 cap_hits=4444 dups=20000
+  [   V5]           restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] L=20000: viol_bound_base=2222 viol_bound_rec=737 viol_dichotomy=2952 cap_hits=0 dups=0
+  [   V8]           restricted: unsettled base/rec/iter=2222/737/2959  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    3000    23511    6757   0.287        0        0        1(20000)  paper-ex:   V5-ex: (l6 22059->9227 |U|=9216)
+
+      L    R       E         n     paper        V5     V5/n        V8   p-regr  v5-regr
+  [paper] R=3 E=20000: restricted unsettled base/rec/iter=2222/737/2959  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] R=3 E=20000: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] R=3 E=20000: restricted unsettled base/rec/iter=2222/737/2959  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    3   20000     80014     59997     59997    0.750         0        0        0  t=2
+  [paper] R=8 E=20000: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] R=8 E=20000: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] R=8 E=20000: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    8   20000    180019    119984    119984    0.667         0        0        0  t=2
+  [paper] R=8 E=60000: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] R=8 E=60000: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] R=8 E=60000: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    8   60000    500019    139979    139979    0.280         0        0        0  t=2
+  [paper] R=16 E=20000: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] R=16 E=20000: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] R=16 E=20000: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000   16   20000    340027    199938    199937    0.588         0        0        0  t=2
+  [paper] R=16 E=20000: restricted unsettled base/rec/iter=308/20/328  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] R=16 E=20000: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] R=16 E=20000: restricted unsettled base/rec/iter=308/20/328  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000   16   20000    340027         0         0    0.000         0        0        0  t=4
+  [paper] R=64 E=5000: restricted unsettled base/rec/iter=307/20/327  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] R=64 E=5000: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] R=64 E=5000: restricted unsettled base/rec/iter=307/20/327  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000   64    5000    340075    535996    535999    1.576         0        0       10  t=4
+
+      L    R       E   q         n     paper        V5    waves    dup/n
+  [paper] q=8: restricted unsettled base/rec/iter=2222/738/2960  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] q=8: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] q=8: restricted unsettled base/rec/iter=2222/738/2960  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    8   20000   8     40099     20000     20000     1.00    0.499
+  [paper] q=4: restricted unsettled base/rec/iter=2222/738/2960  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] q=4: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] q=4: restricted unsettled base/rec/iter=2222/738/2960  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    8   20000   4     40059     20001     20001     1.00    0.499
+  [paper] q=1: restricted unsettled base/rec/iter=2222/740/2962  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V5] q=1: restricted unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [   V8] q=1: restricted unsettled base/rec/iter=2222/739/2961  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  20000    8   20000   1     40029     20000     20000     1.00    0.500
+
+===== examples/dup_classify.rs =====
+                 input        n   dups base-seed base-ins own-root own-swept  foreign  f-anc-Q  f-anc-S  B'-regr  v8-regr
+   zero-heavy minslack     4094      5         0        0        5         0        0        0        0        0        0
+  [restricted paper] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V5] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V8] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+   zero-heavy minslack    16382    608        49       10      549         0        0        0        0        0        0
+  [restricted paper] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V5] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V8] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+         tie-rich 0..3   170000   5074       734      741     3226         0      373      373      373        0        0
+  [restricted paper] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V5] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V8] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+      zero-heavy large   500000    149         5       15      110         0       19       19       19        0        0
+  [restricted paper] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V5] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V8] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+          float-random   500000    664        66      299      250         0       49       49       49        0        0
+  [restricted paper] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V5] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+  [restricted    V8] unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+
+===== examples/verify_contract.rs =====
+Q3 demonstrator (base case, t=2, cutoff 8, B=len 100):
+                      engine  bound viol   rec viol  dichotomy  cap hits
+         paper (Algorithm 4)           1          0          0         0
+                 restricted: unsettled base/rec/iter=1/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+               V5 fixed base           0          0          0         1
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+
+adversarial family (full runs, counters over all returns):
+                       input        n engine   base viol   rec viol  dichotomy  cap hits
+         zero-heavy minslack     4094  paper           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+         zero-heavy minslack     4094     V5           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+         zero-heavy minslack    16382  paper           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+         zero-heavy minslack    16382     V5           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+               tie-rich 0..3   170000  paper           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+               tie-rich 0..3   170000     V5           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+            zero-heavy large   500000  paper           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0
+            zero-heavy large   500000     V5           0          0          0         0
+                 restricted: unsettled base/rec/iter=0/0/0  incomplete base/rec/iter=0/0/0  stale-inc base/rec/iter=0/0/0  settle-inc=0  escort wards base/rec/iter=0/0/0 missing=0/0/0

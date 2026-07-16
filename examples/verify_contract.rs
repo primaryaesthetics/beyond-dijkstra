@@ -66,6 +66,9 @@ struct Counters {
     /// Direct (H) counter (settlements at a non-true label length).
     #[cfg(feature = "dup-classify")]
     settle_incomplete: u64,
+    /// Escort-invariant counters (Q14 addendum 10).
+    #[cfg(feature = "dup-classify")]
+    escort: beyond_dijkstra::solver::EscortCounts,
 }
 
 /// Exact-completeness oracle for the restricted counters: the crate's
@@ -132,6 +135,8 @@ fn run(
         restr: solver.restr.clone(),
         #[cfg(feature = "dup-classify")]
         settle_incomplete: solver.settle_incomplete,
+        #[cfg(feature = "dup-classify")]
+        escort: solver.escort.clone(),
     }
 }
 
@@ -167,7 +172,7 @@ fn main() {
         // unsettled proxy must fire, the exact proxy must not.
         #[cfg(feature = "dup-classify")]
         println!(
-            "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
+            "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}  escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
             "restricted:",
             c.restr.unsettled_base,
             c.restr.unsettled_rec,
@@ -178,7 +183,13 @@ fn main() {
             c.restr.stale_incomplete_base,
             c.restr.stale_incomplete_rec,
             c.restr.stale_incomplete_iter,
-            c.settle_incomplete
+            c.settle_incomplete,
+            c.escort.wards_base,
+            c.escort.wards_rec,
+            c.escort.wards_iter,
+            c.escort.missing_base,
+            c.escort.missing_rec,
+            c.escort.missing_iter,
         );
     }
 
@@ -235,7 +246,7 @@ fn main() {
             );
             #[cfg(feature = "dup-classify")]
             println!(
-                "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
+                "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}  escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
                 "restricted:",
                 c.restr.unsettled_base,
                 c.restr.unsettled_rec,
@@ -246,7 +257,13 @@ fn main() {
                 c.restr.stale_incomplete_base,
                 c.restr.stale_incomplete_rec,
                 c.restr.stale_incomplete_iter,
-                c.settle_incomplete
+                c.settle_incomplete,
+                c.escort.wards_base,
+                c.escort.wards_rec,
+                c.escort.wards_iter,
+                c.escort.missing_base,
+                c.escort.missing_rec,
+                c.escort.missing_iter,
             );
         }
     }

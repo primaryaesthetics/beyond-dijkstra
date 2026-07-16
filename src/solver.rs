@@ -159,6 +159,28 @@ pub struct RestrCounts {
     pub stale_incomplete_iter: u64,
 }
 
+/// Escort-invariant counters (QUESTIONS.md Q14 addendum 10). A *ward* is
+/// a fresh entry of an incomplete key strictly below the site's bound in
+/// the checked D — exactly the entries the escort invariant (E) covers.
+/// `wards_*` counts them; `missing_*` counts wards for which the backward
+/// search over exactly-tight edges (dis(u) + w = dis(v) in f64, the
+/// arithmetic the labels live in), traversing only non-complete vertices,
+/// finds NO complete key holding a fresh entry in the same D strictly
+/// below the ward's in the value order. The search accepts a superset of
+/// canonical tight chains, so a miss falsifies (E) as stated; zero misses
+/// is the invariant surviving at measurement grade. Same sites as
+/// `RestrCounts`; pure observation.
+#[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+#[derive(Clone, Default, Debug)]
+pub struct EscortCounts {
+    pub wards_base: u64,
+    pub wards_rec: u64,
+    pub wards_iter: u64,
+    pub missing_base: u64,
+    pub missing_rec: u64,
+    pub missing_iter: u64,
+}
+
 #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
 #[derive(Clone, Copy)]
 enum RestrSite {
@@ -353,6 +375,17 @@ impl BlockDs {
             .iter()
             .take_while(|&(&v, _)| Label::Fin(v) < bound)
             .any(|(&v, &k)| f(k, v))
+    }
+
+    /// All entries strictly below `bound`, ascending by stored value
+    /// (escort instrumentation only).
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub fn entries_below(&self, bound: Label) -> Vec<(u32, Lab)> {
+        self.by_val
+            .iter()
+            .take_while(|&(&v, _)| Label::Fin(v) < bound)
+            .map(|(&v, &k)| (k, v))
+            .collect()
     }
 }
 
@@ -587,6 +620,13 @@ pub struct Solver<'a> {
     /// Observation-only, never read by control flow.
     #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
     pub settle_incomplete: u64,
+    /// Escort-invariant counters (see `EscortCounts`; needs the oracle).
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub escort: EscortCounts,
+    /// Reverse adjacency for the escort search, built on the first ward
+    /// (never on ward-free runs). Observation-only.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    rev_adj: Option<Vec<Vec<(u32, f64)>>>,
     /// Q11 trace: the vertex whose events are recorded (None = off).
     #[cfg(feature = "q11-trace")]
     pub trace_vertex: Option<u32>,
@@ -633,6 +673,10 @@ impl<'a> Solver<'a> {
             oracle_len: None,
             #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
             settle_incomplete: 0,
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            escort: EscortCounts::default(),
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            rev_adj: None,
             #[cfg(feature = "verify-contract")]
             viol_bound_base: 0,
             #[cfg(feature = "verify-contract")]
@@ -724,21 +768,62 @@ impl<'a> Solver<'a> {
             }
             None => false,
         };
-        let (u_ctr, i_ctr, s_ctr) = match site {
+        // Escort check (see `EscortCounts`): wards are the fresh entries
+        // of incomplete keys strictly below the bound; each is searched
+        // for its escort in this D.
+        let (wards, missing) = match &self.oracle_len {
+            Some(orc) => {
+                let d = &self.d;
+                let ward_list: Vec<Lab> = ds
+                    .entries_below(bound)
+                    .into_iter()
+                    .filter(|&(k, stored)| {
+                        let len = match d[k as usize] {
+                            Label::Fin(l) => l.len,
+                            Label::Inf => f64::INFINITY,
+                        };
+                        len != orc[k as usize] && Label::Fin(stored) == d[k as usize]
+                    })
+                    .map(|(_, stored)| stored)
+                    .collect();
+                if !ward_list.is_empty() && self.rev_adj.is_none() {
+                    let mut rev: Vec<Vec<(u32, f64)>> = vec![Vec::new(); self.adj.len()];
+                    for (u, out) in self.adj.iter().enumerate() {
+                        for &(v, w) in out {
+                            rev[v as usize].push((u as u32, w));
+                        }
+                    }
+                    self.rev_adj = Some(rev);
+                }
+                let missing = ward_list
+                    .iter()
+                    .filter(|&&ward| !self.escort_found(ds, ward))
+                    .count() as u64;
+                (ward_list.len() as u64, missing)
+            }
+            None => (0, 0),
+        };
+        let (u_ctr, i_ctr, s_ctr, w_ctr, m_ctr) = match site {
             RestrSite::Base => (
                 &mut self.restr.unsettled_base,
                 &mut self.restr.incomplete_base,
                 &mut self.restr.stale_incomplete_base,
+                &mut self.escort.wards_base,
+                &mut self.escort.missing_base,
             ),
             RestrSite::Rec => (
                 &mut self.restr.unsettled_rec,
                 &mut self.restr.incomplete_rec,
                 &mut self.restr.stale_incomplete_rec,
+                &mut self.escort.wards_rec,
+                &mut self.escort.missing_rec,
             ),
             RestrSite::Iter => (
                 &mut self.restr.unsettled_iter,
                 &mut self.restr.incomplete_iter,
                 &mut self.restr.stale_incomplete_iter,
+                &mut self.escort.wards_iter,
+                &mut self.escort.missing_iter,
             ),
         };
         if unsettled_hit {
@@ -750,6 +835,47 @@ impl<'a> Solver<'a> {
         if stale_hit {
             *s_ctr += 1;
         }
+        *w_ctr += wards;
+        *m_ctr += missing;
+    }
+
+    /// The escort search for one ward (see `EscortCounts`): backward from
+    /// the ward's vertex over exactly-tight edges, traversing only
+    /// non-complete vertices — a complete vertex either qualifies as the
+    /// escort (fresh entry in `ds` strictly below the ward) or blocks its
+    /// branch, since the invariant anchors at the LAST complete vertex of
+    /// a tight path. Observation only.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    fn escort_found(&self, ds: &BlockDs, ward: Lab) -> bool {
+        let orc = self.oracle_len.as_ref().expect("wards need the oracle");
+        let rev = self.rev_adj.as_ref().expect("built before the search");
+        let complete = |v: u32| -> bool {
+            let len = match self.d[v as usize] {
+                Label::Fin(l) => l.len,
+                Label::Inf => f64::INFINITY,
+            };
+            len == orc[v as usize]
+        };
+        let mut visited: FxHashSet<u32> = FxHashSet::default();
+        let mut stack = vec![ward.curr];
+        visited.insert(ward.curr);
+        while let Some(v) = stack.pop() {
+            for &(u, w) in &rev[v as usize] {
+                if orc[u as usize] + w != orc[v as usize] || !visited.insert(u) {
+                    continue;
+                }
+                if complete(u) {
+                    if let Some(s) = ds.get(u) {
+                        if Label::Fin(s) == self.d[u as usize] && s < ward {
+                            return true;
+                        }
+                    }
+                } else {
+                    stack.push(u);
+                }
+            }
+        }
+        false
     }
 
     // -- FindPivots (SPEC "FindPivots", Algorithm 2) ----------------------

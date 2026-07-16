@@ -37,6 +37,10 @@ pub struct VariantRun {
     /// (needs the runner's oracle argument; see `Solver::settle_incomplete`).
     #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
     pub settle_incomplete: u64,
+    /// Escort-invariant counters (Q14 addendum 10; needs the runner's
+    /// oracle argument — see `crate::solver::EscortCounts`).
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub escort: crate::solver::EscortCounts,
 }
 
 /// Shortest-path lengths from `source` on the original graph. Parameters
@@ -207,5 +211,7 @@ fn sssp_run_inner(
         restr: solver.restr.clone(),
         #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
         settle_incomplete: solver.settle_incomplete,
+        #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+        escort: solver.escort.clone(),
     }
 }

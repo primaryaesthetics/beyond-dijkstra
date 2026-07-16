@@ -147,7 +147,7 @@ fn main() {
             let r = no_transform::sssp_pretest(n, &edges, 0, 0, fixed, dedup, ov, v8.dist.clone());
             let rc = &r.restr;
             println!(
-                "  [restricted {eng:>5}] unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
+                "  [restricted {eng:>5}] unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}  escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
                 rc.unsettled_base,
                 rc.unsettled_rec,
                 rc.unsettled_iter,
@@ -157,7 +157,13 @@ fn main() {
                 rc.stale_incomplete_base,
                 rc.stale_incomplete_rec,
                 rc.stale_incomplete_iter,
-                r.settle_incomplete
+                r.settle_incomplete,
+                r.escort.wards_base,
+                r.escort.wards_rec,
+                r.escort.wards_iter,
+                r.escort.missing_base,
+                r.escort.missing_rec,
+                r.escort.missing_iter,
             );
         }
     }

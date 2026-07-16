@@ -126,7 +126,7 @@ fn demonstrator() {
         seed_source(&mut solver);
         let (bp, _u, ds) = solver.bmssp(b, &[0], 0);
         println!(
-            "{:>8} {:>7} {:>9} {:>10} {:>10} {:>10} {:>9} {:>4} {:>6} {:>6} {:>10}  settle-inc={}",
+            "{:>8} {:>7} {:>9} {:>10} {:>10} {:>10} {:>9} {:>4} {:>6} {:>6} {:>10}  settle-inc={} escort wards/missing={}/{}",
             name,
             bp.fin().len,
             len_of(ds.get(10)),
@@ -139,6 +139,8 @@ fn demonstrator() {
             solver.restr.incomplete_base,
             solver.restr.stale_incomplete_base,
             solver.settle_incomplete,
+            solver.escort.wards_base,
+            solver.escort.missing_base,
         );
     }
 
@@ -170,8 +172,9 @@ fn demonstrator() {
             seen[v as usize] = true;
         }
         let rc = &solver.restr;
+        let ec = &solver.escort;
         println!(
-            "  [{name:>5}] dups={dups} settle-inc={} unsettled base/rec/iter={}/{}/{} incomplete base/rec/iter={}/{}/{} stale-inc base/rec/iter={}/{}/{}",
+            "  [{name:>5}] dups={dups} settle-inc={} unsettled base/rec/iter={}/{}/{} incomplete base/rec/iter={}/{}/{} stale-inc base/rec/iter={}/{}/{} escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
             solver.settle_incomplete,
             rc.unsettled_base,
             rc.unsettled_rec,
@@ -182,6 +185,12 @@ fn demonstrator() {
             rc.stale_incomplete_base,
             rc.stale_incomplete_rec,
             rc.stale_incomplete_iter,
+            ec.wards_base,
+            ec.wards_rec,
+            ec.wards_iter,
+            ec.missing_base,
+            ec.missing_rec,
+            ec.missing_iter,
         );
     }
 }
@@ -273,8 +282,9 @@ fn family() {
                 v8_dups = dups;
             }
             let rc = &solver.restr;
+            let ec = &solver.escort;
             println!(
-                "  [{name:>5}] dups={dups} settle-inc={} viol base/rec={}/{} cap={} unsettled base/rec/iter={}/{}/{} incomplete base/rec/iter={}/{}/{} stale-inc base/rec/iter={}/{}/{}",
+                "  [{name:>5}] dups={dups} settle-inc={} viol base/rec={}/{} cap={} unsettled base/rec/iter={}/{}/{} incomplete base/rec/iter={}/{}/{} stale-inc base/rec/iter={}/{}/{} escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
                 solver.settle_incomplete,
                 solver.viol_bound_base,
                 solver.viol_bound_rec,
@@ -288,6 +298,12 @@ fn family() {
                 rc.stale_incomplete_base,
                 rc.stale_incomplete_rec,
                 rc.stale_incomplete_iter,
+                ec.wards_base,
+                ec.wards_rec,
+                ec.wards_iter,
+                ec.missing_base,
+                ec.missing_rec,
+                ec.missing_iter,
             );
         }
         assert_eq!(v8_dups, 0, "V8 must have zero dups");

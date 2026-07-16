@@ -171,7 +171,7 @@ fn main() {
                 );
                 let rc = &solver.restr;
                 println!(
-                    "  [{tag:>5}]           restricted: unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
+                    "  [{tag:>5}]           restricted: unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}  escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
                     rc.unsettled_base,
                     rc.unsettled_rec,
                     rc.unsettled_iter,
@@ -181,7 +181,13 @@ fn main() {
                     rc.stale_incomplete_base,
                     rc.stale_incomplete_rec,
                     rc.stale_incomplete_iter,
-                    solver.settle_incomplete
+                    solver.settle_incomplete,
+                    solver.escort.wards_base,
+                    solver.escort.wards_rec,
+                    solver.escort.wards_iter,
+                    solver.escort.missing_base,
+                    solver.escort.missing_rec,
+                    solver.escort.missing_iter,
                 );
             }
             runs.push((
@@ -285,7 +291,7 @@ fn staggered() {
             {
                 let rc = &solver.restr;
                 println!(
-                    "  [{_tag:>5}] R={r_trig} E={e_block}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
+                    "  [{_tag:>5}] R={r_trig} E={e_block}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}  escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
                     rc.unsettled_base,
                     rc.unsettled_rec,
                     rc.unsettled_iter,
@@ -295,7 +301,13 @@ fn staggered() {
                     rc.stale_incomplete_base,
                     rc.stale_incomplete_rec,
                     rc.stale_incomplete_iter,
-                    solver.settle_incomplete
+                    solver.settle_incomplete,
+                    solver.escort.wards_base,
+                    solver.escort.wards_rec,
+                    solver.escort.wards_iter,
+                    solver.escort.missing_base,
+                    solver.escort.missing_rec,
+                    solver.escort.missing_iter,
                 );
             }
             out.push((dups, solver.dup_class.bprime_regressions));
@@ -386,7 +398,7 @@ fn reuse() {
             {
                 let rc = &solver.restr;
                 println!(
-                    "  [{_tag:>5}] q={q}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
+                    "  [{_tag:>5}] q={q}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}  escort wards base/rec/iter={}/{}/{} missing={}/{}/{}",
                     rc.unsettled_base,
                     rc.unsettled_rec,
                     rc.unsettled_iter,
@@ -396,7 +408,13 @@ fn reuse() {
                     rc.stale_incomplete_base,
                     rc.stale_incomplete_rec,
                     rc.stale_incomplete_iter,
-                    solver.settle_incomplete
+                    solver.settle_incomplete,
+                    solver.escort.wards_base,
+                    solver.escort.wards_rec,
+                    solver.escort.wards_iter,
+                    solver.escort.missing_base,
+                    solver.escort.missing_rec,
+                    solver.escort.missing_iter,
                 );
             }
             out.push(dups);

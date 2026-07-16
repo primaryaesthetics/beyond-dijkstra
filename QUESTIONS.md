@@ -1411,6 +1411,178 @@ are ZERO on every family, engine, and check site. Consequences:
    chain-connected entry per sub-B′ incomplete fresh entry), then the
    W′ endgame.
 
+## Q14 addendum 10 (2026-07-16, fresh session) — the escort invariant re-drafted in last-complete-vertex form (both addendum-8 defects discharged), the regeneration induction with its single leaking case identified as the W′ channel, and the escort instrumented live: zero missing escorts across the matrix and the triangle family
+
+Addendum 9's consequence 3 executed: the re-draft, then the escort's
+own counters over everything.
+
+**The re-drafted statement.** Addendum 8's defect i (the "chain of
+pending canonical offers" wording) is repaired by quantifying over
+tight paths and anchoring the escort at the last complete vertex.
+Definitions pinned first: a *tight path* to y is a source-to-y path
+every edge of which satisfies dis(u) + w = dis(v) exactly (float
+equality — the arithmetic the labels themselves live in; at proof
+grade, (len, hops)-tight per the len/hops-completeness of the
+addendum-8 audit). *Complete* means the label's len equals dis
+(len/hops at proof grade); *fresh* means the stored value equals the
+key's current label. On any tight path to an incomplete y a last
+complete vertex exists (the source is complete, y is not).
+
+> **(E)** At every observable boundary (base and recursive returns,
+> against the returned B′; end of every BMSSP iteration, against the
+> current B′), for every fresh entry of an incomplete key y stored
+> strictly below the bound in the checked D: some tight path to y has
+> its last complete vertex z holding a fresh entry in the SAME D.
+
+Two clauses of the addendum-8 statement are no longer assumed — they
+are consequences of the anchor choice:
+
+- *Strictness*: z's fresh entry sits at len dis(z) ≤ dis(y) <
+  len(y's stored entry) — the first inequality because z lies on a
+  shortest path to y under non-negative weights, the second because
+  labels are lengths of real paths and y is incomplete. So the escort
+  is strictly below the ward already in the len slot of the value
+  order, hence contained in every pull prefix that contains the ward.
+- *Intermediates*: every vertex strictly between z and y on the
+  chosen path is non-complete (unlabeled or incomplete) by the
+  maximality of z. The old "unlabeled or co-resident below the next
+  link" clause dissolves into the choice of anchor.
+
+**Companion clause (defect ii, resolved per addendum 9).** (E)
+quantifies over fresh entries only. The stale channel — entries of
+incomplete keys below the bound at a non-label value, creatable by
+the two non-re-inserting label-drop sites — is covered by addendum
+7's confinement, promoted to companion:
+
+> **(E-c)** Stale entries of incomplete keys strictly below the
+> governing bound do not exist at observable boundaries; mid-
+> iteration they are confined to the W/S territory of active deeper
+> calls and are repaired at those calls' returns.
+
+Measured status: the boundary half is the `stale_incomplete_*` zero
+across the whole corpus (addendum 9); the mid-iteration half is the
+part the counters cannot see and the proof still owes.
+
+**(E) ⇒ (H) at base pulls, mechanically (modulo E-c).** Induct on
+settlement events in time; let the first (H) violation be a base pull
+settling an incomplete y. The pulled entry is fresh (a stale entry
+below the bound is excluded by E-c at the pull moment — the mid-
+iteration half of E-c is consumed exactly here). By (E) at the seeding
+of this base call plus the regeneration step below, y's current escort
+z holds a fresh co-resident entry strictly below y's — so z, not y,
+would be the minimum: z must have been pulled in an earlier singleton
+of the same base loop. That pull settled z complete (minimality), and
+the base case's post-pull sweep relaxed the tight edge (z, x₁) — x₁
+non-complete means its label tuple strictly exceeds the canonical
+candidate, so the offer is accepted, x₁ completes, and the insert
+lands in this same base D (the candidate value dis(x₁) ≤ dis(y) <
+y's stored len < the base bound, so the sweep's bound gate passes).
+The chain from the last complete vertex to y is now strictly shorter;
+induct on its length — y completes before any pull can take it. ∎
+(modulo E-c's mid-iteration half)
+
+**The regeneration induction (why (E) survives events), case
+inventory.** Events that touch the invariant:
+
+1. *Escort consumption by keep-min or merge*: impossible — Lemma M
+   (a fresh entry of a complete key is the key's floor; keep-min
+   cannot evict it, and a complete label never moves).
+2. *Escort pulled without the ward* (the prefix ends between them):
+   the escort travels to the child and is settled there or deeper;
+   every settlement of it triggers the accepted canonical offer to
+   the next chain link, whose insert lands in the settling call's D —
+   which merges back into the parent's ds at the return inside the
+   SAME parent iteration. Co-residence is restored by the boundary,
+   and the window in between is pull-free at the parent (one pull per
+   iteration, and the child cannot pull the ward — the ward is not in
+   the child's D). This is why a boundary-grade invariant suffices
+   for pull sites.
+3. *Escort pulled with the ward*: both land in the child (pulls are
+   value-prefixes and the escort is strictly smaller); (E) holds one
+   level down and the argument recurses.
+4. *Chain advance — the leaking case.* If the escort z is settled by
+   a W′ boundary append rather than a base pull, z's out-edges are
+   relaxed not by z's own settlement but by the parent's relax sweep
+   (lines 21–26 of the port; the paper's 31–33) in the iteration of
+   the child's return — and that sweep's insert is gated by
+   d[v] ≥ B′_i (the child's returned bound). An accepted canonical
+   offer BELOW B′_i completes x₁ but creates NO entry anywhere: the
+   ward's last complete vertex is then entry-less and (E) as stated
+   is violated. This is Lemma O's named W′-settled-predecessor
+   channel and addendum 7's L2, reached from a third independent
+   direction. Note the knot: the child-return contract
+   U_i = Ũ(B′_i, S_i) would say x₁'s predecessor situation cannot
+   arise — but that contract is what (H) is being proved FOR. The
+   escort invariant's single leaking case IS the endgame's mutual
+   induction, to be untied in the W′ session, not here.
+5. *Ward creation sites* (a fresh incomplete entry appearing below
+   the bound): base-case final-sweep non-canonical plants (the
+   triangle), iteration relax-sweep plants, pivot re-selection
+   re-inserts at current labels, line-33 premature returns to the
+   frontier, FindPivots-seeded initial inserts, and merge carries.
+   The two sweep cases carry the escort with them (the same sweep
+   source is settled-complete and its tight out-edge went into the
+   same D — the triangle's mechanics generalized); the re-insert
+   sites are NOT argued here and are exactly what the instrumentation
+   quantifies over.
+
+**The instrumentation.** Counters `escort_wards_{base,rec,iter}` and
+`escort_missing_{base,rec,iter}` at the same three sites as the
+restricted-invariant counters: wards = fresh entries of incomplete
+keys strictly below the site's bound in the checked D; for each ward
+a backward search over exactly-tight edges (reverse adjacency, built
+lazily) that traverses only non-complete vertices and succeeds when
+it reaches a complete vertex holding a fresh entry in the same D
+strictly below the ward's entry in the value order. Zero missing is
+the invariant surviving at measurement grade; any fire falsifies (E)
+as stated (the search accepts a superset of canonical chains, so a
+miss means no tight chain at all). Observation-only, features
+verify-contract + dup-classify, results unchanged.
+
+**Predictions written before the runs**: wards fire exactly where
+`incomplete_*` fired (the star part 1, the stride rows of the
+triangle family; zero on the whole standard matrix), and
+escort_missing = 0 everywhere — no tested family builds case 4's
+sub-B′_i W′ configuration.
+
+**Results (recorded run: `benchmarks/results/escort.txt`).** Both
+predictions confirmed, and the search itself validated on live
+positives:
+
+- *The star (part 1a, paper and V8)*: the one ward — y's leaked entry
+  at stored 10.5 — finds its escort: z, complete, fresh at 9.25 in the
+  same base D, one tight edge away. wards=1, missing=0; V5 zero wards
+  (the cap removes the leak). Full recursion: wards base/rec/iter =
+  1/0/1, missing all zero.
+- *The scaled family*: wards coincide event-for-event with the
+  `incomplete_*` fires on every row (paper 12/312/75/1250 on the
+  stride rows, V8 6/147/208/588; wards_rec = 0 everywhere, matching
+  incomplete_rec = 0) and **missing = 0 on every row, engine, and
+  site** — every leaked incomplete entry these families can produce
+  carries a strictly smaller complete fresh co-resident entry reached
+  by a tight chain through non-complete vertices.
+- *The standard matrix* (escape all three parts, dup_classify,
+  verify_contract): wards = 0 everywhere — the matrix never presents
+  a sub-bound incomplete fresh entry at a boundary at all, consistent
+  with its all-zero `incomplete_*` record — and every previously
+  recorded number (triangle.txt, stale_incomplete.txt,
+  restricted_invariant.txt) reproduces bit-for-bit with the escort
+  columns stripped.
+
+Consequences: (E) survives at measurement grade on every family ever
+constructed, including the purpose-built falsifier of the restricted
+clause — the corrected proof target now has direct empirical support,
+not just the triangle thought-experiment. The base-pull half of (H)
+rests on (E) plus E-c by the mechanical argument above. Standing
+caveats: the counters observe boundaries, not every mid-iteration
+state (E-c's mid-iteration half is unmeasurable by construction), and
+no tested family exercises regeneration case 4 — wards_rec = 0
+everywhere means the recursive-boundary configuration, where the
+W′-channel leak would surface, has never been built. A driver that
+forces a W′-settled escort with a sub-B′_i canonical successor is the
+natural companion to the W′ endgame session, where the leaking case
+and Lemma O's named gap are the same knot.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a
