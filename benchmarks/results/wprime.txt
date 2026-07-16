@@ -1,0 +1,48 @@
+W' endgame probes (direct level-1 calls, t=2, B=len 1000):
+
+Row A: clean pocket:
+  [paper] B'=21 |U|=38 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=20.5 settledlist=true entry=-
+  [   V5] B'=21 |U|=38 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=20.5 settledlist=true entry=-
+  [   V8] B'=21 |U|=38 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=20.5 settledlist=true entry=-
+
+Row B: pocket healed at FindPivots:
+  [paper] B'=20.5 |U|=44 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=16 in-U=true; x1: d=18 in-U=true
+  [   V5] B'=20.5 |U|=44 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=16 in-U=true; x1: d=18 in-U=true
+  [   V8] B'=20.5 |U|=44 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=16 in-U=true; x1: d=18 in-U=true
+
+Row C: capped improver, root stranded:
+  [paper] B'=21 |U|=37 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=22.75 in-U=false entry=-; x1: d=inf; r: d=21.75 entry=21.75 (B'=21 <= d[r])
+  [   V5] B'=21 |U|=37 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=22.75 in-U=false entry=-; x1: d=inf; r: d=21.75 entry=21.75 (B'=21 <= d[r])
+  [   V8] B'=21 |U|=37 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=22.75 in-U=false entry=-; x1: d=inf; r: d=21.75 entry=21.75 (B'=21 <= d[r])
+
+Row D: root pulled, complementary gates:
+  [paper] B'=21 |U|=37 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=15 in-U=true; x1: d=990 entry=990
+  [   V5] B'=21 |U|=37 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=15 in-U=true; x1: d=990 entry=990
+  [   V8] B'=21 |U|=37 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=15 in-U=true; x1: d=990 entry=990
+
+Row E: recursive-boundary ward:
+  [paper] B'=21 |U|=39 settle-inc=0 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/1 stale-inc=0/0/0 wards b/r/i=1/1/1 missing=0/0/0  y_t: d=20.90625 true=20.859375 entry=20.90625; z_t: d=20.84375 entry=20.84375
+  [   V5] B'=20.84375 |U|=39 settle-inc=0 viol base/rec=0/0 cap=1 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  y_t: d=20.90625 true=20.859375 entry=20.90625; z_t: d=20.84375 entry=20.84375
+  [   V8] B'=21 |U|=39 settle-inc=0 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/1 stale-inc=0/0/0 wards b/r/i=1/1/1 missing=0/0/0  y_t: d=20.90625 true=20.859375 entry=20.90625; z_t: d=20.84375 entry=20.84375
+
+Part 2 -- full recursion, source 0, all engines:
+  full recursion (row A, n=63, l_top=3):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+  full recursion (row B, n=85, l_top=4):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+  full recursion (row C, n=66, l_top=4):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+  full recursion (row D, n=66, l_top=4):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+  full recursion (row E, n=66, l_top=4):
+    [paper] settle-inc=0 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/2 stale-inc=0/0/0 wards b/r/i=1/1/2 missing=0/0/0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=1 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V8] settle-inc=0 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/2 stale-inc=0/0/0 wards b/r/i=1/1/2 missing=0/0/0 (exact)

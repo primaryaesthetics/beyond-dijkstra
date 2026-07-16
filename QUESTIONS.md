@@ -1583,6 +1583,152 @@ forces a W′-settled escort with a sub-B′_i canonical successor is the
 natural companion to the W′ endgame session, where the leaking case
 and Lemma O's named gap are the same knot.
 
+## Q14 addendum 11 (2026-07-17, fresh session; the confinement argument is same-session math, flagged for cold re-derivation like addendum 8 was) — the W′ endgame: case 4 cannot be assembled on any engine; four named repair mechanisms, each exhibited live by a dedicated probe; the first recursive-boundary ward fires with its escort found; the custody object of L1 materialized and its repair channel demonstrated
+
+The attack plan's spine item 1 executed: instead of one driver that
+fires case 4, the session produced a proof-shaped inventory of WHY
+every assembly attempt fails, with one probe per blocking mechanism
+(driver `examples/wprime.rs`, record `benchmarks/results/wprime.txt`;
+all predictions below were written into the driver header before the
+first run and confirmed on it, every row, every engine).
+
+**The construction problem.** Case 4 needs a W′-settled escort z
+(z ∈ W of its call, complete, d[z] < B′ at the W′ computation, never
+pulled) whose canonical successor x₁ has dis(x₁) below the governing
+bound while x₁'s completion creates no entry. Silence is the crux:
+z must never hold an entry in any live D, or a pull settles it and
+the complementary gates regenerate x₁'s entry. Working through the
+port's mechanics (all sites verified against the code, not memory),
+every channel that could complete z silently is blocked:
+
+1. **Pocket closure** (row A). A FAILED FindPivots search (heap
+   emptied with |K| < k) pops everything it labels, so it enumerates
+   the entire region reachable from its root through improvable labels
+   under the call's B. If the pocket's labels are exact — every true
+   path enters via the root x ∈ S, whose own label is exact — the
+   local search is a Dijkstra of the pocket: every successor with
+   candidate < B joins it (relax accepts ties, so equal labels join
+   too; cand > d[v] with cand = dis(v) is impossible below the true
+   value; a smaller tuple at equal len means v is already
+   len-complete). Sub-B′ successors of W′-settled pocket vertices are
+   therefore themselves pocket members and W′-settle complete in the
+   same append. Row A: the pocket {x, z} W′-settles complete, all
+   counters zero, all engines.
+
+2. **FindPivots-time healing** (row B). A stale pocket whose true
+   path enters via another FAILED root is re-explored exactly at
+   FindPivots time: failed searches pop everything, so the improving
+   search re-relaxes the successor chain in place — z AND x₁ are
+   complete before the main loop starts, and both W′-settle. Row B:
+   z@16, x₁@18 healed and settled, counters zero.
+
+3. **Tie-restore plus complementary gates** (row D). Line 23 accepts
+   exact ties (cand ≤ d[v]), so every pull-settled vertex re-offers
+   its canonical successor even when the successor's label is already
+   final; base-case inserts are ungated (the Q3 site), and outside
+   the base the two gates are complementary by construction: the
+   child's relax refuses exactly when cand ≥ b_i, which is exactly
+   when the parent sweep's insert gate d[v] ≥ b_i accepts. A
+   pull-settled vertex's sub-B successor ALWAYS regains an entry in
+   some live D — so a stale W-vertex improved by a pulled chain is
+   itself re-entried and pull-settled, never W′-settled. Row D: r@14
+   pulled, the base child re-walks r → c₁ → z by tie-restores and
+   settles z by pull; z → x₁ (990) is refused inside the child
+   (990 ≥ 16) and accepted at the parent sweep, whose gate INSERTS
+   x₁@990 into the parent D. x₁ ends complete WITH an entry.
+
+4. **The separator cap** (row C — the one genuinely new lemma-shaped
+   fact). The only silent-completion channel left is a CAPPED tree
+   search: the improving search hits |K| = k exactly on z, so z is
+   improved at FindPivots time with no insert and is never popped —
+   z's stale pocket had already refused z → x₁ at the stale candidate
+   (stale 30 + 975 ≥ B = 1000) while the true value slid under the
+   bound (22.75 + 975 = 997.75 < B): the stale-label inflation of
+   Observation 2.1's gap, materialized. But z's true path passes
+   through the tree root r ∈ S, and r holds a fresh entry (pivot
+   insert) at d[r] < dis(z). Pull separators are minima of the
+   remaining D, so B′ ≤ every value that stays unpulled at exit:
+   either r is pulled — mechanism 3 walks the chain and z is
+   pull-settled — or r's entry survives and B′ ≤ d[r] < dis(z), so
+   z ∉ W′ and the case-4 premise dies. Row C, measured: B′ = 21 ≤
+   d[r] = 21.75 < dis(z) = 22.75; z returned complete, entry-less,
+   unsettled, NOT in U; x₁ still unlabeled at d = ∞; r's entry at
+   21.75 sits in the returned D. All counters zero.
+
+**The custody object, materialized.** Row C's z is exactly the object
+L1's bookkeeping owes: complete, entry-less, unsettled, invisible to
+the parent (not in U, not in S, no entry anywhere). Its custody is
+carried NOT by z but by the fresh entry of its improver root r — via
+the unpulled pivot entry, or line 33's premature return (b_prime ≤
+d[r] < B re-inserts r at the boundary). The full-recursion runs of the
+same graphs (part 2 of the record) show the repair end-to-end: the
+parent re-pulls r, the child's FindPivots re-explores the subtree, and
+every engine finishes distance-exact with zero wards. This names L1's
+invariant in frontier form: every un-walked completion has, on its
+true path, a fresh entry held by the active stack at value ≤ its dis —
+(E)'s escort at the frontier, anchored at S/pivot/premature-return
+entries. The mutual induction with the child contract is coherent, not
+circular: the anchor exists at the completion event, persists by
+Lemma M, and caps every deeper bound through the separators before any
+boundary where case 4 could fire.
+
+**Case 4's status.** On these mechanics the case-4 configuration
+cannot be assembled in-call: every W′-settled vertex is either
+exactly labeled by its own pocket search (closure ⟹ its sub-B′
+successors W′-settle with it) or was improved and then either
+pull-settled (mechanisms 2–3, not W′) or capped out of W′ (mechanism
+4). What remains OPEN is the cross-call channel: a pocket search
+refusing into a vertex completed by an EARLIER call (labels persist
+globally; the entry may live in an ancestor's D or have been
+consumed). The settled sub-case discharges (the earlier settlement
+explored the successors under its own gates, entries merged up); the
+stranded sub-case reduces to the row-C anchor one level up (the
+anchor's value < dis of everything it hides, and bound nesting
+carries the separator cap down the stack: b_child ≤ parent separator
+≤ anchor). Writing that stack-nesting bookkeeping down formally is
+Lemma O's window argument — the remaining formal debt. The channel
+inventory is now complete and each channel has a named cap; the knot
+is no longer "unknown leak" but "one bookkeeping lemma."
+
+**The first recursive-boundary ward** (row E). A base-exit triangle
+planted at the cutoff exit of the LAST child before the parent's |U|
+limit exit survives the merge into the parent's returned D: wards_rec
+fires for the first time on any input ever constructed (addendum 10's
+"case untested" caveat discharged on the co-residence side), and the
+escort search finds z_t — complete, fresh, co-resident, one tight
+edge below — so missing_rec = 0. incomplete_rec fires event-for-event
+with wards_rec (1/1), stale-inc stays zero, settle-inc stays zero,
+and the full-recursion embedding stays distance-exact with
+missing = 0 while wards fire at base/rec/iter = 1/1/2 (paper and V8;
+V5's base cap removes the leak, B′ capped to the pair's floor at
+20.84375 — same pattern as the triangle star).
+
+**Consequences for the spine.**
+
+- (E)'s regeneration case 4 is CLOSED at in-call grade by mechanisms
+  1–4 (sketch; cold re-derivation owed), and the cross-call residue
+  is the same statement as L1's custody and Lemma O's windows — the
+  three open items of addenda 7–10 are now literally one lemma: the
+  active-stack anchor/window bookkeeping.
+- L2's capture argument ("B′ never passes an unpulled fresh entry")
+  is no longer a Lemma-F import: it is the separator cap, measured
+  live in row C, and it is PER-EXIT and local — B′ monotonicity
+  across iterations is NOT consumed by this route. The B′-monotonicity
+  multi-front attack (queued item 2) may accordingly shrink to the V5
+  endgame only (V5 regresses B′ by design, Q15, and routes the
+  endgame differently).
+- E-c's mid-iteration half gains evidence but not a proof: crafted
+  stale pockets (rows C, D) never produce a stale-incomplete entry
+  anywhere (stale-inc 0/0/0 across the driver), consistent with the
+  two label-drop sites never firing below the bound on these shapes.
+- The watch-list's mid-unwind case in L2 remains to be handled inside
+  the window lemma, not separately.
+
+Next session: the anchor/window lemma proper (Lemma O's sketch
+upgraded to cover W′-settled predecessors using the separator cap and
+Lemma M), which — if it closes — discharges (H) modulo the E-c
+mid-iteration half, i.e. the last two debts merge into one.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a

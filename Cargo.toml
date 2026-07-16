@@ -89,3 +89,7 @@ required-features = ["dup-classify"]
 [[example]]
 name = "triangle"
 required-features = ["verify-contract", "dup-classify"]
+
+[[example]]
+name = "wprime"
+required-features = ["verify-contract", "dup-classify"]
