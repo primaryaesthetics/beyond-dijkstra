@@ -118,6 +118,10 @@ fn main() {
             let mut solver = Solver::new(&adj, t, k);
             solver.fixed_base = fixed_base;
             solver.settled_dedup = settled_dedup;
+            #[cfg(feature = "verify-contract")]
+            {
+                solver.oracle_len = Some(oracle.clone());
+            }
             solver.d[0] = Label::Fin(Lab {
                 len: 0.0,
                 hops: 0,
@@ -164,6 +168,16 @@ fn main() {
                     solver.viol_bound_rec,
                     solver.viol_dichotomy,
                     solver.base_cap_hits
+                );
+                let rc = &solver.restr;
+                println!(
+                    "  [{tag:>5}]           restricted: unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                    rc.unsettled_base,
+                    rc.unsettled_rec,
+                    rc.unsettled_iter,
+                    rc.incomplete_base,
+                    rc.incomplete_rec,
+                    rc.incomplete_iter
                 );
             }
             runs.push((
@@ -228,10 +242,16 @@ fn staggered() {
         let l_top = (log_n / t as f64).ceil() as u64;
 
         let mut out: Vec<(usize, u64)> = Vec::new();
-        for &(fixed_base, settled_dedup) in &[(false, false), (true, false), (false, true)] {
+        for &(_tag, fixed_base, settled_dedup) in
+            &[("paper", false, false), ("V5", true, false), ("V8", false, true)]
+        {
             let mut solver = Solver::new(&adj, t, k);
             solver.fixed_base = fixed_base;
             solver.settled_dedup = settled_dedup;
+            #[cfg(feature = "verify-contract")]
+            {
+                solver.oracle_len = Some(oracle.clone());
+            }
             solver.d[0] = Label::Fin(Lab {
                 len: 0.0,
                 hops: 0,
@@ -256,6 +276,19 @@ fn staggered() {
                     dups += 1;
                 }
                 seen[v as usize] = true;
+            }
+            #[cfg(feature = "verify-contract")]
+            {
+                let rc = &solver.restr;
+                println!(
+                    "  [{_tag:>5}] R={r_trig} E={e_block}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                    rc.unsettled_base,
+                    rc.unsettled_rec,
+                    rc.unsettled_iter,
+                    rc.incomplete_base,
+                    rc.incomplete_rec,
+                    rc.incomplete_iter
+                );
             }
             out.push((dups, solver.dup_class.bprime_regressions));
         }
@@ -306,10 +339,16 @@ fn reuse() {
         let l_top = (log_n / t as f64).ceil() as u64;
 
         let mut out: Vec<usize> = Vec::new();
-        for &(fixed_base, settled_dedup) in &[(false, false), (true, false), (false, true)] {
+        for &(_tag, fixed_base, settled_dedup) in
+            &[("paper", false, false), ("V5", true, false), ("V8", false, true)]
+        {
             let mut solver = Solver::new(&adj, t, k);
             solver.fixed_base = fixed_base;
             solver.settled_dedup = settled_dedup;
+            #[cfg(feature = "verify-contract")]
+            {
+                solver.oracle_len = Some(oracle.clone());
+            }
             solver.d[0] = Label::Fin(Lab {
                 len: 0.0,
                 hops: 0,
@@ -334,6 +373,19 @@ fn reuse() {
                     dups += 1;
                 }
                 seen[v as usize] = true;
+            }
+            #[cfg(feature = "verify-contract")]
+            {
+                let rc = &solver.restr;
+                println!(
+                    "  [{_tag:>5}] q={q}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                    rc.unsettled_base,
+                    rc.unsettled_rec,
+                    rc.unsettled_iter,
+                    rc.incomplete_base,
+                    rc.incomplete_rec,
+                    rc.incomplete_iter
+                );
             }
             out.push(dups);
         }

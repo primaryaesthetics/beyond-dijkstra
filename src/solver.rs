@@ -114,6 +114,48 @@ pub struct DupClassCounts {
 }
 
 // ---------------------------------------------------------------------------
+// Restricted-invariant counters (features `verify-contract` + `dup-classify`
+// together; zero overhead otherwise). QUESTIONS.md Q14/Q15 falsified Lemma
+// 3.7's invariant 2 (dB[D] ≥ B′ over ALL stored values) on real runs, yet
+// every measured falsifying entry belonged to an already-complete vertex —
+// so the repair candidate restricts the clause to incomplete vertices:
+// "min stored value among keys whose VERTEX is incomplete ≥ B′". These
+// counters test that candidate before any proof is attempted, under two
+// completeness proxies:
+//   - `unsettled_*`: incomplete ≈ not yet first-settled. Settlement implies
+//     completeness under (H), so this scans a SUPERSET of the incomplete
+//     vertices — zero violations here implies the true invariant holds.
+//   - `incomplete_*`: exact — current label length ≠ true distance, read
+//     from an oracle array (`Solver::oracle_len`, driver-supplied Dijkstra
+//     lengths). This is the invariant itself; `unsettled_*` may over-count
+//     it on complete-but-never-settled vertices (the Q3 star's vertex 10).
+// Sites: `_base` at base-case returns, `_rec` at recursive returns (both
+// against the returned B′, exactly where verify-contract counts the
+// unrestricted clause), `_iter` at the end of every BMSSP loop iteration
+// against the current B′. Pure observation — results are unchanged.
+
+/// Violations of the incomplete-restricted bound clause, by completeness
+/// proxy and site. See the module comment above.
+#[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+#[derive(Clone, Default, Debug)]
+pub struct RestrCounts {
+    pub unsettled_base: u64,
+    pub unsettled_rec: u64,
+    pub unsettled_iter: u64,
+    pub incomplete_base: u64,
+    pub incomplete_rec: u64,
+    pub incomplete_iter: u64,
+}
+
+#[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+#[derive(Clone, Copy)]
+enum RestrSite {
+    Base,
+    Rec,
+    Iter,
+}
+
+// ---------------------------------------------------------------------------
 // Parameters (SPEC "Parameters"; clamps per QUESTIONS.md Q1).
 
 /// Mirror of `choose_params`: all logs base 2, `int()` truncation for delta.
@@ -280,6 +322,14 @@ impl BlockDs {
     /// Stored value for `key`, if present (trace introspection only).
     pub fn get(&self, key: u32) -> Option<Lab> {
         self.by_key.get(&key).copied()
+    }
+
+    /// Smallest stored value whose key satisfies `f` (restricted-invariant
+    /// instrumentation only): ascending value scan, early exit at the
+    /// first hit.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub fn min_where(&self, mut f: impl FnMut(u32) -> bool) -> Option<Lab> {
+        self.by_val.iter().find(|&(_, &k)| f(k)).map(|(&v, _)| v)
     }
 }
 
@@ -498,6 +548,15 @@ pub struct Solver<'a> {
     /// on).
     #[cfg(feature = "dup-classify")]
     first_settled: Vec<bool>,
+    /// Restricted-invariant counters (see `RestrCounts`).
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub restr: RestrCounts,
+    /// Exact-completeness oracle for `RestrCounts::incomplete_*`: true
+    /// shortest-path lengths per vertex, driver-supplied (None = the
+    /// `incomplete_*` counters stay 0). Observation-only, never read by
+    /// control flow.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub oracle_len: Option<Vec<f64>>,
     /// Q11 trace: the vertex whose events are recorded (None = off).
     #[cfg(feature = "q11-trace")]
     pub trace_vertex: Option<u32>,
@@ -538,6 +597,10 @@ impl<'a> Solver<'a> {
             dup_class: DupClassCounts::default(),
             #[cfg(feature = "dup-classify")]
             first_settled: vec![false; adj.len()],
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            restr: RestrCounts::default(),
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            oracle_len: None,
             #[cfg(feature = "verify-contract")]
             viol_bound_base: 0,
             #[cfg(feature = "verify-contract")]
@@ -588,6 +651,42 @@ impl<'a> Solver<'a> {
             true
         } else {
             false
+        }
+    }
+
+    /// Restricted-invariant check (see `RestrCounts`): count a violation
+    /// per proxy if `ds` holds an entry strictly below `bound` whose
+    /// vertex is (unsettled proxy) not yet first-settled / (exact proxy)
+    /// currently labeled above its true distance. Observation only.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    fn restr_check(&mut self, ds: &BlockDs, bound: Label, site: RestrSite) {
+        let fs = &self.first_settled;
+        let m = ds.min_where(|k| !fs[k as usize]);
+        let unsettled_hit = matches!(m, Some(m) if Label::Fin(m) < bound);
+        let incomplete_hit = match &self.oracle_len {
+            Some(orc) => {
+                let d = &self.d;
+                let m = ds.min_where(|k| {
+                    let len = match d[k as usize] {
+                        Label::Fin(l) => l.len,
+                        Label::Inf => f64::INFINITY,
+                    };
+                    len != orc[k as usize]
+                });
+                matches!(m, Some(m) if Label::Fin(m) < bound)
+            }
+            None => false,
+        };
+        let (u_ctr, i_ctr) = match site {
+            RestrSite::Base => (&mut self.restr.unsettled_base, &mut self.restr.incomplete_base),
+            RestrSite::Rec => (&mut self.restr.unsettled_rec, &mut self.restr.incomplete_rec),
+            RestrSite::Iter => (&mut self.restr.unsettled_iter, &mut self.restr.incomplete_iter),
+        };
+        if unsettled_hit {
+            *u_ctr += 1;
+        }
+        if incomplete_hit {
+            *i_ctr += 1;
         }
     }
 
@@ -818,6 +917,8 @@ impl<'a> Solver<'a> {
                 self.viol_dichotomy += 1;
             }
         }
+        #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+        self.restr_check(&ds, bound, RestrSite::Base);
         #[cfg(feature = "q11-trace")]
         {
             self.trace_stack.pop();
@@ -1022,6 +1123,11 @@ impl<'a> Solver<'a> {
             u_set.extend(u_i.iter().copied());
             u_log.extend(u_i);
             j_pending.clear();
+            // End of the iteration: every insert of this round (merge of
+            // the child's D, relax sweep, pivot re-selection) is in `ds`
+            // and B′ is current — the invariant's per-iteration snapshot.
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            self.restr_check(&ds, b_prime, RestrSite::Iter);
         }
 
         let w_prime = phase!(self, boundary_sweeps, {
@@ -1145,6 +1251,8 @@ impl<'a> Solver<'a> {
                 self.viol_dichotomy += 1;
             }
         }
+        #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+        self.restr_check(&ds, b_prime, RestrSite::Rec);
         #[cfg(feature = "q11-trace")]
         {
             self.trace_stack.pop();

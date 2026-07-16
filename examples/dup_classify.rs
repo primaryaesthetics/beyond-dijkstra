@@ -136,5 +136,25 @@ fn main() {
             c.bprime_regressions,
             v8.dup_class.bprime_regressions,
         );
+        // Restricted-invariant pre-test (Q14 item 1): re-run each engine
+        // with the counters and the exact-completeness oracle. The final
+        // labels are the oracle — v8.dist is asserted equal to the paper
+        // run's above, and a mid-run vertex is complete exactly when its
+        // label already equals its final value.
+        #[cfg(feature = "verify-contract")]
+        for (eng, fixed, dedup) in [("paper", false, false), ("V5", true, false), ("V8", false, true)]
+        {
+            let r = no_transform::sssp_pretest(n, &edges, 0, 0, fixed, dedup, ov, v8.dist.clone());
+            let rc = &r.restr;
+            println!(
+                "  [restricted {eng:>5}] unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                rc.unsettled_base,
+                rc.unsettled_rec,
+                rc.unsettled_iter,
+                rc.incomplete_base,
+                rc.incomplete_rec,
+                rc.incomplete_iter
+            );
+        }
     }
 }

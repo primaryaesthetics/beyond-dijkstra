@@ -29,6 +29,10 @@ pub struct VariantRun {
     /// Q14 duplicate-settlement classification (feature `dup-classify`).
     #[cfg(feature = "dup-classify")]
     pub dup_class: crate::solver::DupClassCounts,
+    /// Restricted-invariant counters (Q14 item 1 pre-test; the exact
+    /// `incomplete_*` half needs the runner's oracle argument).
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub restr: crate::solver::RestrCounts,
 }
 
 /// Shortest-path lengths from `source` on the original graph. Parameters
@@ -41,7 +45,7 @@ pub fn sssp(
     source: usize,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, 0, false, false, override_params)
+    sssp_run_inner(n, edges, source, 0, false, false, override_params, None)
 }
 
 /// V3 (VARIANTS.md): V1 with levels ≤ `hybrid_level` running the base
@@ -54,7 +58,7 @@ pub fn sssp_hybrid(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, hybrid_level, false, false, override_params)
+    sssp_run_inner(n, edges, source, hybrid_level, false, false, override_params, None)
 }
 
 /// V5 (VARIANTS.md): like `sssp_hybrid`, with the fixed base case
@@ -66,7 +70,7 @@ pub fn sssp_v5(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, hybrid_level, true, false, override_params)
+    sssp_run_inner(n, edges, source, hybrid_level, true, false, override_params, None)
 }
 
 /// V8 (VARIANTS.md): like `sssp_hybrid`, with the per-vertex settled bit
@@ -78,10 +82,16 @@ pub fn sssp_v8(
     hybrid_level: u64,
     override_params: Option<(u64, u64, u64)>,
 ) -> VariantRun {
-    sssp_full(n, edges, source, hybrid_level, false, true, override_params)
+    sssp_run_inner(n, edges, source, hybrid_level, false, true, override_params, None)
 }
 
-fn sssp_full(
+/// Restricted-invariant pre-test runner (QUESTIONS.md Q14 item 1): any of
+/// the engines above, plus an exact-completeness oracle (true shortest-path
+/// lengths per vertex) feeding the `incomplete_*` counters. Observation
+/// only — distances are unchanged.
+#[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+#[allow(clippy::too_many_arguments)]
+pub fn sssp_pretest(
     n: usize,
     edges: &[(u32, u32, f64)],
     source: usize,
@@ -89,6 +99,32 @@ fn sssp_full(
     fixed_base: bool,
     settled_dedup: bool,
     override_params: Option<(u64, u64, u64)>,
+    oracle_len: Vec<f64>,
+) -> VariantRun {
+    sssp_run_inner(
+        n,
+        edges,
+        source,
+        hybrid_level,
+        fixed_base,
+        settled_dedup,
+        override_params,
+        Some(oracle_len),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn sssp_run_inner(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    fixed_base: bool,
+    settled_dedup: bool,
+    override_params: Option<(u64, u64, u64)>,
+    // Restricted-invariant oracle; only read under verify-contract +
+    // dup-classify (None and unused otherwise).
+    #[allow(unused_variables)] oracle_len: Option<Vec<f64>>,
 ) -> VariantRun {
     #[cfg(feature = "phase-timer")]
     let total_t0 = std::time::Instant::now();
@@ -111,6 +147,10 @@ fn sssp_full(
     solver.hybrid_level = hybrid_level;
     solver.fixed_base = fixed_base;
     solver.settled_dedup = settled_dedup;
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    {
+        solver.oracle_len = oracle_len;
+    }
     solver.d[source] = Label::Fin(Lab {
         len: 0.0,
         hops: 0,
@@ -159,5 +199,7 @@ fn sssp_full(
         base_cap_hits: solver.base_cap_hits,
         #[cfg(feature = "dup-classify")]
         dup_class: solver.dup_class.clone(),
+        #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+        restr: solver.restr.clone(),
     }
 }

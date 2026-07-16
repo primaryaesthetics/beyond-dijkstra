@@ -59,6 +59,40 @@ struct Counters {
     bound_rec: u64,
     dichotomy: u64,
     cap_hits: u64,
+    /// Restricted-invariant counters (Q14 item 1 pre-test) — build with
+    /// `--features verify-contract,dup-classify` to populate and print.
+    #[cfg(feature = "dup-classify")]
+    restr: beyond_dijkstra::solver::RestrCounts,
+}
+
+/// Exact-completeness oracle for the restricted counters: the crate's
+/// Dijkstra on the same graph (same helper as `escape.rs`).
+#[cfg(feature = "dup-classify")]
+fn dijkstra_lengths(n: usize, edges: &[(u32, u32, f64)], source: usize) -> Vec<f64> {
+    let mut counts = vec![0i64; n + 1];
+    for &(u, _, _) in edges {
+        counts[u as usize + 1] += 1;
+    }
+    for i in 0..n {
+        counts[i + 1] += counts[i];
+    }
+    let mut indices = vec![0i32; edges.len()];
+    let mut weights = vec![0f64; edges.len()];
+    let mut next = counts.clone();
+    for &(u, v, w) in edges {
+        let slot = next[u as usize] as usize;
+        indices[slot] = v as i32;
+        weights[slot] = w;
+        next[u as usize] += 1;
+    }
+    let mut dist = vec![0f64; n];
+    let mut pred = vec![0i32; n];
+    let mut heap = beyond_dijkstra::dijkstra::Heap::new();
+    let ok = beyond_dijkstra::dijkstra::dijkstra(
+        &counts, &indices, &weights, source, &mut dist, &mut pred, &mut heap,
+    );
+    assert!(ok.is_ok(), "oracle rejected the graph");
+    dist
 }
 
 fn run(
@@ -75,6 +109,10 @@ fn run(
     }
     let mut solver = Solver::new(&adj, t, k);
     solver.fixed_base = fixed_base;
+    #[cfg(feature = "dup-classify")]
+    {
+        solver.oracle_len = Some(dijkstra_lengths(n, edges, 0));
+    }
     solver.d[0] = Label::Fin(Lab {
         len: 0.0,
         hops: 0,
@@ -87,6 +125,8 @@ fn run(
         bound_rec: solver.viol_bound_rec,
         dichotomy: solver.viol_dichotomy,
         cap_hits: solver.base_cap_hits,
+        #[cfg(feature = "dup-classify")]
+        restr: solver.restr.clone(),
     }
 }
 
@@ -115,6 +155,21 @@ fn main() {
         println!(
             "{:>28} {:>11} {:>10} {:>10} {:>9}",
             name, c.bound_base, c.bound_rec, c.dichotomy, c.cap_hits
+        );
+        // Restricted-counter semantics check: the star's undercutting
+        // entry (vertex 10, len 8 < bound 9) belongs to a never-settled
+        // vertex whose label already equals its true distance — the
+        // unsettled proxy must fire, the exact proxy must not.
+        #[cfg(feature = "dup-classify")]
+        println!(
+            "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+            "restricted:",
+            c.restr.unsettled_base,
+            c.restr.unsettled_rec,
+            c.restr.unsettled_iter,
+            c.restr.incomplete_base,
+            c.restr.incomplete_rec,
+            c.restr.incomplete_iter
         );
     }
 
@@ -168,6 +223,17 @@ fn main() {
             println!(
                 "{:>28} {:>8} {:>6} {:>11} {:>10} {:>10} {:>9}",
                 name, n, engine, c.bound_base, c.bound_rec, c.dichotomy, c.cap_hits
+            );
+            #[cfg(feature = "dup-classify")]
+            println!(
+                "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                "restricted:",
+                c.restr.unsettled_base,
+                c.restr.unsettled_rec,
+                c.restr.unsettled_iter,
+                c.restr.incomplete_base,
+                c.restr.incomplete_rec,
+                c.restr.incomplete_iter
             );
         }
     }
