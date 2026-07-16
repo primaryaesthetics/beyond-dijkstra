@@ -1,0 +1,6 @@
+dijkstra     median    0.028 s
+fast L=0     median    0.249 s   (8.80x dijkstra)
+fast L=top   median    0.086 s   (3.04x dijkstra)
+v8-fast L=0  median    0.227 s   (8.02x dijkstra, 0.91x of fast L=0)
+v8-fast L=top median   0.087 s   (3.06x dijkstra, 1.01x of fast L=top)
+v9-flat      median    0.056 s   (1.98x dijkstra, 0.65x of v8-fast L=top)

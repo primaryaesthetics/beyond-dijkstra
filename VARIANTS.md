@@ -826,3 +826,23 @@ is now purely the 4-tuple label itself (16-byte keys, hops
 bookkeeping, pred side-array writes) running through an identical
 algorithmic structure. Queued: 4-ary heap layout (the crate Dijkstra's
 own), the last structural difference between the two runners.
+
+**4-ary heap (second commit).** KHeap switched from binary to 4-ary —
+the crate Dijkstra's layout; sibling order among equal keys is
+unobservable for the same reason pred is. Tier-2 green. Same-process
+medians (fast-only harness rows; raw records
+`benchmarks/results/bench_fast_v9b_{1e5,1e6,NY}.txt`):
+
+| input | v9 binary | v9 4-ary |
+|---|---|---|
+| random 1e5 | 2.04x (0.056 s) | 1.84x (0.060 s) |
+| random 1e6 | 2.21x (1.649 s) | **1.79x (1.410 s)** |
+| USA-road-d.NY | 1.90x (0.055 s) | 1.98x (0.056 s) |
+
+Clear −15% absolute at 1e6 where heap depth dominates; noise at the
+small sizes and on NY (both directions across repeat runs — the
+absolute medians move ±7% between sessions on this box). Adopted on
+the 1e6 signal. The best family member is now **1.8–2.0× of the
+crate's Dijkstra**, and V9 is structurally identical to it except for
+the 16-byte packed 4-tuple key and the pred side-array — the verdict
+chain's residual, measured as precisely as this machine allows.

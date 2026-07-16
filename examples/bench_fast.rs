@@ -247,11 +247,15 @@ fn main() {
             v1 / bf
         );
     }
-    println!(
-        "fast L=0     median {f0:8.3} s   ({:.2}x dijkstra, {:.2}x of no-transform)",
-        f0 / dj,
-        f0 / v1
-    );
+    if fast_only {
+        println!("fast L=0     median {f0:8.3} s   ({:.2}x dijkstra)", f0 / dj);
+    } else {
+        println!(
+            "fast L=0     median {f0:8.3} s   ({:.2}x dijkstra, {:.2}x of no-transform)",
+            f0 / dj,
+            f0 / v1
+        );
+    }
     println!(
         "fast L=top   median {ftop:8.3} s   ({:.2}x dijkstra)",
         ftop / dj

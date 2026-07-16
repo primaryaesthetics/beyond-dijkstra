@@ -134,7 +134,9 @@ impl VHeap {
 /// SoA lazy min-heap of (key, vertex) — V9's heap: pred dropped from the
 /// order (a full key tie is the same vertex; internal duplicate order is
 /// unobservable under the settled bit), entries 20 bytes, one u128
-/// comparison.
+/// comparison. 4-ary layout like the crate Dijkstra's heap: shallower
+/// pops for the same push cost; sibling order among equal keys is
+/// unobservable for the same reason pred is.
 #[derive(Default)]
 struct KHeap {
     k: Vec<u128>,
@@ -147,7 +149,7 @@ impl KHeap {
         self.v.push(vert);
         let mut i = self.k.len() - 1;
         while i > 0 {
-            let parent = (i - 1) / 2;
+            let parent = (i - 1) / 4;
             if self.k[i] < self.k[parent] {
                 self.k.swap(i, parent);
                 self.v.swap(i, parent);
@@ -172,14 +174,16 @@ impl KHeap {
         let len = self.k.len();
         let mut i = 0usize;
         loop {
-            let l = 2 * i + 1;
-            if l >= len {
+            let first = 4 * i + 1;
+            if first >= len {
                 break;
             }
-            let mut c = l;
-            let r = l + 1;
-            if r < len && self.k[r] < self.k[l] {
-                c = r;
+            let end = (first + 4).min(len);
+            let mut c = first;
+            for j in (first + 1)..end {
+                if self.k[j] < self.k[c] {
+                    c = j;
+                }
             }
             if self.k[c] < self.k[i] {
                 self.k.swap(i, c);
