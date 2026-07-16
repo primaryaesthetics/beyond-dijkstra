@@ -171,13 +171,17 @@ fn main() {
                 );
                 let rc = &solver.restr;
                 println!(
-                    "  [{tag:>5}]           restricted: unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                    "  [{tag:>5}]           restricted: unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
                     rc.unsettled_base,
                     rc.unsettled_rec,
                     rc.unsettled_iter,
                     rc.incomplete_base,
                     rc.incomplete_rec,
-                    rc.incomplete_iter
+                    rc.incomplete_iter,
+                    rc.stale_incomplete_base,
+                    rc.stale_incomplete_rec,
+                    rc.stale_incomplete_iter,
+                    solver.settle_incomplete
                 );
             }
             runs.push((
@@ -281,13 +285,17 @@ fn staggered() {
             {
                 let rc = &solver.restr;
                 println!(
-                    "  [{_tag:>5}] R={r_trig} E={e_block}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                    "  [{_tag:>5}] R={r_trig} E={e_block}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
                     rc.unsettled_base,
                     rc.unsettled_rec,
                     rc.unsettled_iter,
                     rc.incomplete_base,
                     rc.incomplete_rec,
-                    rc.incomplete_iter
+                    rc.incomplete_iter,
+                    rc.stale_incomplete_base,
+                    rc.stale_incomplete_rec,
+                    rc.stale_incomplete_iter,
+                    solver.settle_incomplete
                 );
             }
             out.push((dups, solver.dup_class.bprime_regressions));
@@ -378,13 +386,17 @@ fn reuse() {
             {
                 let rc = &solver.restr;
                 println!(
-                    "  [{_tag:>5}] q={q}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                    "  [{_tag:>5}] q={q}: restricted unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
                     rc.unsettled_base,
                     rc.unsettled_rec,
                     rc.unsettled_iter,
                     rc.incomplete_base,
                     rc.incomplete_rec,
-                    rc.incomplete_iter
+                    rc.incomplete_iter,
+                    rc.stale_incomplete_base,
+                    rc.stale_incomplete_rec,
+                    rc.stale_incomplete_iter,
+                    solver.settle_incomplete
                 );
             }
             out.push(dups);

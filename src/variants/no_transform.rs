@@ -33,6 +33,10 @@ pub struct VariantRun {
     /// `incomplete_*` half needs the runner's oracle argument).
     #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
     pub restr: crate::solver::RestrCounts,
+    /// Direct (H) counter: settlement events at a non-true label length
+    /// (needs the runner's oracle argument; see `Solver::settle_incomplete`).
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub settle_incomplete: u64,
 }
 
 /// Shortest-path lengths from `source` on the original graph. Parameters
@@ -201,5 +205,7 @@ fn sssp_run_inner(
         dup_class: solver.dup_class.clone(),
         #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
         restr: solver.restr.clone(),
+        #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+        settle_incomplete: solver.settle_incomplete,
     }
 }

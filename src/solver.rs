@@ -136,6 +136,15 @@ pub struct DupClassCounts {
 
 /// Violations of the incomplete-restricted bound clause, by completeness
 /// proxy and site. See the module comment above.
+///
+/// The `stale_incomplete_*` counters split the exact proxy by entry
+/// freshness (QUESTIONS.md Q14 addendum 8): a hit means the D holds an
+/// entry strictly below the bound whose vertex is incomplete AND whose
+/// stored value differs from the vertex's current label — the entry a
+/// fresh-only co-residence invariant cannot see. Two sites can create
+/// such entries (FindPivots-round improvements and line-36 accepts whose
+/// re-insert lands in a different D); whether they ever surface below B′
+/// decides the invariant's companion clause.
 #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
 #[derive(Clone, Default, Debug)]
 pub struct RestrCounts {
@@ -145,6 +154,9 @@ pub struct RestrCounts {
     pub incomplete_base: u64,
     pub incomplete_rec: u64,
     pub incomplete_iter: u64,
+    pub stale_incomplete_base: u64,
+    pub stale_incomplete_rec: u64,
+    pub stale_incomplete_iter: u64,
 }
 
 #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
@@ -330,6 +342,17 @@ impl BlockDs {
     #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
     pub fn min_where(&self, mut f: impl FnMut(u32) -> bool) -> Option<Lab> {
         self.by_val.iter().find(|&(_, &k)| f(k)).map(|(&v, _)| v)
+    }
+
+    /// Whether any entry strictly below `bound` satisfies `f(key, stored)`
+    /// (restricted-invariant instrumentation only): ascending value scan
+    /// over the sub-bound prefix, early exit at the first hit.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub fn any_below(&self, bound: Label, mut f: impl FnMut(u32, Lab) -> bool) -> bool {
+        self.by_val
+            .iter()
+            .take_while(|&(&v, _)| Label::Fin(v) < bound)
+            .any(|(&v, &k)| f(k, v))
     }
 }
 
@@ -557,6 +580,13 @@ pub struct Solver<'a> {
     /// control flow.
     #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
     pub oracle_len: Option<Vec<f64>>,
+    /// Direct (H) counter (QUESTIONS.md Q14): settlement events — base-case
+    /// pulls and W′ boundary appends — whose vertex label length differs
+    /// from the oracle's true distance at settlement time. (H) is the
+    /// hypothesis that this never happens; 0 stays 0 without an oracle.
+    /// Observation-only, never read by control flow.
+    #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+    pub settle_incomplete: u64,
     /// Q11 trace: the vertex whose events are recorded (None = off).
     #[cfg(feature = "q11-trace")]
     pub trace_vertex: Option<u32>,
@@ -601,6 +631,8 @@ impl<'a> Solver<'a> {
             restr: RestrCounts::default(),
             #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
             oracle_len: None,
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            settle_incomplete: 0,
             #[cfg(feature = "verify-contract")]
             viol_bound_base: 0,
             #[cfg(feature = "verify-contract")]
@@ -677,16 +709,46 @@ impl<'a> Solver<'a> {
             }
             None => false,
         };
-        let (u_ctr, i_ctr) = match site {
-            RestrSite::Base => (&mut self.restr.unsettled_base, &mut self.restr.incomplete_base),
-            RestrSite::Rec => (&mut self.restr.unsettled_rec, &mut self.restr.incomplete_rec),
-            RestrSite::Iter => (&mut self.restr.unsettled_iter, &mut self.restr.incomplete_iter),
+        // Stale split (see `RestrCounts`): an incomplete-keyed sub-bound
+        // entry whose stored value is not the key's current label.
+        let stale_hit = match &self.oracle_len {
+            Some(orc) => {
+                let d = &self.d;
+                ds.any_below(bound, |k, stored| {
+                    let len = match d[k as usize] {
+                        Label::Fin(l) => l.len,
+                        Label::Inf => f64::INFINITY,
+                    };
+                    len != orc[k as usize] && Label::Fin(stored) != d[k as usize]
+                })
+            }
+            None => false,
+        };
+        let (u_ctr, i_ctr, s_ctr) = match site {
+            RestrSite::Base => (
+                &mut self.restr.unsettled_base,
+                &mut self.restr.incomplete_base,
+                &mut self.restr.stale_incomplete_base,
+            ),
+            RestrSite::Rec => (
+                &mut self.restr.unsettled_rec,
+                &mut self.restr.incomplete_rec,
+                &mut self.restr.stale_incomplete_rec,
+            ),
+            RestrSite::Iter => (
+                &mut self.restr.unsettled_iter,
+                &mut self.restr.incomplete_iter,
+                &mut self.restr.stale_incomplete_iter,
+            ),
         };
         if unsettled_hit {
             *u_ctr += 1;
         }
         if incomplete_hit {
             *i_ctr += 1;
+        }
+        if stale_hit {
+            *s_ctr += 1;
         }
     }
 
@@ -865,6 +927,13 @@ impl<'a> Solver<'a> {
                 continue; // V8: stale entry of a settled vertex — drop
             }
             u_log.push(u);
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            if let Some(orc) = &self.oracle_len {
+                // Direct (H) check: a base pull settles its vertex now.
+                if self.d[u as usize].fin().len != orc[u as usize] {
+                    self.settle_incomplete += 1;
+                }
+            }
             #[cfg(feature = "dup-classify")]
             {
                 if self.first_settled[u as usize] {
@@ -1160,6 +1229,17 @@ impl<'a> Solver<'a> {
             if self.settled_dedup {
                 for &x in &w_prime {
                     self.settled[x as usize] = true; // V8: W′ settles
+                }
+            }
+            #[cfg(all(feature = "verify-contract", feature = "dup-classify"))]
+            if let Some(orc) = &self.oracle_len {
+                // Direct (H) check: a W′ boundary append settles its
+                // vertex now (labels below B′ are vouched, per Lemma 3.6's
+                // claim — this counts the events where the vouch fails).
+                for &x in &w_prime {
+                    if self.d[x as usize].fin().len != orc[x as usize] {
+                        self.settle_incomplete += 1;
+                    }
                 }
             }
             #[cfg(feature = "dup-classify")]

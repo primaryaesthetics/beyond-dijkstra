@@ -147,13 +147,17 @@ fn main() {
             let r = no_transform::sssp_pretest(n, &edges, 0, 0, fixed, dedup, ov, v8.dist.clone());
             let rc = &r.restr;
             println!(
-                "  [restricted {eng:>5}] unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                "  [restricted {eng:>5}] unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
                 rc.unsettled_base,
                 rc.unsettled_rec,
                 rc.unsettled_iter,
                 rc.incomplete_base,
                 rc.incomplete_rec,
-                rc.incomplete_iter
+                rc.incomplete_iter,
+                rc.stale_incomplete_base,
+                rc.stale_incomplete_rec,
+                rc.stale_incomplete_iter,
+                r.settle_incomplete
             );
         }
     }

@@ -1326,6 +1326,91 @@ driver first (validates the counter semantics on a live positive),
 then the escort re-draft with the stale-entry clause decided by
 instrumentation, then the W′ endgame.
 
+## Q14 addendum 9 (2026-07-16, fresh session) — the triangle driver: the restricted clause falsified live as predicted, (H) measured directly for the first time (zero violations everywhere), and the stale-incomplete channel empty across the whole matrix. CONFIRMED (recorded runs)
+
+Addendum 8's next-steps items (ii) and (iii)'s counting half, executed.
+Driver `examples/triangle.rs` (record `benchmarks/results/triangle.txt`);
+two new observation-only counters (features verify-contract +
+dup-classify, results unchanged, both suites green with the features on
+and off):
+
+- `stale_incomplete_{base,rec,iter}` (RestrCounts): check-site events
+  where the D holds an entry strictly below the bound whose vertex is
+  incomplete AND whose stored value differs from the vertex's current
+  label — the entry a fresh-only co-residence invariant cannot see
+  (addendum 8's defect ii).
+- `settle_incomplete` (Solver): the direct (H) counter — settlement
+  events (base-case pulls and W′ boundary appends) whose label length
+  differs from the oracle's true distance at settlement time. Until now
+  (H) was only ever inferred through dup/distance proxies.
+
+**Part 1a — the deterministic live positive.** The star: leaves 1..8
+at weights 1..8 fill the t=2 base cutoff, ballast at 50 is the one
+remaining D value at the last pull (so B′ = 50 by the fixed-at-pull
+rule), and the triangle hangs off leaf 8: z at w 1.25, y at w 2.5
+direct while the true path is 8 → z → y = 9.5. Paper and V8 return
+B′ = 50 with the leaked pair in D — z stored 9.25 = true (the complete
+escort), y stored 10.5 ≠ true 9.5 — and `incomplete_base` fires: 1.
+The restricted clause is NOT an invariant, exactly as the addendum-8
+thought experiment predicted; the measured zero of the pre-test was a
+family artifact, and the counter's semantics are now validated on a
+live positive. V5 caps the bound to 9.25 (cap_hits=1) and shows zero —
+consistent with its all-zero record. Stale-inc 0 (the leaked entry is
+fresh); settle-inc 0.
+
+**Part 1b — the escort finishes the job.** Full recursion on the same
+star: distances exact, dups 0, settle-inc 0, with the fire visible at
+base and iter sites (1/0/1). y is completed by z's settlement sweep
+before anything can pull it at the stale value.
+
+**Part 2 — the scaled family** (gate + unit path, the triangle on
+every stride-th path vertex, ballast block above; stride ∈ {2, 3}
+keeps the settlement period t³+1-coprime so chunk-end phases rotate).
+The stride 0 control reproduces escape's contained-L=200 numbers
+exactly (unsettled 22/6/28, incomplete 0) — cross-driver confirmation
+of the chunk arithmetic. With triangles, every run is distance-exact,
+V8 dup-free, settle-inc 0, and `incomplete_base`/`incomplete_iter`
+fire at scale: paper 12 (L=200, stride 2), 312 (L=5000, stride 2),
+75 (L=5000, stride 3), 1250 (L=20000, stride 2); V8 fires with
+different counts (6/147/208/588) — the count is a chunk-phase
+artifact of each engine, the existence is the finding. Two
+observations for the record: `incomplete_rec` stayed 0 everywhere
+(on these families the leak is a base-return phenomenon; the stride-3
+run's 101 recursive-return bound violations were all complete-keyed),
+and on the stride-2 rows the paper engine's duplicate settlements
+coincide with the fire counts (12/312/1250) — the leaked entry is
+consumed as a benign duplicate of an already-complete vertex, i.e.
+the dup channel and the leak are the same event chain seen at two
+sites (stride 3 breaks the coincidence: 303 dups vs 75 fires).
+
+**The matrix sweep** (record `benchmarks/results/stale_incomplete.txt`):
+escape (all three parts), dup_classify, and verify_contract re-run
+with both new counters. Every previously recorded number
+(restricted_invariant.txt) reproduces unchanged, and both counters
+are ZERO on every family, engine, and check site. Consequences:
+
+1. **(H) now has a direct measurement, and it is zero everywhere** —
+   including the escape waves, whose thousands of paper-engine
+   duplicate settlements therefore all re-settle already-complete
+   vertices at the true length. Every measured settlement event in
+   the corpus settles a complete vertex.
+2. **The escort's companion clause: the stale-incomplete channel is
+   empty at every check site.** This is the instrumentation decision
+   addendum 8 asked for: the fresh-only escort scope suffices
+   empirically, and the invariant-grade candidate for the companion
+   clause is addendum 7's confinement (stale incomplete entries live
+   only in W/S territory of active deeper calls, repaired at their
+   returns) rather than a same-D fresh-companion claim. Caveat kept
+   explicit: the counters observe return/iteration boundaries, not
+   every mid-iteration state; the proof still owes the confinement
+   argument itself.
+3. The proof target is now cleanly the escort invariant (addendum 8's
+   statement with defect i's chain re-wording and defect ii resolved
+   toward confinement). Next per the plan: the escort re-draft, its
+   own instrumentation (a strictly smaller complete co-resident
+   chain-connected entry per sub-B′ incomplete fresh entry), then the
+   W′ endgame.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a

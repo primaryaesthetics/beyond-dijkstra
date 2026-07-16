@@ -63,6 +63,9 @@ struct Counters {
     /// `--features verify-contract,dup-classify` to populate and print.
     #[cfg(feature = "dup-classify")]
     restr: beyond_dijkstra::solver::RestrCounts,
+    /// Direct (H) counter (settlements at a non-true label length).
+    #[cfg(feature = "dup-classify")]
+    settle_incomplete: u64,
 }
 
 /// Exact-completeness oracle for the restricted counters: the crate's
@@ -127,6 +130,8 @@ fn run(
         cap_hits: solver.base_cap_hits,
         #[cfg(feature = "dup-classify")]
         restr: solver.restr.clone(),
+        #[cfg(feature = "dup-classify")]
+        settle_incomplete: solver.settle_incomplete,
     }
 }
 
@@ -162,14 +167,18 @@ fn main() {
         // unsettled proxy must fire, the exact proxy must not.
         #[cfg(feature = "dup-classify")]
         println!(
-            "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+            "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
             "restricted:",
             c.restr.unsettled_base,
             c.restr.unsettled_rec,
             c.restr.unsettled_iter,
             c.restr.incomplete_base,
             c.restr.incomplete_rec,
-            c.restr.incomplete_iter
+            c.restr.incomplete_iter,
+            c.restr.stale_incomplete_base,
+            c.restr.stale_incomplete_rec,
+            c.restr.stale_incomplete_iter,
+            c.settle_incomplete
         );
     }
 
@@ -226,14 +235,18 @@ fn main() {
             );
             #[cfg(feature = "dup-classify")]
             println!(
-                "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}",
+                "{:>28} unsettled base/rec/iter={}/{}/{}  incomplete base/rec/iter={}/{}/{}  stale-inc base/rec/iter={}/{}/{}  settle-inc={}",
                 "restricted:",
                 c.restr.unsettled_base,
                 c.restr.unsettled_rec,
                 c.restr.unsettled_iter,
                 c.restr.incomplete_base,
                 c.restr.incomplete_rec,
-                c.restr.incomplete_iter
+                c.restr.incomplete_iter,
+                c.restr.stale_incomplete_base,
+                c.restr.stale_incomplete_rec,
+                c.restr.stale_incomplete_iter,
+                c.settle_incomplete
             );
         }
     }

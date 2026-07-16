@@ -85,3 +85,7 @@ required-features = ["q11-trace"]
 [[example]]
 name = "escape"
 required-features = ["dup-classify"]
+
+[[example]]
+name = "triangle"
+required-features = ["verify-contract", "dup-classify"]

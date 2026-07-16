@@ -1,0 +1,43 @@
+The base-exit triangle driver (QUESTIONS.md Q14 addendum 8/9): the last
+settlement of a cutoff-ending base call carries two out-edges u -> z
+(w 1.25) and u -> y (w 2.5) plus z -> y (w 0.25), so the post-pull sweep
+plants y's non-canonical label below the already-fixed B'. Counters:
+incomplete_* = fresh-or-stale entry of an incomplete vertex below the
+bound (exact oracle proxy); stale-inc = same but stored value differs
+from the key's current label; settle-inc = direct (H) counter,
+settlement events at a non-true label length.
+Build: --features verify-contract,dup-classify (observation-only).
+
+Part 1a -- one base call on the star (t=2, cutoff 8, B=len 100):
+  engine      B'   D[z=10]     true z    D[y=11]     true y boundviol  cap unsett incomp  stale-inc
+   paper      50      9.25       9.25       10.5        9.5         1    0      1      1          0  settle-inc=0
+      V5    9.25      9.25       9.25       10.5        9.5         0    1      0      0          0  settle-inc=0
+      V8      50      9.25       9.25       10.5        9.5         1    0      1      1          0  settle-inc=0
+
+Part 1b -- full recursion on the star (B=INF, l_top=2):
+  [paper] dups=0 settle-inc=0 unsettled base/rec/iter=1/0/1 incomplete base/rec/iter=1/0/1 stale-inc base/rec/iter=0/0/0
+  [   V5] dups=0 settle-inc=0 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V8] dups=0 settle-inc=0 unsettled base/rec/iter=1/0/1 incomplete base/rec/iter=1/0/1 stale-inc base/rec/iter=0/0/0
+
+Part 2 -- the scaled family (full recursion, t=2, k=2):
+      L  stride    E_A        n    tris  per-engine counters below
+    200       0    500      702       0
+  [paper] dups=0 settle-inc=0 viol base/rec=22/6 cap=0 unsettled base/rec/iter=22/6/28 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V5] dups=0 settle-inc=0 viol base/rec=0/0 cap=22 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=22/6 cap=0 unsettled base/rec/iter=22/6/28 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+    200       2    500      902     100
+  [paper] dups=12 settle-inc=0 viol base/rec=25/0 cap=0 unsettled base/rec/iter=25/0/25 incomplete base/rec/iter=12/0/12 stale-inc base/rec/iter=0/0/0
+  [   V5] dups=12 settle-inc=0 viol base/rec=0/0 cap=25 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=12/0 cap=0 unsettled base/rec/iter=12/0/12 incomplete base/rec/iter=6/0/6 stale-inc base/rec/iter=0/0/0
+   5000       2   3000    13002    2500
+  [paper] dups=312 settle-inc=0 viol base/rec=625/0 cap=0 unsettled base/rec/iter=625/0/625 incomplete base/rec/iter=312/0/312 stale-inc base/rec/iter=0/0/0
+  [   V5] dups=312 settle-inc=0 viol base/rec=0/0 cap=625 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=294/0 cap=0 unsettled base/rec/iter=294/0/294 incomplete base/rec/iter=147/0/147 stale-inc base/rec/iter=0/0/0
+   5000       3   3000    11336    1667
+  [paper] dups=303 settle-inc=0 viol base/rec=454/101 cap=0 unsettled base/rec/iter=454/101/555 incomplete base/rec/iter=75/0/75 stale-inc base/rec/iter=0/0/0
+  [   V5] dups=303 settle-inc=0 viol base/rec=0/0 cap=454 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=416/0 cap=0 unsettled base/rec/iter=416/0/416 incomplete base/rec/iter=208/0/208 stale-inc base/rec/iter=0/0/0
+  20000       2   3000    43002   10000
+  [paper] dups=1250 settle-inc=0 viol base/rec=2500/0 cap=0 unsettled base/rec/iter=2500/0/2500 incomplete base/rec/iter=1250/0/1250 stale-inc base/rec/iter=0/0/0
+  [   V5] dups=1250 settle-inc=0 viol base/rec=0/0 cap=2500 unsettled base/rec/iter=0/0/0 incomplete base/rec/iter=0/0/0 stale-inc base/rec/iter=0/0/0
+  [   V8] dups=0 settle-inc=0 viol base/rec=1177/0 cap=0 unsettled base/rec/iter=1177/0/1177 incomplete base/rec/iter=588/0/588 stale-inc base/rec/iter=0/0/0
