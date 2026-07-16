@@ -1090,6 +1090,13 @@ dis(z) ≤ dis(u) < d[u]; either way an entry strictly below u's
 contradicts u being the minimum pull, with the tuple order settling
 exact ties. So every base-case pull settles a complete vertex,
 independent of Q3 — which breaks only the bound clause. ∎
+[Cold-audit correction 2026-07-16: NOT unconditional — the "or still
+stored fresh at dis(z)" step silently assumes z's fresh entry sits in
+THIS base D, i.e. covered seeds at call entry; that premise is free
+only for the top-level call, whose D is the only D. "Independent of
+Q3" survives. The entry condition is exactly L1's handoff, so the base
+case moves inside the induction rather than anchoring it — see the
+audit note at the end of addendum 8.]
 
 **The repaired Frontier Split.** Lemma 3.6's hypothesis
 {x ∈ Y : d[x] < B_s} ⊆ Y_s is stated over labels while Pull selects by
@@ -1143,7 +1150,7 @@ standing hypothesis of Lemmas B, D, F, G, H and the linear-excess
 theorem (addendum 6), and upgrades V8 from "empirically safe" to
 "provably safe modulo (L1)/(L2)".
 
-## Q14 addendum 8 (2026-07-16, same day, unreviewed — every claim here is flagged for independent cold re-derivation before anything is built on it) — permanent freshness, canonical-prefix completeness, the incompleteness floor, a thought-experiment that probably falsifies the restricted clause as an invariant, and the escort invariant that replaces it
+## Q14 addendum 8 (2026-07-16, same day, unreviewed — every claim here is flagged for independent cold re-derivation before anything is built on it) — permanent freshness, canonical-prefix completeness, the incompleteness floor, a thought-experiment that probably falsifies the restricted clause as an invariant, and the escort invariant that replaces it. COLD-AUDITED same day (fresh session; note at end): M and O confirmed, triangle confirmed against paper + port, N restated for len/hops-completeness, escort statement needs two fixes before instrumenting
 
 Written immediately after addendum 7 while attacking L1/L2. Three
 lemmas hold at proof or sketch grade; the fourth item is a designed
@@ -1237,6 +1244,88 @@ escort invariant instrumented (for each sub-B′ incomplete entry,
 verify a smaller complete co-resident chain-connected entry exists);
 (iv) the W′ endgame with the floor lemma in hand.
 
+**Cold audit (2026-07-16, fresh session) — the attack plan's item 0
+executed over addenda 5–8 and Q15.** (a) Every quoted number
+re-traced to the recorded files (escape.txt, restricted_invariant.txt,
+dup_classify.txt, cascade.txt): all exact. (b) Every paper citation
+re-checked against paper_text.txt — Algorithm 3 lines 7/13/23/24/29/
+30/31–33/34/36, Lemma 3.6's hypothesis and what its proof consumes,
+Lemma 3.7's three clauses, Observation 2.1's dB[Y], §3.4 property 6's
+per-level windows, Algorithm 4's pull-then-sweep order: all faithful.
+(d) escape, dup_classify and verify_contract re-run under
+verify-contract + dup-classify: outputs reproduce the recorded files
+exactly. Two in-place corrections above came out of (a)/(c): the Q15
+chunk-formula floor/ceiling and the addendum-7 base-case
+"unconditional". (c) Adversarial re-derivation, item by item:
+
+- **Lemma M confirmed.** One step made explicit: an entry leaves a D
+  only through pull or keep-min, and keep-min (strict `<`, ties keep
+  the incumbent) can never evict a key's floor. Merge is per-key
+  keep-min, so custody reduces to creation and pull-handoff as
+  claimed.
+- **Lemma N corrected: completeness must be read as len/hops-
+  completeness.** The acceptance that completes v pins its
+  predecessor's len and hops to the canonical prefix values — NOT the
+  predecessor's own pred field, so the full-4-tuple induction breaks
+  at the second step (a predecessor can carry a non-canonical pred at
+  exact len/hops). Since relax candidates read only len/hops of the
+  source (Lemma D's own note) and the instrumentation defines
+  incomplete by length, len/hops-completeness is the right notion
+  everywhere in addenda 7–8, and Lemma N's "canonical path" is the
+  accepted-pred tight path — a minimal-(len, hops) path, not
+  necessarily the pred-id-tie-broken one. No downstream consumer
+  needs more.
+- **Lemma O confirmed at sketch grade.** Wording fix: an ACCEPTED
+  offer completes y (the unwind sweep merely triggers acceptance;
+  refusal is only ever by gate, since a label at cand is already
+  complete). The window bookkeeping reconstructs cleanly: pending
+  windows at a boundary belong to strict ancestors of the batch's
+  custody call, all on the active stack, lower ends ≥ B of the
+  deepest active call by bound nesting. The W′ gap stands as named.
+- **The triangle confirmed as real mechanics against BOTH engines of
+  truth**: the paper's Algorithm 4 fixes B′ at the last Pull (line 4)
+  before the final sweep's inserts (lines 6–8), and the port does the
+  same (base_case: bound set at pull, the Q3-flagged insert after).
+  The measured zero is a family artifact as suspected; the driver
+  prediction stands.
+- **The escort invariant: mechanism survives adversarial probing —
+  same-batch and split-batch handoffs (pull is a value-prefix, so a
+  pull can never take the ward without its strictly smaller escort),
+  chain regeneration, zero-weight links (strictness survives in tuple
+  order through hops) — but the STATEMENT has two defects to fix
+  before instrumenting.** (i) "Chain of pending canonical offers" is
+  wrong for chains of length ≥ 2: intermediate offers need not exist
+  yet — plant u_last → y₂ directly and neither (z, y₁) nor (y₁, y₂)
+  is pending until z settles. Re-draft: a canonical tight-edge chain
+  from the escort to the ward whose intermediates are each either
+  unlabeled or co-resident below the next link; regeneration (each
+  settlement completes the next link and fresh-inserts it below the
+  following one) is the induction step. (ii) The fresh-only
+  restriction does not give (H) at pull sites by itself: a STALE
+  entry of an incomplete key below B′ — creatable by the two
+  non-re-inserting label-drop sites (FindPivots rounds, line-36
+  accepts below B′), since the re-insert of a drop lands at the
+  accepting site's D, not necessarily where the old entry lives — is
+  outside the invariant's scope, and a pull consuming it settles the
+  vertex at its current incomplete label. The escort form needs a
+  companion clause: either addendum 7's confinement (stale incomplete
+  entries exist only for W/S territory of active deeper calls,
+  repaired at their returns) promoted to invariant grade, or a proof
+  that a stale incomplete entry below B′ always coexists with a
+  smaller fresh entry of the same key in the SAME D. This, alongside
+  the W′ endgame, is the open drafting question — the instrumentation
+  (next-steps item iii) should count stale-incomplete sub-B′ entries
+  separately to decide which clause is true.
+
+Net effect on the spine: L1's decay half stays closed (M holds);
+the base case now consumes the co-residence premise instead of
+anchoring it, which makes the escort invariant — not the restricted
+clause — the single load-bearing target, as this addendum proposed;
+L2's plan is unchanged. Order of work after the audit: triangle
+driver first (validates the counter semantics on a live positive),
+then the escort re-draft with the stale-entry clause decided by
+instrumentation, then the W′ endgame.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a
@@ -1265,7 +1354,14 @@ distance-exact vs Dijkstra; all under the event ceiling. Five results:
    re-inserts the next front below the ballast-scale separator — one
    violation per chunk, confirmed by arithmetic: V8's counts are
    exactly ⌈wave/(t³+1)⌉ (555 = 5 000/9 at t = 2), the paper engine
-   doubles them (first wave + duplicate wave). The full-execution
+   doubles them (first wave + duplicate wave). [Cold-audit correction
+   2026-07-16: the formula is ⌊wave/(t³+1)⌋ — ⌈·⌉ overcounts the
+   boundary chunk (555 = ⌊5 000/9⌋; V8 at L = 20 000 is
+   2 222 = ⌊20 000/9⌋) — and the doubling holds only where the
+   duplicate wave completes: at L = 5 000, 1 110 = 2·555, but at
+   L = 20 000 the stranded wave (finding 4's damping) gives
+   2 973 < 4 444, while V5's completed wave shows cap_hits
+   4 444 = 2·2 222 exactly.] The full-execution
    dichotomy breaks at the same scale (up to 2 958 — Q10's sub-case,
    previously a corner). Q3's addendum "the adversarial family is
    contract-clean" is hereby superseded: cleanliness was a property of
