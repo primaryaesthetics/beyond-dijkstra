@@ -1143,6 +1143,100 @@ standing hypothesis of Lemmas B, D, F, G, H and the linear-excess
 theorem (addendum 6), and upgrades V8 from "empirically safe" to
 "provably safe modulo (L1)/(L2)".
 
+## Q14 addendum 8 (2026-07-16, same day, unreviewed — every claim here is flagged for independent cold re-derivation before anything is built on it) — permanent freshness, canonical-prefix completeness, the incompleteness floor, a thought-experiment that probably falsifies the restricted clause as an invariant, and the escort invariant that replaces it
+
+Written immediately after addendum 7 while attacking L1/L2. Three
+lemmas hold at proof or sketch grade; the fourth item is a designed
+counterexample to the restricted clause itself, which sharpens the
+proof target rather than killing it.
+
+**Lemma M (permanent freshness).** A fresh entry of a COMPLETE vertex
+stays fresh forever, wherever keep-min and Merge carry it: its stored
+value dis(u) is the key's floor (stored ≥ label ≥ dis-label), so no
+later insert undercuts it and no keep-min evicts it, and a complete
+label never moves. Fresh coverage by complete vertices never decays;
+it is only ever CONSUMED by a pull. So L1's custody question is about
+creation and pull-handoff exclusively. ∎
+
+**Lemma N (canonical-prefix completeness).** Every vertex on the
+canonical shortest path of a complete vertex is complete. At the
+moment v became complete, the accepting candidate pinned its canonical
+predecessor's label to the canonical prefix value (Lemma B read
+backward), so the predecessor was complete at that moment, and
+completeness is permanent; induct along the prefix. ∎
+
+**Lemma O (incompleteness floor, base-settled predecessors).** At any
+iteration boundary with active stack X_0 ⊃ … ⊃ X_q: if y is
+incomplete, dis(y) < B_{X_0}, and y's canonical predecessor z was
+settled by a base-case pull, then dis(y) ≥ B_{X_q}. Sketch: the base
+settlement swept [0, B_base) at once and the line-30 unwind tiles
+[B_base, B_{X_0}) with ancestor windows (Lemma A); the canonical offer
+(z, y) carries the fixed value dis(y) (Lemma N) and lands in exactly
+one window; sweeps run in the same iteration as each return, so the
+pending windows at any boundary belong to strict ancestors of the
+batch's current custody call — all on the active stack, with lower
+ends ≥ B_{X_q} by bound nesting. y incomplete means its canonical
+offer is pending (a swept canonical offer completes y), so dis(y)
+sits in a pending window. ∎ (sketch) — The W′-settled-predecessor
+case is NOT covered: a W′ settlement sweeps only [B′_Y, B_Y), and the
+range [0, B′_Y) is vouched by U_Y = Ũ(B′_Y, S_Y), which reaches y
+only through S_Y. The one channel that survived every previous
+closure survives this one too.
+
+**The base-exit triangle (thought experiment — the restricted clause
+is probably NOT an invariant).** Take a base call whose cutoff-ending
+settlement u_last has two out-edges: w₁ to z and w₂ to y, plus an edge
+z → y, with d[u_last] + w₂ > d[u_last] + w₁ + w_zy, and the rest of
+D's remaining values (which set the returned B′) far above. The final
+post-pull sweep relaxes both edges in adjacency order: z becomes
+complete at dis(z) = d[u_last] + w₁, y receives the NON-canonical
+value d[u_last] + w₂ < B′ while its true path runs through z — an
+INCOMPLETE key with a fresh entry below B′, exactly what the pre-test
+counter watches. The measured zero across the matrix is then a family
+artifact: no tested input builds this triangle. To be confirmed by a
+dedicated driver (predicted: the incomplete-restricted counter fires
+while distances and (H) hold — which would also re-validate the
+counter's semantics on a live positive).
+
+**The escort invariant (the corrected proof target).** In the
+triangle, (H) still survives, and the reason generalizes: z's fresh
+COMPLETE entry at dis(z) < d[y] was created by the same sweep into the
+same D and travels with y's entry through every merge (custody is
+shared until a pull separates them). Value-ordered pulls take z first
+— in an earlier batch, whose settlement sweep immediately relaxes the
+canonical (z, y) and completes y before y's entry can surface; or in
+the SAME batch, where the child receives both, settles z first by the
+same argument one level down, and completes y before pulling it. If a
+chain z → y₁ → … → y_r hangs below B′ with only z complete, each
+settlement completes the next link and fresh-inserts it below the
+following one — the escort regenerates down the chain. Proposed
+invariant, replacing the restricted clause:
+
+> Every fresh entry of an incomplete key below B′ coexists in its D
+> with a strictly smaller fresh entry of a complete key from which a
+> chain of pending canonical offers reaches it.
+
+(H) then follows at pull sites: a pulled minimum is either complete,
+or its escort — strictly smaller — was pulled before it and completed
+it first, contradiction. The measured zero-violation state is the
+special case where no incomplete entry sits below B′ at all; the
+escort form is what the algorithm actually guarantees. What this
+does to the remaining spine: L1's decay half is closed by Lemma M;
+L2's capture argument becomes "escorts are pulled before wards",
+which within one D is the data structure's value order and across a
+batch boundary is the settlement sweep running before any later pull
+— both mechanical, neither consuming B′ monotonicity. What still
+consumes B′ monotonicity is the W′ endgame (Lemma O's named gap plus
+addendum 7's L2), unchanged.
+
+Next steps, in order: (i) independent re-derivation of Lemmas M/N/O
+and the escort argument — the window bookkeeping in O and the
+batch-boundary case of the escort were written fast and unreviewed;
+(ii) the triangle driver, added to the standard matrix; (iii) the
+escort invariant instrumented (for each sub-B′ incomplete entry,
+verify a smaller complete co-resident chain-connected entry exists);
+(iv) the W′ endgame with the floor lemma in hand.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a
