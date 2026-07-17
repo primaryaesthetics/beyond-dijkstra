@@ -454,7 +454,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap)
 
 What the paper needs and never states or proves:
 
@@ -2390,6 +2390,125 @@ tuple-grade upgrade of the completeness notion (Lemma N). If (a)
 holds, the (H | V5) program is done modulo (b) and (c), and with it
 V5+V8's exactness claim and the repaired-lemma write-up gain their
 missing spine.
+
+## Q14 addendum 17 (2026-07-18, fresh session) — cold audit of addendum 16: the recast holds on all five named targets; two wording defects repaired, the Q12 carve-out sharpened to its transitive form, and the one residual named — custody persistence as its own lemma
+
+Debt (a) of addendum 16, per the standing cadence rule. Every step
+re-derived against `src/solver.rs` (the four relax call sites,
+`BlockDs::pull`/`insert`/`merge`, the V5 cap) and the recorded
+definitions — none from memory. Verdict: the window/off-path-anchor
+recast SURVIVES. The five named attack points in order:
+
+**1. The E-c elimination — CONFIRMED (the recast's largest claim).**
+The definitional spine first: stored values never sit below current
+labels — every insert site stores `self.d[v]` at insert time (base
+seeds, base post-relax, initial and re-selected pivots, line 33, both
+sweeps; merges carry such values), keep-min keeps the minimum of
+historical labels, and labels only improve, so the current label ≤
+every historical insert ≤ the stored minimum. Incompleteness of the
+label therefore transfers to β through the len slot of tuple order
+(lex order, len first). Both event judgments read current labels only
+(the base pull settles d[u]; the W′ filter reads d[x]); A′'s custody
+is any stored value; and no channel of the inventory invokes
+freshness anywhere — checked channel by channel. E-c stays true as
+measured and stays part of the invariant picture, but nothing in
+(H | V5) consumes it. The elimination is real.
+
+**2. The same-batch corner — CONFIRMED**, and the case analysis
+re-derives sharper than stated. (a) One child call per loop iteration
+makes "z arrived in an active ancestor's CURRENT iteration"
+structurally impossible: the current iteration's child is still
+active, so nothing has returned into that iteration — every active
+ancestor that received z did so in a finished iteration whose sweep
+ran strictly before the event. (b) An ACTIVE ancestor cannot have
+W′-settled z: the append is post-loop, and a call with a live
+descendant is still in its loop — so a settlement of z inside an
+active call is a base pull of the event's own call (the base-sweep
+case) and nothing else. (c) Branch (iii)'s tie-refusal corner closes
+at len grade: the offer to an incomplete x₁ is strict in the len slot
+(len(cand) = dis(x₁) < len(d[x₁])), so a tuple-order refusal at equal
+length cannot occur — this line is the known pressure point of the
+tuple-grade upgrade (debt c), flagged for that session.
+
+**3. Channel 2's descent termination — CONFIRMED.** Each descent step
+moves to a strictly deeper FINISHED call (z settled in the returned
+child's subtree; recurse to z's actual settling site), the call tree
+is finite, and every terminal is an enumerated channel: base pull
+(ungated insert — custody), FindPivots exits (channels 4/5), W′ sweep
+pass (custody) or refusal (channel 3, whose branches end in same-batch
+completion or the W2 contradiction). The relax-site enumeration behind
+exhaustiveness re-verified against the code: exactly four call sites
+(search, base, iteration sweep, W′ sweep). No circularity: the descent
+consults only finished deeper calls and same-call structural facts,
+never the event's own A′ instance.
+
+**4. The seed recursion — HOLDS, but the written step skips its
+justification; repaired here.** "Carries its anchor in the same ds" is
+not free — custody could a priori sit in any live D. It is forced
+into the pulling call's own ds by the ancestor half of Lemma W applied
+at the pull moment: W as stated is event-scoped, but the W1 proof is
+moment-independent (the no-insert span between pull and child call and
+the pull invariant hold whenever a child subtree is active), so state
+it as **W1's ancestor floor holds at every moment a call is
+suspended**. A sub-pull-value custody entry then cannot be an
+ancestor's, hence it is co-resident with the ward's entry, hence
+prefix containment (strictly smaller in the len slot: len ≤ dis(z) <
+len of the ward's stored value) pulls it with or before the ward.
+Through a RECURSIVE child the anchor arrives as a seed and is
+represented per FindPivots (pivot / W / proxy — channels 4/5), and the
+recursion bottoms at the base case, where every seed enters the base D
+directly. Second wording defect, channel 4: "re-entried by line 33 at
+dis(f) ≤ dis(z)" presumes f complete, which f need not be; the correct
+claim is **d[f] ≤ dis(z)**, by heap-pop monotonicity of the failed
+search (every in-search label ≥ the root's start label — each pushed
+candidate strictly exceeds its popped source — so dis(z) = z's popped
+final label ≥ d[f] at search start ≥ d[f] at line 33, labels only
+improving). Custody (i) needs only the stored len ≤ dis(z), which this
+gives; the conclusion stands, the wording is repaired.
+
+**5. Q12's confinement to W2 — CONFIRMED, carve-out sharpened to its
+transitive form.** W1 is immune to Q12 by construction: the pull
+invariant is insert-history-agnostic — a sub-b_i re-selection survivor
+from an earlier iteration would have been consumed by the very pull
+that defined b_i, so at child-call time the remainder minimum is
+≥ b_i regardless of what line 29 ever inserted. W3 is immune (the base
+D has no re-selection site). The single entry point is W2's loop-exit
+clause via the transitive proposition — but the carve-out as written
+names only the event call's OWN final-iteration re-selection, and the
+inherited shape exists: a descendant's final-iteration line-29 leak
+rides the child-D merge into an ancestor whose loop exits WITHOUT
+another pull (limit exit in the same iteration), surfacing at that
+ancestor's W′ filter unconsumed. Same single hole — it still enters
+only through W2, via the transitive proposition's induction
+hypothesis — but the carve-out must read "a final-iteration line-29
+re-selection anywhere in the event call's subtree, unconsumed by any
+later pull", not "the event's own". Measured status unchanged
+(viol_bound_rec = 0 corpus-wide under V5).
+
+**The residual, named.** The audit's one refusal to grade up: custody
+SURVIVAL between z's completion and the settlement event is
+distributed across channel 5's consumption/re-materialization
+sentences (proxy → pulled pivot → child seed → boundary collapse →
+line-33/merge/re-selection re-entry) rather than stated as one
+induction. Every branch attacked here closed — consumption by a pull
+turns custody into a seed whose subtree settles the anchor or
+re-materializes an entry at its boundary; keep-min can only lower a
+custody value, preserving len ≤ dis(z); keys leave a ds only by pull —
+and no counterexample was found. But the write-up needs this as its
+own lemma (**custody persistence**: once created, custody is
+re-established at every event boundary until the anchored vertex
+settles or the path's frontier advances), with the event interleaving
+spelled out. The grade stays sketch until that lemma is written down.
+
+**Status.** Addendum 16's debt (a) is discharged: the recast holds
+under cold re-derivation, with two wording repairs (channel 4's
+d[f]; the seed step's W1-at-any-moment justification) and the
+transitive Q12 carve-out folded into the record. (H | V5) rests on
+W + A′ + the reduction with named debts: (b) Q12 as mathematics — now
+formally the last statement-level gap, carve-out in transitive form;
+(c) the tuple-grade upgrade (Lemma N), pressure point = branch (iii)'s
+tie strictness; (d) the custody-persistence lemma as the write-up's
+spine. Next: Q12.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
