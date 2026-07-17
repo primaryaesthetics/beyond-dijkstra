@@ -454,7 +454,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended
 
 What the paper needs and never states or proves:
 
@@ -2068,6 +2068,123 @@ and the causal chain Q3 → Q15 → row G now bottoms out in Algorithm
 it. Next: row H (the V8 wrong-distance embedding — f value-adjacent
 inside the leaking call's S-batch, chain re-alignment so the cutoff
 still fires at u_last), then the anchor/window lemma under V5.
+
+## Q14 addendum 15 (2026-07-17, fresh session) — row H: the W′ leak embedded in a full recursion; V8 finishes with a wrong final distance (the first distance-incorrect V8 run on any input), the paper engine heals through one duplicate settlement, V5 closes the hole — the three engines separate on a single 70-vertex input
+
+Attack-plan spine item: row H, the V8 wrong-distance embedding
+predicted by addendum 13 ("V8's distance-correctness is now suspect by
+derivation") and queued by addendum 14.
+
+**Why row G does not embed, and the fix.** The falsification needs
+y_t ∈ W of the very call whose exit strands the leaked entries, and W
+membership is decided at FindPivots time — so the stale-walking seed f
+must be a member of that call's S, walking y_t while it is still
+unlabeled. In row G's full run f sits at 995: by the time any call
+pulls it, y_t is settled complete and the walk is refused. Worse, the
+first level-1 call of any full recursion has S = {0}, and a single
+search from the source caps immediately on the seed fan-out (W = ∅
+always), so the leak can never fire in the call that does the early
+work. The first call with a real multi-seed S is the level-2 call's
+SECOND pull — row H makes f value-adjacent and packs the entire
+leaking configuration into that one batch.
+
+**Construction** (`examples/rowh.rs`, one graph, source 0, n = 70,
+t = 2, k = 3, l_top = 4; record `benchmarks/results/rowh.txt`):
+
+- Phase A: 32 sink seeds at 1.0..16.5. The first level-1 call
+  (S = {0}, limit 32) consumes exactly these — base child 1 settles
+  0 + a1..a8 (cutoff exit at separator 5), twelve sink pairs take |U|
+  to 33 > 32 — and limit-exits at B′ = 20 with every later key
+  unsettled in the returned D.
+- The batch: the level-2 call's second pull (M = 8) extracts exactly
+  {p1..p6, g11, f} — six 3-leaf ballast stars at 20..22.5, the chain
+  root g11@23, f@23.75. The 9th-smallest key, a sink at 30, becomes
+  the pull separator: B_C* = 30.
+- Inside C* (level 1, B = 30): f's search accepts the stale offer
+  f →4→ y_t at 27.75 (y_t unlabeled — the chain is never walked
+  before this call) and fails at |K| = 2 < 3: W = {f, y_t}. Three
+  star-pair children settle 24; then g11 is pulled ALONE, the chain
+  child walks g11 + h1..h7 + u_last = 9 pulls, the 9th empties the
+  base D fixing the bound, and u_last's post-pull sweep plants
+  z_t@23.53125 and y_t@23.59375 (true 23.546875 via the never-walked
+  z_t) below it. |U| = 33 > 32: limit exit, B′ = 30, and y_t passes
+  the W′ filter — settled INCOMPLETE inside a full recursion.
+- Aftermath: C*'s returned D carries z_t and y_t up; the level-2
+  call's next pull hands them to a cleanup call whose FindPivots
+  search from z_t repairs y_t — unless something blocks the relax.
+
+Three alignment facts the construction turned up (they constrain any
+future embedding of this shape):
+
+1. A failed root holds no D entry, so an 8-key batch yields at most 7
+   pivots and the chain root is pulled alone — and a solo pull's
+   empty remainder makes the base child's bound the CALL bound B_C*
+   itself. The recursion hands the widest possible leak window (B′ =
+   B_C* = 30) for free; the direct rows' careful separator
+   engineering (b₆ = 21) is not needed at all.
+2. The plan's chain re-alignment: 8 chain steps so that g11 + h1..h7
+   + u_last = 9 pulls with u_last exactly ninth (cutoff 8) — the base
+   D must be EMPTY at the ninth pull so the bound is fixed before the
+   sweep inserts the leak below it (Q3's pull-then-insert order, the
+   root defect of addendum 14, doing the work).
+3. The stale value threads dis(y_t) < d_direct(y_t) < σ < B_C*
+   (23.546875 < 23.59375 < 27.75 < 30): below B_C* so the FindPivots
+   walk is accepted, above the direct value so the chain child's
+   insert is the operative wrong label. Hand alignment sufficed; the
+   grid-search fallback the plan reserved was not needed.
+
+**Recorded run** (`benchmarks/results/rowh.txt`, all predictions
+written into the driver header before the first run and confirmed
+exactly on it, every figure):
+
+- paper: settle-inc = 1 (y_t at C*'s boundary), viol base/rec = 1/1,
+  incomp b/r/i = 1/1/2, wards 1/1/2, missing 0, dups = 1 — y_t is
+  settled TWICE (incomplete at 23.59375 in C*, complete at 23.546875
+  in the cleanup call's W′) and the final distances are EXACT. The
+  duplicate channel's healing is now measured in vivo: exactly one
+  duplicate settlement (wprime_own_root) is the entire repair — on
+  this input Q11's duplicate is not overhead, it IS the correctness.
+- V8: identical counters (the engines coincide bit-for-bit up to the
+  W′ settlement, and every counter site at or after it sees identical
+  D states), dups = 0, y_t settled ONCE — the settled bit rejects
+  z_t's repair relax and the level-2 pull drops y_t's stale entry:
+  final d[y_t] = 23.59375 against true 23.546875 (err 0.046875), the
+  only wrong vertex of 70. The first distance-incorrect V8 run on any
+  input, exactly as derived.
+- V5: cap = 1 (the chain child's bound capped to dB[D] = 23.53125,
+  the escort z_t again), settle-inc = 0, all other counters zero,
+  distances exact — y_t never passes the W′ filter, f is re-inserted
+  by line 33, the cleanup call settles everything complete.
+
+**What this settles.**
+
+- (H | V8-reachable states) — the conditional addendum 13 made
+  non-vacuous — is FALSE: the completeness hypothesis fails on a
+  V8-reachable state and V8 freezes the wrong label its contrapositive
+  paragraph predicted. VARIANTS.md's V8 exactness claim amended in
+  this commit: exact on the tested matrix, incorrect in general; V8
+  not promotable to mainline; V5+V8 is the candidate composition and
+  its exactness is precisely the (H | V5) program.
+- The Tier-2 matrix's green V8 gate is explained, not contradicted:
+  the shape needs a stale pocket walk into the ward of a base-case
+  cutoff-exit leak, and no generator family contains it. A crafted
+  counterexample is the only way this red gate could ever have been
+  produced — which is why addendum 13's derivation, not the matrix,
+  found it.
+- The three engines now separate on one 70-vertex input: paper =
+  incomplete settlement + duplicate heal (exact), V8 = incomplete
+  settlement + frozen wrong distance, V5 = no incomplete settlement
+  at all. Keeper regression probe for any future engine work.
+- The relay channel (addendum 14 scope note 2) stays dormant by
+  design (y_t is a sink): row H needed only the settled bit as the
+  hiding mechanism, so the relay remains an unexercised second
+  channel, still available if a paper-engine wrong-distance embedding
+  is ever wanted (it would need the healing duplicate itself blocked,
+  which the relay's entry-less successor provides).
+
+Next: the anchor/window lemma restated under V5 — (H | V5) is now the
+only living exactness target above tested-matrix grade, for the paper
+engine and V8 alike.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 

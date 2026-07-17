@@ -758,6 +758,34 @@ verdict does not move: no family member approaches Dijkstra at
 storable sizes; V8 just makes the gap honestly smaller while carrying
 its math content (zero duplicate settlements, exact |U| accounting).
 
+**Exactness status — AMENDED 2026-07-17: the claim's hypothesis is
+false, and V8 is distance-INCORRECT on a crafted input.** The claim
+above was always conditional: "IF every settlement settles a complete
+vertex". QUESTIONS.md Q14 (addenda 13–15) falsified that hypothesis —
+the paper's W′ filter settles an incomplete vertex on a crafted
+frontier state (row G, direct-call grade), and the configuration
+embeds in a full recursion (row H, `examples/rowh.rs`, recorded run
+`benchmarks/results/rowh.txt`): on a 70-vertex input the paper engine
+settles y_t incomplete and heals through a duplicate settlement
+(distances exact, dups = 1), while V8 freezes the wrong label — the
+settled bit rejects the repair relax and the pull drops the stale
+entry — and finishes with d[y_t] = 23.59375 against the true
+23.546875. This is the contrapositive paragraph's red-gate instance,
+produced by construction rather than by the generator matrix: the
+shape (a stale pocket walk into the ward of a base-case cutoff-exit
+leak) was never in any Tier-2 family, which is why the matrix stayed
+green. Consequences: (i) V8's distance preservation is downgraded from
+"claim with green gate" to "exact on the tested matrix, incorrect in
+general — same trust grade as the paper's own completeness clause it
+inherited"; (ii) V8 must not be promoted to mainline; (iii) the V5
+base cap closes the only known channel (same run: cap = 1, all
+counters zero, distances exact), so V5+V8 is the candidate composition
+— whether it is exact everywhere is exactly the (H | V5) program of
+Q14. V9's L = l_top configuration is untouched by this finding: a
+single top-level base case has no W′ site and no recursive boundary,
+and its settlements are heap-order pops (Dijkstra-grade completeness),
+so the row H channel does not exist there.
+
 ## V9 — flat top runner: the degenerate member engineered to its honest endpoint
 
 The best configuration on road inputs is v8-fast at L = l_top: the

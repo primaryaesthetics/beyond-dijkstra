@@ -1,0 +1,15 @@
+Row H — the V8 wrong-distance embedding (full recursion, source 0, n=70, l_top=4, t=2, k=3):
+
+  [paper] settle-inc=1 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/2 stale-inc=0/0/0 wards b/r/i=1/1/2 missing=0/0/0 dups=1
+          y_t (v67): d=23.546875 true=23.546875 settlements=2
+          distances: EXACT (70/70)
+
+  [   V5] settle-inc=0 viol base/rec=0/0 cap=1 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y_t (v67): d=23.546875 true=23.546875 settlements=1
+          distances: EXACT (70/70)
+
+  [   V8] settle-inc=1 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/2 stale-inc=0/0/0 wards b/r/i=1/1/2 missing=0/0/0 dups=0
+          y_t (v67): d=23.59375 true=23.546875 settlements=1
+          distances: WRONG at 1 vertex(es):
+            v67: got 23.59375 want 23.546875 (err 0.046875)
+
