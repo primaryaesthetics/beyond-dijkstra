@@ -454,7 +454,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5)
 
 What the paper needs and never states or proves:
 
@@ -1962,6 +1962,112 @@ same-session math — the probe's numbers are recorded but the
 consequence analysis needs a fresh eye), then row H (the V8
 wrong-distance embedding), then the anchor/window lemma restated for
 V5.
+
+## Q14 addendum 14 (2026-07-17, fresh session) — cold audit of addendum 13: the falsification chain holds end to end, the root sharpened to one unproven sentence in the paper, and two scope corrections
+
+Item 0 of the cycle: cold re-derivation of addendum 13's same-session
+math — the timing-hole derivation, the frontier-precondition check,
+and the falsification logic — against the paper text and
+`src/solver.rs`, with the recorded run re-executed. Verdict: the
+falsification STANDS on every link; nothing in addendum 13's headline
+needs retraction. The audit adds one sharpening and two scope notes.
+
+**Reproduction.** `cargo run --release --features
+verify-contract,dup-classify --example wprime` re-run cold:
+byte-identical to `benchmarks/results/wprime.txt`, all rows, all
+engines, direct calls and full recursion. Row G's numbers re-derived
+by hand from the construction: six children (pairs of ballast pivots,
+M = 2), separator b₆ = 21 fixed by the pull that extracts
+{g10@20, g11@20.5} while g12@21 heads the remainder; the sixth base
+child's ninth pull (u_last@20.8125, over its cutoff 8) empties the
+base D so the pull's bound is the call bound 21, and u_last's
+post-pull sweep then inserts z_t@20.84375 and y_t@20.90625 below it;
+|U| = 5·6 + 9 = 39 plus y_t via W′ = 40; V5 caps to dB[D] = 20.84375
+and keeps |U| = 39. Every figure matches the record.
+
+**Timing hole — CONFIRMED against both texts.** The port's iteration
+order (pull, child call, child-D merge, relax sweep, re-selection,
+then B′ ← B′_i) matches Algorithm 3's line order, so on a limit exit
+the returned D contains the last child's merged entries with no
+separator above them. The cap's coverage re-derived: entries
+surviving the last pull are ≥ b_f ≥ B′_f (the pull separator);
+relax-sweep inserts carry the d ≥ b_i gate with b_f ≥ B′_f, so the
+last iteration's line-24 inserts are capped too; earlier iterations'
+inserts either got pulled (settled) or sit above the last separator.
+The uncapped births are exactly addendum 13's channels — the last
+child's returned D (the Q3 leak) and last-iteration re-selections —
+and row G rides the first.
+
+**Frontier precondition — CONFIRMED verbatim, one implicit
+sub-hypothesis identified and checked.** Lemma 3.7 as printed assumes
+only "⟨∅, S⟩ is a frontier for eU(B, S)". The frontier definition
+(Section 2.4) additionally requires X, Y ⊆ eU — so every seed needs
+dis(s) < B and a shortest path visiting S (itself). The tightest seed
+is f: dis(f) = 995 < B = 1000 — holds. With every seed complete,
+frontier condition 2 is automatic for all of eU. No size hypothesis
+appears in 3.7; row G's |S| = 21 satisfies even Lemma 3.1's
+t·2^{2lt} = 32. No hidden hypothesis: the counterexample meets the
+lemma's stated preconditions exactly as claimed.
+
+**Falsification logic — CONFIRMED, with the window clause noted.**
+W is the union of FAILED searches' arborescences in the paper's own
+Algorithm 2 (lines 17–19), matching the port's `w_list`; y_t enters
+W_f under both. The W′ formula is the paper's (proof of Lemma 3.7,
+first bullet: W′ = {x ∈ W \ U : d[x] < B′}) — the D-blindness is in
+the paper, not a port artifact. The three failed clauses of
+conclusion 2 re-instantiated by hand: completeness (y_t settled at
+20.90625 ≠ dis 20.859375), bound (dB[D] = 20.84375 < 21), set
+equality (z_t ∈ eU(21, S) \ U). One clause SURVIVES and is worth
+recording: max dis(U) < B′ holds (dis(y_t) = 20.859375 < 21) — the
+falsification settles a wrong LABEL inside the window, it does not
+settle a vertex outside the window. Any repaired lemma keeps the
+window clause as is.
+
+**The sharpening — one root sentence.** Addendum 13 located the proof
+break at induction proposition 2. The audit pushes one level deeper:
+proposition 2's inductive step ("any v added into D has d[v] ≥ B′_i")
+is sound GIVEN the children honor Lemma 3.1's dB[D] ≥ B′ clause, and
+the recursion bottoms out at the single unproven sentence "Clearly
+base case satisfies Lemma 3.7." That sentence is false: Algorithm 4
+fixes B′ at the pull (line 4) and inserts relaxed neighbors into D
+afterwards (lines 6–8), so a cutoff exit returns sub-B′ entries — Q3,
+confirmed 2026-07-13. Everything else in Lemma 3.7's proof audited
+locally valid. The paper therefore has ONE root defect with two
+symptom families: the bound clause violated at scale on natural
+weights (Q15), and the completeness clause falsified by a crafted
+frontier (row G). This is the sharpest possible framing for the
+eventual write-up.
+
+**Scope note 1 — the boundary-collapse dichotomy is (H | V5)-scoped.**
+Addendum 13's corrected dichotomy ("an S-member at the boundary below
+B′ is settled, or entry-held in a live D") leans on W′ completeness
+in its W-channel branch — the very clause row G falsifies — so on the
+paper engine it inherits the counterexample and is dead with (H). Its
+proper home is the V5 program, where the cap restores W′ completeness
+and every branch of the case analysis closes. The anchor/window lemma
+should cite it only under V5.
+
+**Scope note 2 — the relay channel, flagged for the ward inventory.**
+An incomplete W′-settled vertex relays its wrong label onward: the
+final sweep (paper line 37, the port's W′ relax) relaxes its
+out-edges at the wrong value, and a successor landing below B′ is
+refused a D entry by the d ≥ B′ insert gate — wrong-labeled,
+unsettled, entry-less, invisible to W and to the escort wards (wards
+key on entries). Row G does not fire it only because y_t is a sink.
+On the paper engine the duplicate channel still heals it (z_t's entry
+re-settles y_t, whose strict improvement re-relaxes the successor);
+under V5 the channel closes with W′ completeness itself. Recorded so
+the dichotomy is never quoted engine-unconditionally, and as a
+candidate ingredient for row H's embedding: it is a second way to
+hide a wrong value from repair, orthogonal to V8's settled bit.
+
+Audit verdict: addendum 13 confirmed in full — (H) is false for the
+paper engine and V8 at direct-call grade, the target stays (H | V5),
+and the causal chain Q3 → Q15 → row G now bottoms out in Algorithm
+4's pull-then-insert order and the one "Clearly" that papered over
+it. Next: row H (the V8 wrong-distance embedding — f value-adjacent
+inside the leaking call's S-batch, chain re-alignment so the cutoff
+still fires at u_last), then the anchor/window lemma under V5.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
