@@ -1836,6 +1836,133 @@ direct entries. The merge-channel analysis and the boundary-collapse
 fact are same-session math — flagged for cold re-derivation before
 the lemma builds on them.
 
+## Q14 addendum 13 (2026-07-17, fresh session) — cold audit of addendum 12, and its consequence: the separator cap has a timing hole, the W′ filter never consults D, and the two compose into a live falsification of (H) and of Lemma 3.7's completeness clause; V5 closes the hole exactly
+
+Item 0 of the cycle: cold re-derivation of addendum 12's same-session
+math (the merge-channel analysis and the boundary-collapse fact)
+against `src/solver.rs` and the paper text, then whatever the audit
+forces. It forced a falsification probe.
+
+**Cold audit of the merge channel — CONFIRMED, with one unification.**
+Row F re-derived by hand from the driver's construction: x's failed
+search plants {x, z} with z stale at 30 and the z → x1 offer refused
+at 1005 ≥ B; g's search caps at |K| = 4; r's search improves z to its
+true 22.125, pushes it, and merges on the same pop's second edge
+(r → h2, 21.84375 < 21.875) before z is popped; s4 contacts the same
+tree at 21.828125; the partition of the merged tree from root g walks
+h2's subtree into the group [h2, r, z, s4] (DFS trace against
+`partition_tree` confirmed), so P_0 = [r, s4] with argmin pivot s4@21,
+r entry-less, custody of z on the proxy. Separators: five 8-settle
+children exit the |U| limit at 40 > 32, B′ = 20.5 from the last base
+child's empty-remainder bound. Every recorded figure reproduces from
+first principles. One unification the addendum missed: mechanisms 4
+and 5 are the same mechanism — in BOTH the capped and merged cases the
+custody anchor is the pivot of the partition group owning the improver
+root (value ≤ d[root] < dis(z) by argmin over a P_j containing the
+root), and row C's "root's own fresh entry" is the special case where
+the root wins its group's argmin. Q2's empty-P_j drop cannot break the
+capture: the anchor lives in the root's group, and a capped/merged
+root is never in Q (only failed roots join `q_list`), so its group's
+P_j is non-empty.
+
+**Cold audit of boundary collapse — conclusion survives, two
+corrections.** (i) confirmed as coded (line 33 inserts every S-member
+with B′ ≤ d < B, live in row F's r). (ii) as stated ("an S-member with
+d < B′ is in W and W′-settles, or was pulled") under-enumerates: an
+S-member can also reach the boundary below B′ through pivot expansion
+(line 13 seeds P_j members into the child's S without consuming any
+entry), through the child's returned D (an unpulled child seed merges
+back up), or through a post-last-pull re-selection (lines 27–29 run
+before B′ is updated from the child's return). The honest dichotomy is
+"settled, or entry-held in a live D at its current value" — every
+branch of the case analysis lands in one of the two, so the collapse
+conclusion is strengthened, not weakened. (iii) the separator cap is
+correct but carries a TIMING QUALIFIER that addenda 11 and 12 both
+stated too broadly: B′ ≤ b_last ≤ (stored values) holds only for
+entries PRESENT IN D AT THE LAST PULL. Entries born after the last
+pull — above all the last child's returned D, whose sub-B′ content is
+exactly the Q3 leak, plus last-iteration re-selections — are not
+capped, and row E's ward pair (z_t@20.84375, y_t@20.90625 under
+B′ = 21) is the measured population of that hole.
+
+**The composition — row G, the W′ leak.** The W′ filter (line 34 of
+the paper, the port's boundary sweep) tests only W-membership,
+non-settlement, and d[x] < B′; it never consults D. So the cap's
+timing hole composes with pocket walking: take row E's graph and add
+ONE seed f@995 with the single edge f →4→ y_t. f's FindPivots search
+accepts the stale offer (999 < B = 1000), walks the sink y_t, and
+fails at |K| = 2 < 3 — y_t enters W at 999. Everything else replays
+row E bit-for-bit: the sixth child cutoff-exits right after planting
+z_t@20.84375 (complete) and y_t@20.90625 (true 20.859375 via the
+never-walked z_t) below its returned bound, B′ = 21. At the boundary
+y_t ∈ W, y_t ∉ U, d[y_t] = 20.90625 < 21 — y_t passes the filter and
+is SETTLED INCOMPLETE. Recorded (driver row G in
+`examples/wprime.rs`, record `benchmarks/results/wprime.txt`, all
+predictions written into the driver header before the first run and
+confirmed exactly on it): paper and V8 identically B′ = 21, |U| = 40,
+settle_incomplete = 1 — the direct (H) counter firing for the first
+time on any input in the project's history — with viol 1/1, incomp
+and wards 1/1/1, missing 0; V5: cap = 1, B′ = 20.84375, |U| = 39,
+settle-inc = 0, everything else zero. Rows A–F reproduced
+byte-identically in the same run; the full-recursion part stays
+distance-exact on every engine (the falsification does not embed on
+THIS graph: by the time f enters any call's S, y_t is settled complete
+and the 999 offer is refused).
+
+**What is falsified.** The crafted call state satisfies Lemma 3.7's
+preconditions verbatim — every seed is complete, so ⟨∅, S⟩ is a
+frontier for eU(B, S) by the paper's own definition (Section 2.5) —
+hence this is a counterexample to the lemma AS STATED, not to an
+unreachable configuration; no reachability argument is needed. Of
+conclusion 2 ("max dis(U) < B′ ≤ dB[D], U = eU(B′, S) and is
+complete"): the completeness clause fails (y_t ∈ U via W′,
+incomplete), the bound clause fails (dB[D] = 20.84375 < 21, known
+since Q3/Q15), and the set-equality clause fails (z_t ∈ eU(21, S) \ U
+— which row E had already exhibited, unremarked, without the
+completeness breach). The paper's own proof of "W′ is complete" (the
+first bullet of Lemma 3.7's concluding argument) uses induction
+proposition 2, dB[D ∪ P] ≥ B′ — the clause falsified live since Q3 —
+so the proof breaks exactly where the counters said it would; row G
+materializes the consequence in the conclusion. (H) — "every
+settlement event settles a complete vertex" — is therefore FALSE for
+the paper's algorithm as written, at direct-call grade.
+
+**Consequences.**
+
+- The H-proof program's target changes from (H) to (H | V5). V5's
+  one-line base cap (B′ ≤ dB[D] at base returns, restoring Lemma 3.1's
+  contract, transitively at every level per Q15 finding 3) removes the
+  cap's timing hole: every merged entry is ≥ the returned bound, so
+  the separator-cap argument needs no present-at-last-pull qualifier,
+  and row G measures the repair live (the cap reads the escort
+  z_t@20.84375 — the escort invariant and the V5 cap are the same
+  object at the boundary). The anchor/window lemma is DEAD for the
+  paper engine (counterexample) and becomes provable-shaped for V5.
+- V8's distance-correctness is now suspect by derivation: in row G,
+  V8 sets y_t's settled bit at the wrong label, and V8's relax
+  rejects every later repair offer at a settled target — a
+  full-recursion embedding (a value-adjacent f inside the leaking
+  call's own S-batch, alignment to be engineered) is predicted to end
+  with a WRONG FINAL DISTANCE on V8 while the paper engine heals
+  through the duplicate channel. V8's green suites never contained
+  the shape: it needs a stale pocket walk into the ward of a
+  cutoff-exit leak. Queued as the next probe (row H) — until it runs,
+  V8's exactness claim in VARIANTS.md must be treated as conditional
+  on (H | V8-reachable states), which row G has made non-vacuous.
+- The paper audit gains its sharpest finding: not a contract clause
+  but the correctness lemma's completeness conclusion, falsified by a
+  crafted frontier state satisfying the lemma's hypotheses, with a
+  recorded reproducible run. Q3 → Q15 → row G is now one causal
+  chain: the base-exit undercut, industrialized at scale, composed
+  with the W′ filter's blindness to D.
+
+Next session: cold re-derivation of THIS addendum's chain (the timing
+hole, the frontier-precondition check, and the falsification logic are
+same-session math — the probe's numbers are recorded but the
+consequence analysis needs a fresh eye), then row H (the V8
+wrong-distance embedding), then the anchor/window lemma restated for
+V5.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a

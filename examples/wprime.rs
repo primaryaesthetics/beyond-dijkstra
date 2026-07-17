@@ -69,6 +69,48 @@
 //! B′ = 20.5 <= d[s4] = 21 < d[r] = 21.5 < dis(z) = 22.125. Part 2:
 //! distance-exact, all counters zero, every engine.
 //!
+//! - Row G (the W′ leak, k = 3; added by the cold audit of the separator-cap
+//!   argument): row E's graph plus one seed f@995 with the single edge
+//!   f ->4-> y_t. The cap covers only entries PRESENT AT THE LAST PULL of
+//!   the exiting call; the base-exit leak (Q3) births entries below B′
+//!   AFTER it, and the W′ filter never consults D at all — so a W-walked
+//!   vertex re-improved by the leaking child to a still-incomplete value
+//!   below B′ passes the filter. f's search fails (|K| = 2 < 3) after
+//!   walking y_t at the stale 999, putting y_t in W; the run then plays
+//!   row E unchanged: the 6th child (root20, g11) exits at its cutoff
+//!   right after u_last's sweep plants z_t@20.84375 (complete) and
+//!   y_t@20.90625 (true 20.859375 via z_t, never walked) into the child D,
+//!   and returns B′ = 21 with both entries leaking below it. At the
+//!   boundary y_t ∈ W, not in U, d = 20.90625 < B′ = 21 -> y_t enters W′
+//!   and is SETTLED INCOMPLETE: settle_incomplete fires for the first time
+//!   on any input — the direct (H) counter, and the completeness clause of
+//!   the paper's Lemma 3.7 conclusion 2 ("U is complete"), falsified live.
+//!   The crafted call state satisfies Lemma 3.7's preconditions verbatim
+//!   (every seed complete, so ⟨∅, S⟩ is a frontier for eU(B, S)), hence
+//!   this is a counterexample to the lemma as stated, not merely to an
+//!   unreachable configuration. V5's base cap closes exactly this hole:
+//!   B′ capped to dB[D] = 20.84375 <= every leaked entry, and the escort
+//!   z_t is what the cap reads.
+//!
+//! Row G predictions, written before its first run:
+//! paper: B′ = 21, |U| = 40 (row E's 39 + y_t via W′), settle-inc = 1,
+//! viol base/rec = 1/1, cap = 0, incomp b/r/i = 1/1/1, stale-inc 0/0/0,
+//! wards b/r/i = 1/1/1, missing 0/0/0; y_t: d = 20.90625, true 20.859375,
+//! in-U = TRUE (the incomplete W′ settlement), entry = 20.90625;
+//! z_t: entry = 20.84375; f: entry = 995 (line 33).
+//! V8: identical to paper (y_t not previously settled, so the settled bit
+//! never gates anything in this call) — and V8 additionally freezes the
+//! wrong label: the settled bit blocks every later repair relax, so a
+//! full run reaching this state would end with d[y_t] wrong.
+//! V5: B′ = 20.84375 (cap = 1), |U| = 39, settle-inc = 0, viol 0/0,
+//! incomp/wards/missing all zero; y_t in-U = false, entry = 20.90625.
+//! Part 2 (full recursion, n = 67): the falsification does NOT embed on
+//! this graph — by the time f enters any call's S, y_t is long settled
+//! complete, f's offer (999) is refused, and y_t never enters that call's
+//! W. Predicted: distances exact on every engine; paper/V8 counters equal
+//! to row E's full run (settle-inc 0, viol 1/1, incomp 1/1/2,
+//! wards 1/1/2, missing 0); V5 cap = 1, all else zero.
+//!
 //! ```text
 //! cargo run --release --features verify-contract,dup-classify --example wprime
 //! ```
@@ -455,6 +497,49 @@ fn row_f() -> (Craft, u64, u32, u32, u32, u32) {
     (c, 4, z, x1, r, s4)
 }
 
+/// Row G: the W′ leak (k = 3) — row E's graph plus one failed seed f@995
+/// whose single edge f ->4-> y_t walks y_t into W at the stale 999
+/// (999 < B = 1000, so the relax accepts; y_t is a sink, so f's search
+/// fails at |K| = 2 < 3). Everything else replays row E: the 6th child
+/// (root20, g11) cutoff-exits right after planting z_t@20.84375 and
+/// y_t@20.90625 (true 20.859375) below its returned bound 21. At the
+/// parent boundary y_t ∈ W, not in U, d[y_t] = 20.90625 < B′ = 21 —
+/// the W′ filter never consults D, so y_t is settled incomplete.
+fn row_g() -> (Craft, u64, u32, u32, u32) {
+    let mut c = Craft::new();
+    for i in 0..11 {
+        let g = c.seed(15.0 + 0.5 * i as f64);
+        for j in 0..2 {
+            let h = c.vertex();
+            c.edge(g, h, 0.125 * (j + 1) as f64);
+        }
+    }
+    let g11 = c.seed(20.5);
+    let mut prev = g11;
+    for _ in 0..4 {
+        let h = c.vertex();
+        c.edge(prev, h, 0.0625);
+        prev = h;
+    }
+    let u_last = c.vertex();
+    c.edge(prev, u_last, 0.0625); // u_last at 20.8125
+    let z_t = c.vertex();
+    let y_t = c.vertex();
+    c.edge(u_last, z_t, 0.03125); // z_t at 20.84375
+    c.edge(u_last, y_t, 0.09375); // y_t direct 20.90625, true 20.859375
+    c.edge(z_t, y_t, 0.015625);
+    for i in 12..20 {
+        let g = c.seed(15.0 + 0.5 * i as f64);
+        for j in 0..2 {
+            let h = c.vertex();
+            c.edge(g, h, 0.125 * (j + 1) as f64);
+        }
+    }
+    let f = c.seed(995.0);
+    c.edge(f, y_t, 4.0); // stale walk at 999 < B; y_t joins W
+    (c, 3, z_t, y_t, f)
+}
+
 fn main() {
     println!("W' endgame probes (direct level-1 calls, t=2, B=len 1000):");
     println!();
@@ -569,6 +654,26 @@ fn main() {
     }
     println!();
 
+    // -- Row G ------------------------------------------------------------
+    let (cg, kg, ztg, ytg, fg) = row_g();
+    let rg = run_direct(&cg, kg, "G: the W' leak, incomplete W' settlement", move |s, bp, u, ds| {
+        format!(
+            "y_t: d={} true={} in-U={} entry={}; z_t: entry={}; f: entry={} (B'={})",
+            label_len(s.d[ytg as usize]),
+            s.oracle_len.as_ref().unwrap()[ytg as usize],
+            u.contains(&ytg),
+            len_of(ds.get(ytg)),
+            len_of(ds.get(ztg)),
+            len_of(ds.get(fg)),
+            label_len(bp),
+        )
+    });
+    println!("Row {}:", rg.name);
+    for l in &rg.engines {
+        println!("{l}");
+    }
+    println!();
+
     // -- Part 2: full recursion on the same graphs -------------------------
     println!("Part 2 -- full recursion, source 0, all engines:");
     run_full(&ca, ka, "row A");
@@ -577,4 +682,5 @@ fn main() {
     run_full(&cd, kd, "row D");
     run_full(&ce, ke, "row E");
     run_full(&cf, kf, "row F");
+    run_full(&cg, kg, "row G");
 }

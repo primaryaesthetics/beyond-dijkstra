@@ -30,6 +30,11 @@ Row F: merge-abort improver, proxy pivot:
   [   V5] B'=20.5 |U|=41 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=22.125 in-U=false entry=-; x1: d=inf; r: d=21.5 entry=21.5; s4: entry=21 (B'=20.5 <= d[s4])
   [   V8] B'=20.5 |U|=41 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  z: d=22.125 in-U=false entry=-; x1: d=inf; r: d=21.5 entry=21.5; s4: entry=21 (B'=20.5 <= d[s4])
 
+Row G: the W' leak, incomplete W' settlement:
+  [paper] B'=21 |U|=40 settle-inc=1 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/1 stale-inc=0/0/0 wards b/r/i=1/1/1 missing=0/0/0  y_t: d=20.90625 true=20.859375 in-U=true entry=20.90625; z_t: entry=20.84375; f: entry=995 (B'=21)
+  [   V5] B'=20.84375 |U|=39 settle-inc=0 viol base/rec=0/0 cap=1 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0  y_t: d=20.90625 true=20.859375 in-U=false entry=20.90625; z_t: entry=20.84375; f: entry=995 (B'=20.84375)
+  [   V8] B'=21 |U|=40 settle-inc=1 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/1 stale-inc=0/0/0 wards b/r/i=1/1/1 missing=0/0/0  y_t: d=20.90625 true=20.859375 in-U=true entry=20.90625; z_t: entry=20.84375; f: entry=995 (B'=21)
+
 Part 2 -- full recursion, source 0, all engines:
   full recursion (row A, n=63, l_top=3):
     [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
@@ -55,3 +60,7 @@ Part 2 -- full recursion, source 0, all engines:
     [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
     [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
     [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+  full recursion (row G, n=67, l_top=4):
+    [paper] settle-inc=0 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/2 stale-inc=0/0/0 wards b/r/i=1/1/2 missing=0/0/0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=1 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 (exact)
+    [   V8] settle-inc=0 viol base/rec=1/1 cap=0 incomp b/r/i=1/1/2 stale-inc=0/0/0 wards b/r/i=1/1/2 missing=0/0/0 (exact)
