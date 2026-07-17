@@ -454,7 +454,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed)
 
 What the paper needs and never states or proves:
 
@@ -2185,6 +2185,211 @@ exactly on it, every figure):
 Next: the anchor/window lemma restated under V5 — (H | V5) is now the
 only living exactness target above tested-matrix grade, for the paper
 engine and V8 alike.
+
+## Q14 addendum 16 (2026-07-18, fresh session; the ENTIRE recast is same-session math, flagged for cold re-derivation before anything builds on it) — the anchor/window lemma under V5: the window half proved from the pull invariant plus the V5 contract (modulo Q12, the single carve-out), the anchor weakened to off-path custody, (H | V5) assembled at sketch grade over the audited channel inventory — and E-c's mid-iteration half drops out of the base argument
+
+The attack-plan item queued by addenda 13–15. One infrastructure note
+first: development moved to an arm64 machine this session, and the
+recorded corpus survives the platform change — `wprime` and `rowh`
+re-run cold reproduce `benchmarks/results/wprime.txt` and
+`benchmarks/results/rowh.txt` byte-identically (modulo line endings),
+every row, every engine, direct calls and full recursion. The port's
+determinism is architecture-independent as designed (IEEE-754 ops
+only; BlockDs reads order only through the value-sorted pull;
+keep-min is insertion-order-free), and every number quoted below
+traces to those records unchanged.
+
+Scope: the V5 engine (`fixed_base`), len-completeness grade (Lemma N
+standing; the tuple-grade upgrade is a named debt). Target: (H | V5)
+— every settlement event (base pull; W′ boundary append) settles a
+len-complete vertex. Definitions pinned from addenda 10–12: *complete*
+= label len equals dis; *live D* = the ds of each call on the active
+stack plus the current base D (returned Ds merge synchronously at the
+child-return line, so no other D ever exists); *governing bound* β of
+an event = the pulled entry's stored value at a base pull, B′ at a W′
+append. Stored values never sit below their key's current label
+(labels only improve; keep-min keeps the minimum of historical
+inserts, each of which was the label at its own insert time), so
+"stale" always means stored-above-label, never below.
+
+**Lemma W (the window).** At a settlement event with governing bound
+β, no live D holds a stored value < β — modulo exactly one carve-out,
+Q12, named in (W2).
+
+- (W1) *Ancestors.* Every stored value of a call's ds is < its block
+  bound B: each insert site is fed by a relax gated at cand < B (base
+  post-pull inserts, both sweeps), pivot and line-33 inserts store
+  labels < B by their own guards, and merges carry child values
+  < B_child ≤ B. Hence every pull separator is ≤ B, hence call bounds
+  nest downward. While a child subtree is active, the parent's ds is
+  untouched between the pull and the child call (no insert site
+  executes in that span), so dB[parent ds] equals the pull remainder's
+  minimum, which is ≥ b_i = B_child by the pull invariant (the
+  returned separator IS the remainder's minimum). Composing up the
+  active stack: every strict ancestor A of the event's call C holds
+  dB[A.ds] ≥ B_C ≥ β.
+- (W2) *Own D at a W′ append.* At the filter, ds holds the loop-exit
+  content plus the line-33 re-inserts. Line-33 inserts are ≥ B′ by
+  their guard. The loop-exit content is ≥ B′ by the transitive
+  proposition (VARIANTS.md "Algorithm 3's contract, transitively")
+  with V5 supplying the base clause at every leaf — modulo its one
+  hole, Q12's final-iteration line-29 re-selection. Under V5 that
+  channel has never fired (viol_bound_rec = 0 on every family
+  including escape, `benchmarks/results/escape.txt`), but it is open
+  as statement-level math, so it is carried as the proof's one
+  carve-out: if a Q12 state occurred, W2 would fail and the proof
+  would go silent there (no counterexample is implied — the
+  contradiction below simply would not fire).
+- (W3) *Own D at a base pull.* The pull pops the value-order global
+  minimum, so nothing co-resident is below β by definition.
+
+**Lemma A′ (the anchor, weakened to off-path custody).** At every
+settlement event, for every vertex y with an incomplete label and
+every tight path to y, with z the path's last complete vertex (the
+source is complete, so z exists): (i) some live D holds a stored
+value whose len is ≤ dis(z), or (ii) z has been settled, or (iii) z
+was popped at its final label by a FindPivots search of the event's
+own call. The weakening against addendum 12's statement is the point:
+custody need not sit on y's path, need not name z, and need not be
+fresh — ANY live stored value at or below dis(z) suffices, because
+A′'s only consumer is the contradiction against Lemma W. The proxy
+complication (row F) and the deep-pocket residue (channel 4 below)
+are absorbed by the statement instead of case-splitting it, and
+freshness — which the escort form (E) had to carry — drops out
+entirely.
+
+**Reduction: (A′) + (W) ⟹ (H | V5).** Induct on settlement events in
+program order; suppose the first violation settles y incomplete under
+β. The strictness chain: dis(z) ≤ dis(y) < len(d[y]) ≤ len(β), strict
+at the incompleteness step. Now each A′ branch contradicts:
+
+- (i) gives a live stored value at len ≤ dis(z) < len(β) — strictly
+  below β, impossible by W (W3/W1 at base pulls, W2/W1 at appends).
+- (iii): the pop relaxed the tight edge (z, x₁) at
+  cand = the canonical tuple of x₁, with len(cand) = dis(x₁) ≤
+  dis(y) < len(β) ≤ len(B_C), so the offer cleared the relax bound;
+  x₁ incomplete at that moment means its label exceeded cand, so the
+  offer was accepted and x₁ completed during FindPivots — before the
+  event — contradicting z's last-complete maximality at the event.
+- (ii): z settled complete (an incomplete settlement of z would be an
+  earlier violation). z rides the concatenated returned U past every
+  boundary above its settling call, and each level's relax sweep
+  re-offers (z, x₁) at that level's call bound. Walk up to the
+  deepest ACTIVE call A that received z in a finished iteration
+  (z's settling call itself if that is C in an earlier iteration or
+  an earlier singleton of the same base loop): the sweep there ran
+  strictly before the current event at bound B_A ≥ B_C > len(cand),
+  the offer was accepted against x₁'s incomplete label, and x₁
+  completed — same contradiction. The one same-time corner, z
+  settling in the current W′ batch itself, never reaches (ii): a
+  batch member is in W, W-membership at a final label is exactly
+  case (iii) (a failed search's heap empties, so everything walked
+  was popped), and W-membership at a non-final label followed by
+  later completion lands in the channel inventory with custody (i).
+
+Contradiction in every branch; no first violation exists. ∎ (modulo
+Q12 via W2)
+
+**The channel inventory behind A′** — every way a vertex completes,
+and where its custody lands (the silent-completion inventory of
+addenda 11–13, exhaustive on the port's four relax call sites and
+three search exits, re-run under V5):
+
+1. *Base post-pull sweep from a settled pred*: the insert is ungated
+   (Q3's channel) — custody (i) lands in the base D and merges up.
+   The proof consumes the ungated insert POSITIVELY: V5 keeps it and
+   caps only the returned bound, which is exactly why the leak that
+   killed (H) on the paper engine becomes custody under V5.
+2. *Iteration relax sweep from a settled pred*, gate d ≥ b_i: pass →
+   custody (i). Refusal means the same offer already cleared the
+   child's own bound (complementary gates, mechanism 3) — descend
+   into the child that returned the pred; the descent terminates at a
+   base insert (1), a FindPivots walk (4/5), or a W′ sweep (3).
+3. *W′ final sweep from a settled pred*, gate d ≥ B′: pass → custody
+   (i). Refusal (cand < B′) is the row-G site, closed under V5: the
+   sweeping source is in W′, so either it was popped at its final
+   label — then this edge was already relaxed during the search and
+   the target is in W, settling complete in the same batch — or its
+   completion came from a capped/merged improver whose proxy custody
+   (5) is a live entry below B′, impossible at this boundary by W2.
+4. *Failed-search walk* (popped at final label): case (iii) in the
+   walking call; at that call's boundary the vertex settles
+   (d < B′) or joins the W-residue (d ≥ B′). Residue custody: the
+   pocket root f ∈ S is re-entried by line 33 (B′ ≤ d[f] < B) at
+   dis(f) ≤ dis(z) — custody (i); if instead d[f] < B′, f settled
+   and (ii)'s lattice pushes completeness and gated-pass entries up
+   the pocket; independently, the W′ sweep's exact-tie re-offer
+   re-entries the first residue layer through the d ≥ B′ gate
+   (addendum 12's sharpening). Some live stored value ≤ dis(z)
+   survives in every branch — rows A/B/E's recorded mechanics.
+5. *Capped or merged improver*: the improver root's partition group
+   holds a pivot entry at argmin ≤ d[root] < dis(z) (mechanisms 4/5
+   unified, addendum 13) — proxy custody (i). Consumption of any
+   custody entry by a pull turns the anchor into a child seed
+   (pivot expansion for proxies), and the boundary collapse
+   (addendum 13's corrected dichotomy, V5-scoped per addendum 14)
+   re-materializes custody at every return: settled, or entry-held
+   via line 33 / child-D merge / re-selection — each ≥ B′ under V5
+   or an earlier settlement. Prefix containment covers pulls that
+   take the anchor without the ward (a smaller value is always in
+   the same or an earlier pull prefix).
+
+*Seeds need no separate hypothesis*: a call's seeds may be
+incomplete — an incomplete seed's tight path carries its anchor
+in the same ds at a strictly smaller stored value, so the anchor is
+pulled in the same or an earlier batch and the induction recurses;
+the top call's S = {source} is complete outright.
+
+**What dropped out.** Addendum 10's base-pull argument consumed E-c's
+mid-iteration half to exclude a stale pulled entry (the escort
+pairing needed the ward's entry fresh). The recast never touches
+freshness: the settlement reads the vertex's CURRENT label, β is the
+STORED value (≥ the label, so incompleteness of the label transfers),
+and A′'s custody is any stored value at all. E-c stays true as
+measured (stale-inc zero everywhere) and stays part of the invariant
+picture, but it is no longer a named debt of (H | V5). The cold audit
+should attack this elimination first — it is the recast's largest
+single claim.
+
+**The attempted falsification (the row-I shape that does not exist).**
+Before writing the lemma down, the strongest available attack was run
+on paper: aim addendum 14's relay channel at V5 itself — let a
+W′-settled x's sub-B′ tight successor v complete entry-less at the
+final sweep (gate-refused, custody-less), give v's successor v₁ a
+stale side path, and let a later call's failed search walk v₁ into W
+below a later B′: v₁ would settle incomplete on every engine,
+falsifying (H | V5) and, since v never re-relaxes, ending the FULL
+run with a wrong distance on the paper engine too. The assembly dies
+at the first hop, and the blocker is pocket closure (mechanism 1): x
+∈ W requires a FAILED search, a failed search's heap empties, so x
+was popped — at a final label the edge (x, v) was relaxed THEN
+(v joins W and settles complete in the same batch; or cand ≥ B_C
+puts dis(v) outside every window of the call; or v was already
+complete), and at a non-final label x's completion needs an improver
+whose proxy custody contradicts W2 at the boundary. Every branch
+closes without a new driver — the branch behaviors are rows A, B, F,
+G's recorded mechanics. The W′ sweep's insert gate — the one site
+that refuses sub-B′ entries by design — cannot orphan a completion
+under V5: the refused target is always already in W or already
+complete. On the paper engine the same assembly is NOT blocked (the
+first hop rides the Q3 leak instead of a pocket, row G), which is one
+more way of stating that the falsification family and the V5 repair
+are the same object.
+
+**Status and debts.** (H | V5) now rests on: Lemma W (proved above,
+modulo Q12), Lemma A′ (proved over the channel inventory at sketch
+grade; the inventory's exhaustiveness is addendum 12's audited
+relabel-site enumeration), and the reduction (proved above). Named
+debts after this addendum: (a) the cold re-derivation of the entire
+recast — specific attack points: the E-c elimination, the reduction's
+same-batch corner, channel 2's descent termination, the seed
+recursion, and whether Q12's carve-out stays confined to W2; (b) Q12
+itself (measured zero under V5, open as mathematics — the only
+statement-level gap between this sketch and a theorem); (c) the
+tuple-grade upgrade of the completeness notion (Lemma N). If (a)
+holds, the (H | V5) program is done modulo (b) and (c), and with it
+V5+V8's exactness claim and the repaired-lemma write-up gain their
+missing spine.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
