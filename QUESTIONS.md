@@ -469,7 +469,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap; cold audit owed)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry)
 
 What the paper needs and never states or proves:
 
@@ -2525,7 +2525,7 @@ formally the last statement-level gap, carve-out in transitive form;
 tie strictness; (d) the custody-persistence lemma as the write-up's
 spine. Next: Q12.
 
-## Q14 addendum 18 (2026-07-18, fresh session; the theorem and its devices are same-session math, flagged for cold re-derivation before anything builds on them) — Q12 as mathematics: the leak confined to the last-child spine, escaped entries characterized into two shapes, the batch tie-break device, and the W2 carve-out dissolved into the custody-persistence interface
+## Q14 addendum 18 (2026-07-18, fresh session; the theorem and its devices are same-session math, flagged for cold re-derivation before anything builds on them — audit PASSED, addendum 19) — Q12 as mathematics: the leak confined to the last-child spine, escaped entries characterized into two shapes, the batch tie-break device, and the W2 carve-out dissolved into the custody-persistence interface
 
 Debt (b) of addenda 16–17. Every semantic fact below was re-pinned
 against the port (`BlockDs` insert/merge/pull, `relax`, `find_pivots`,
@@ -2708,6 +2708,154 @@ persistence lemma or hides a circularity; (c) the tuple-grade upgrade
 carrying S1/S2 as concrete obligations on top of its own
 event-interleaving spine. Next: cold audit of this addendum, then
 debt (d).
+
+## Q14 addendum 19 (2026-07-18, fresh session) — cold audit of addendum 18: all four attack points hold; one wording repair (the spine is the leak-carrying prefix), the keep-min corner closed, and the S1/S2 interface sharpened — S2 keys are outside the event call's W, the obligations live at W′ events only, and they are unavoidable
+
+Debt (a-18), per the standing cadence rule. Every step re-derived
+against `src/solver.rs` — the eight pinned facts F1–F8 first, then the
+four named attack points — none from memory. Verdict: addendum 18
+SURVIVES. F1–F8 all re-confirmed at their code sites (loop guard runs
+the full body before re-checking and a live entry at the guard forces
+the cutoff exit; pull pops the value-order prefix with the remainder
+minimum as separator, strict since values are unique across keys;
+B′ is overwritten with the child's bound unconditionally every
+iteration; the six bmssp insert sites carry exactly the stated gates;
+P_j filters S; W accumulates failed-search residue only; re-selection
+fires on settlement via the bookkeeping pass, not on entry pull;
+every insert site stores the current label). The attack points:
+
+**1. Sp's post-last-pull site enumeration — CONFIRMED**, with two
+additions and one wording repair. (a) The insert-site scan is
+complete: bmssp writes its ds at exactly six sites — initial pivots,
+child-D merge, iteration sweep, line-29 re-selection, line 33, W′
+sweep — and the base case at two (seeds, post-pull relax); the
+in-sweep pivot SWAP (the d[v] < d[p_j] pointer update) inserts
+nothing, `relax` never touches any D, and FindPivots runs before the
+call's ds exists. The degenerate corner the proof never names closes
+trivially: a call whose FindPivots yields no pivots starts with an
+empty ds, never enters the loop, and its boundary gates (line 33 on
+[B′, B) with B′ = B; W′ sweep needing cand < B and d ≥ B′ = B) admit
+no entry — so "a last pull exists" is safe whenever a returned entry
+exists. (b) The keep-min corner, closed — this repairs an implicit
+step. "Created by line 29" needs the sub-B′ VALUE to have been
+written by the line-29 insert, and keep-min could a priori keep an
+older smaller value instead. It cannot: a pre-existing entry for p
+that survived the last pull is ≥ b_f ≥ B′ (F2/F3), so the sub-B′
+re-selection value d[p] replaces it; a same-key leak arriving in the
+final child's merged D is ≥ p's current label by F8, so keep-min
+resolves to d[p] again; and a final-sweep insert for p stores a
+label ≥ the later re-selection's. In every interleaving the stored
+value equals d[p] at re-selection time — the anatomy's X = d[p]
+exactly, now derived rather than assumed. The supporting inequality
+b_f ≥ B′ was re-proved from the returned-bound ≤ block-bound
+induction (base: every stored value sits below B because seeds are
+pulled or pivot-expanded strictly below the child bound and inserts
+are relax-gated, so the separator is ≤ B and V5 only lowers it;
+recursive: B′ starts ≤ B and is overwritten by child bounds ≤ b_i
+≤ B). (c) The wording repair: Sp's "every call on that chain exited
+by cutoff" is false for the full final-child chain — calls BELOW the
+deepest creator can be full exits (the proof's own termination
+clause). The spine must be defined as the maximal PREFIX of the
+final-child chain whose every element returns a sub-B′ entry — the
+leak's transmission chain. On that prefix the claim is exact: each
+element holds a live leak at its guard (F1) and shares the one B′
+(F3); the first chain element below it returns no sub-B′ entry and
+is a V5 base, a full exit, or a leak-free cutoff exit. The lemma's
+content is unchanged; the quantifier now matches the proof.
+
+**2. The batch re-basing's compatibility — CONFIRMED.** The
+tie-break inference re-derived: an incomplete batch-mate settling at
+label L with len(L) ≤ dis(z) gives dis(mate) < len(L) ≤ dis(z) ≤
+dis(y) — strict at the incompleteness step, so the contradiction
+with y's dis-minimality survives exact dis ties. Branch by branch:
+(i) reads live-D state at one filter moment, which the batch IS;
+(iii) references only the event call's own FindPivots; branch (ii)'s
+active-ancestor facts (z received in a finished iteration, sweeps
+strictly before the event) are program-order facts unaffected by how
+settlements are grouped; base pulls are singleton batches (M = 1,
+one settlement per pull), identical to the event induction. Sh's one
+consumption of the device type-checks: p settling in the current
+batch settles at its current label ≤ X (F8), so len ≤ dis(z) and the
+tie-break applies.
+
+**3. Sh's filter-time claim and the W ∩ F̄ overlap — CONFIRMED.**
+(a) Filter-time: between the line-29 re-selection and the creator's
+W′ filter no relax site executes — the iteration order is merge,
+bookkeeping, sweep, re-selection, and post-loop line 33 only
+re-inserts S-vertices without relaxing; the W′ SWEEP relaxes but
+runs after the filter. So the creator's filter reads d[p] = X
+exactly; ancestor spine boundaries may read lower (their final
+sweeps run after the merge), which both shapes absorb. (b) The
+overlap is real in exactly one temporal direction, and Sh needs only
+that direction: a W-walked vertex is later adopted into an F̄ via
+relax re-acceptance (exact ties included), while the reverse is
+impossible — relaxing into a tree member triggers the contact merge,
+which routes the whole K into the tree and never into W. (c) p ∉
+U(C₀) at the creator's boundary is forced by bookkeeping excision:
+every settled P_j member is removed before the argmin, so a
+re-selected p was never in any u_i. (d) Shape exhaustiveness: p
+settled resolves to complete (earlier batch by the induction
+hypothesis, current batch by the tie-break) → S1; p unsettled → S2
+by F8; no third shape, and the p = y chain (len(X) ≥ len(d[y]) >
+dis(y) ≥ dis(z) ≥ len(X)) re-verified strict.
+
+**4. S2's consumability — NO CIRCULARITY**, and the interface
+sharpens under attack. Sp and Sh consume only structural facts, the
+batch induction hypothesis, and within-batch minimality — no forward
+reference to (H | V5). Three sharpenings fall out of the audit:
+
+- *S2 keys are outside the event call's W* — derived, not assumed.
+  If p ∈ W(C_e): either p ∈ U(C_e) (settled in an iteration — not
+  S2) or the filter takes it (d[p] ≤ X < B′), settling p in the
+  current batch — not S2. So an S2 key is invisible to the event's
+  own boundary: unsettled, outside W, below every re-entry gate —
+  the load-bearing paragraph's orphan shape, previously asserted at
+  the gating counterfactual, now a theorem of the S2 state itself.
+- *The obligations live at W′ events only, and there they are the
+  WHOLE of branch (i).* At a base pull, W1/W3 are carve-out-free
+  and branch (i) closes unconditionally. At a W′ event, Sp plus
+  the locality corollary plus W1 leave no non-leak sub-β value
+  anywhere — so branch (i)'s custody, when inhabited, is ALWAYS
+  S1/S2-shaped; "non-leak → contradiction with W" is exactly the
+  statement that the non-leak sub-case is empty. The generic V5
+  state (viol_bound_rec = 0) is branch (i) vacuous, forcing (ii)
+  or (iii); the leak state is branch (i) inhabited by S1/S2 alone.
+- *The obligations are unavoidable, not artifacts of the analysis.*
+  A custody chain that re-materializes through a line-29 insert and
+  is live sub-β at a later event is NECESSARILY a final-iteration
+  leak: a non-final re-selection entry surviving to any boundary is
+  ≥ b_f ≥ B′, hence never sub-β. Channel 5's re-materialization
+  list includes re-selection, so the persistence lemma cannot route
+  around S1/S2.
+
+The honest grading note the next session must carry: A′'s weakening
+to off-path custody — which cleaned the window argument — deprives
+the S1 sub-branch of the branch-(ii) sweep argument (a custodian p
+completely settled need not lie on y's tight path, so its settlement
+sweep advances nothing on y's path). Closing S1 therefore needs the
+persistence lemma to carry PROVENANCE — the anchor chain from z's
+completion, not bare existence of a value — and S2 likewise
+transfers the contradiction obligation rather than discharging it:
+an unsettled sub-dis(z) key with a live entry is consistent state,
+and the lemma must show it cannot be the sole custody at a violating
+event (or that its presence forces (ii)/(iii) for y's path). That is
+precisely debt (d)'s content; addendum 18's sketch grading and its
+"two named obligations" framing are correct as recorded.
+
+**Status.** Debt (a-18) is discharged: addendum 18 holds under cold
+re-derivation, with one wording repair (the spine quantifier), one
+implicit step closed (keep-min → X = d[p] exactly), and the S1/S2
+interface entering debt (d) sharper than it left addendum 18 —
+obligations scoped to W′ events, S2 keys proven W-invisible,
+provenance named as the persistence lemma's required carry. Tests
+green with features on and off; solver untouched. Remaining debts:
+(c) the tuple-grade upgrade (unchanged; pressure point branch
+(iii)'s tie strictness), (d) custody persistence — the single
+remaining gap, now with three audited inputs (S1 re-arm with
+provenance, S2 sole-custody exclusion, W′-event scoping). The row-I
+probe (the S2 assembly) stays queued predictions-first and would
+exercise exactly the state debt (d) must reason about. Next: debt
+(d), the custody-persistence lemma.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
