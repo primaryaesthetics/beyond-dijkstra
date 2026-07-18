@@ -363,7 +363,7 @@ open: evaluate a guarded strict-< (the first project's counterexample
 warns this is exactly where cross-call equivalence intuitions die —
 full class-2 treatment required). Letter/note material, pairs with Q10.
 
-## Q12 — Line 29's unguarded insert can break Lemma 3.7's dB[D] ≥ B′ in partial executions; the invariant proof skips it. OPEN
+## Q12 — Line 29's unguarded insert can break Lemma 3.7's dB[D] ≥ B′ in partial executions; the invariant proof skips it. OPEN as a paper defect — CHARACTERIZED 2026-07-18 (Q14 addendum 18: leak confined to last-child spines, escaped entries two-shaped; no longer independently blocking (H | V5))
 
 Found while writing the transitive contract-restoration argument (V5
 follow-up, VARIANTS.md). Algorithm 3 has exactly one unguarded D-insert:
@@ -418,6 +418,21 @@ Full argument in VARIANTS.md ("Algorithm 3's contract, transitively").
 Letter/note material — arguably the strongest single item: a
 correctness contract that cannot be locally restored.
 
+Characterization (2026-07-18, Q14 addendum 18): the leak is confined
+to last-child spines — every call between the creating site and any
+boundary where the entry is live exited by cutoff in the iteration
+the entry arrived, and all of them return one shared B′ — and inside
+the (H | V5) first-violation analysis every escaped entry is either a
+stale duplicate of a completely settled vertex (S1) or self-custodial
+(S2: its key unsettled with current label ≤ the stored value).
+Consequence: Q12 no longer blocks (H | V5) on its own — the carve-out
+in Lemma W's W2 became two named obligations of the custody-
+persistence lemma. The paper-facing defect stands exactly as recorded
+above (clause 2 as stated is breachable, no local repair); the
+correct weakening is now explicit, and line 29's ungatedness is
+load-bearing — gating it would orphan exactly the S2 keys (unsettled,
+outside W, below every re-entry gate).
+
 ## Q13 — the loop guard's |U|: the paper counts distinct vertices, the pinned reference counts settlement events. OPEN (pinned deviation)
 
 Line 30 is `U ← U ∪ Ui` — a set union — so line 9's `|U| ≤ t³·2^lt`
@@ -454,7 +469,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap; cold audit owed)
 
 What the paper needs and never states or proves:
 
@@ -2509,6 +2524,190 @@ formally the last statement-level gap, carve-out in transitive form;
 (c) the tuple-grade upgrade (Lemma N), pressure point = branch (iii)'s
 tie strictness; (d) the custody-persistence lemma as the write-up's
 spine. Next: Q12.
+
+## Q14 addendum 18 (2026-07-18, fresh session; the theorem and its devices are same-session math, flagged for cold re-derivation before anything builds on them) — Q12 as mathematics: the leak confined to the last-child spine, escaped entries characterized into two shapes, the batch tie-break device, and the W2 carve-out dissolved into the custody-persistence interface
+
+Debt (b) of addenda 16–17. Every semantic fact below was re-pinned
+against the port (`BlockDs` insert/merge/pull, `relax`, `find_pivots`,
+`base_case`, the BMSSP loop and boundary block) and SPEC this
+session — none from memory. Scope: V5 (`fixed_base`), len grade,
+inside the (H | V5) machinery of addendum 16 as audited by 17.
+
+**Pinned facts the argument stands on** (each re-verified in code):
+(F1) the loop guard runs the full iteration body — pull, child call,
+merge, bookkeeping, relax sweep, re-selection — before re-checking,
+and a call holding any live entry at the guard cannot exit by drain:
+a sub-B′ entry in ds forces the cutoff exit. (F2) `pull` removes the
+M smallest stored values; the separator is the remainder's minimum
+(the block bound B when drained), so every entry that survives a pull
+is ≥ that pull's separator. (F3) B′ is overwritten with the child's
+returned bound every iteration — at exit it is the FINAL child's
+bound, so a partial-exit call and its final child return the SAME B′
+value. (F4) insert gates: iteration-sweep inserts ≥ b_i; line-33
+inserts in [B′, B); W′-sweep inserts ≥ B′; initial-pivot and line-29
+inserts UNGATED; the base inserts on every improvement (base entries
+sit at current labels) and V5 caps the base B′ at dB[D]. (F5)
+P_j ⊆ S — SPEC pins `P_j = [x ∈ S : x ∈ vertices(F_j), x ∉ Q, x ∉
+earlier F]`. (F6) W is the failed-search residue only (SPEC: heap
+empty → K becomes a W_j; |K| ≥ k → an F̄); a vertex walked by an
+earlier failed search can later be adopted into a successful F̄
+(relax re-acceptance), so P_j ∩ W ≠ ∅ is possible but P_j ⊄ W in
+general. (F7) re-selection is triggered by the pivot's SETTLEMENT
+(bookkeeping over U_i), not by its entry's pull — a pivot can settle
+as a bystander of the child's subtree while its group entry still
+sits in ds. (F8) stored values never sit below their key's current
+label, and keep-min plus any later re-insert preserves this.
+
+**Lemma Sp (spine confinement).** At any call's return under V5,
+every returned entry with value < B′ was created by a line-29
+re-selection in the final iteration of a call on the LAST-CHILD SPINE
+of the returning call — the chain C → (C's final iteration's child) →
+… — and every call on that chain exited by cutoff and returned the
+same bound value B′. *Proof.* An entry that survived the returning
+call's last pull is ≥ b_f (F2) ≥ b_pi_f = B′ (F3), so a sub-B′ entry
+arrived after the last pull. The post-last-pull arrivals are: the
+final child's merged D (recurse — same B′ by F3), final-sweep inserts
+(≥ b_f ≥ B′, F4), line 33 and the W′ sweep (≥ B′, F4), and the final
+re-selection — the only ungated site. The recursion descends only
+through final children (an earlier child's sub-bound merge entries
+either die in later pulls or survive them and are then ≥ b_f ≥ B′)
+and terminates: a base case returns no sub-B′ entry (V5's cap, F4)
+and a full-exit call returns none (its loop-exit ds is empty, its
+boundary inserts are ≥ B′) — consistently, a call carrying a live
+leak cannot drain (F1), so every spine call is a cutoff exit. ∎
+
+**Corollary (leak locality).** Composing Sp with W1's suspended-
+ancestor floor (every suspended call's ds sits ≥ its last pull's
+separator ≥ the active child bound — leaks from earlier iterations
+included, since surviving a pull lifts them above it): a live sub-β
+value exists ONLY at the W′ boundary of a call on the leak's own
+creating spine, and every such value was created after that call's
+last pull. An ancestor never sees a leak — by the time its own
+boundary comes, it either pulled again (consumed) or is itself the
+next spine call. This is addendum 17's confinement-to-W2, re-proved
+with its temporal half: the leak is always YOUNG, born inside the
+current chain of final iterations.
+
+**The anatomy of a creating site.** In the creating call C₀'s final
+iteration: group j's pivot settled somewhere in the final child's
+returned U (F7), the argmin p over the group's remainder has
+d[p] = X < B′, and ⟨p, X⟩ enters ds ungated. Three structural facts:
+(i) p ∈ S(C₀) (F5), and p was never settled by C₀'s own iterations —
+bookkeeping removes settled members before the argmin runs; (ii) X is
+the MINIMUM current label over the group's C₀-unsettled remainder —
+the tightest representation the group can offer at that moment; (iii)
+X ≥ d[p] ≥ dis(p) from creation onward (F8). Between the re-selection
+and C₀'s boundary nothing runs but the guard, so C₀'s own boundary
+filter reads d[p] = X exactly.
+
+**The batch tie-break, as a device.** The reduction's induction is
+re-based: induct on settlement BATCHES in program order (a base pull
+is a singleton batch; a W′ boundary append is one batch read off one
+filter state), and within the first violating batch analyze a
+violator y of minimal dis among the batch's incomplete members.
+Everything in addendum 16's reduction is batch-compatible as
+written — W1/W2/W3 are statements about the filter moment, and branch
+(iii) plus the same-batch corner of branch (ii) already argue from
+structure, not append order. What the re-basing buys is a clean
+handling of batch-mates: any member of the current batch whose
+settlement label is ≤ dis(z) in the len slot is complete — otherwise
+it would be a violator of strictly smaller dis than the minimal one
+(dis(mate) < len(label) ≤ dis(z) ≤ dis(y)).
+
+**Lemma Sh (the two shapes).** Inside the first-violation analysis so
+re-based — all events strictly before the current batch complete, y
+the minimal-dis violator, z the last complete vertex of a tight path
+to y (dis(z) ≤ dis(y)) — every live stored value ⟨p, X⟩ with
+len(X) ≤ dis(z) at the event is of one of two shapes:
+
+- **S1 (stale duplicate):** p is settled and complete, with
+  X ≥ d[p] = dis(p);
+- **S2 (self-custodial):** p is unsettled with d[p] ≤ X — the sub-β
+  value's own key is a live, currently-entried, unsettled vertex
+  whose label sits at or below dis(z).
+
+*Proof.* By W1/W3 and the transitive proposition, a live sub-β value
+is a spine leak (Sp, locality corollary), with the anatomy above. If
+p is settled by event time: a settlement strictly before the current
+batch is complete by the induction hypothesis; a settlement in the
+current batch is complete by the tie-break (p incomplete would give
+dis(p) < len(d_settle[p]) ≤ len(X) ≤ dis(z) ≤ dis(y), a smaller-dis
+violator). Either way S1, with X ≥ the label at creation ≥ the final
+label = dis(p) (F8). If p is unsettled: S2 directly from anatomy
+(iii). Stability along the spine: at each spine boundary after
+creation, either p lies in that call's W with d[p] < B′ — then that
+boundary's own W′ filter settles p (possible despite p ∈ P_j, by F6;
+the filter excludes only that call's own U) and the shape is S1 at
+every later event — or p stays unsettled and S2 persists; ancestor
+sweeps can only lower d[p], preserving both shapes. One corner is
+impossible outright: the custody entry's key cannot be the violator
+itself — p = y would give len(X) ≥ len(d[y]) > dis(y) ≥ dis(z) ≥
+len(X). ∎
+
+**What this buys: the carve-out dissolves into an interface.** Lemma
+W's W2 clause carried Q12 as "if the state occurred, the proof would
+go silent." It no longer does. At the first violating batch, branch
+(i)'s custody value — some live ⟨p, X⟩ with len(X) ≤ dis(z) — is
+either non-leak (contradiction with W, as before) or a leak of shape
+S1 or S2, and the two shapes are exactly the inputs the
+custody-persistence lemma (debt d) must consume:
+
+- S1: custody with a settled-complete key — the key's settlement
+  already relaxed its out-edges under the settling call's bound; the
+  persistence lemma must show the anchor machinery re-arms past a
+  completely settled custodian (or A′ sharpens to unsettled-key
+  custody over the channel inventory);
+- S2: custody whose key IS an unsettled vertex at label ≤ dis(z) with
+  a live entry — not a loss of the frontier but its continuation, in
+  the exact form custody was always meant to certify.
+
+Q12 therefore stops being a free-standing statement-level gap of
+(H | V5): it is absorbed into debt (d) as two named obligations. What
+remains true and unrepaired is Q12's paper-facing content: Lemma
+3.7's clause 2 AS STATED (dB[D] ≥ B′, absolute) is breachable and
+admits no return-boundary repair (VARIANTS "Algorithm 3's contract,
+transitively"). The correct weakening is now explicit: every sub-B′
+returned entry is a last-child-spine line-29 leak whose value bounds
+its key's current label from above and equals its creating group's
+minimum label at creation.
+
+**The ungated insert is load-bearing.** Gating line 29 at B′ would
+orphan exactly the S2 keys outside W — unsettled, in an F̄ tree, label
+below B′: no line-33 re-entry (that gate starts at B′), no W′
+settlement (not in W), no entry anywhere — the representation behind
+the completeness clause would break at the same corner where the
+bound clause got saved. The one site that breaches Lemma 3.7's clause
+2 is the only site that re-arms sub-B′ representation after a
+final-iteration pivot death. As with row G and V5 (addendum 16: the
+falsification family and the repair are the same object), the defect
+and the custody mechanism are one object read with opposite signs.
+
+**Measured status and the predicted probe.** viol_bound_rec — the
+live counter at exactly Sp's site — is zero corpus-wide under V5,
+including the escape family built to pressure this corner
+(benchmarks/results/escape.txt). The characterization says what an
+exercised leak must look like: an S2 assembly needs a tree-shadow
+member (inside an F̄, outside W), dropped below the final child's
+returned bound by a cross-boundary relax from a settled neighbor, its
+group's pivot dying in the final iteration, cutoff exit — the leaked
+entry then riding last-child spines only. That is the row-I
+candidate, to be built predictions-first in a later session; nothing
+was run this session.
+
+**Status.** Debt (b) is discharged into the S1/S2 interface: Q12 as
+mathematics is done at the same sketch grade as the rest of (H | V5)
+— spine confinement (Sp) with its locality corollary, the two-shape
+theorem (Sh), the batch re-basing, and the load-bearing-ungatedness
+reading. Named debts after this addendum: (a-18) cold re-derivation
+of THIS addendum — attack points: Sp's post-last-pull site
+enumeration, the batch re-basing's compatibility with branches
+(ii)/(iii) of the reduction, Sh's filter-time label claim and the
+W ∩ F̄ overlap, and whether S2 is genuinely consumable by the
+persistence lemma or hides a circularity; (c) the tuple-grade upgrade
+(unchanged); (d) custody persistence — now THE single remaining gap,
+carrying S1/S2 as concrete obligations on top of its own
+event-interleaving spine. Next: cold audit of this addendum, then
+debt (d).
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
