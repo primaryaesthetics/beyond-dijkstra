@@ -469,7 +469,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry); CUSTODY PERSISTENCE WRITTEN 2026-07-18 (addendum 20: Lemma Rep proved, re-arm gaps closed by bound domination at violating events, S1 reduced to S2 — and the honest negative: S2's closure is not derivable from the assembled machinery; (H | V5) is now conditional on exactly one obligation, (d2) the frontier-order question, decidable by row I's two-stage protocol, with the exit-cap engine as the designed fallback; same-session math, cold audit owed); addendum 20 cold audit PASSED 2026-07-18 (addendum 21: all five attack points hold, one wording repair — D3's "consumed" reads "settled"; the case-5 corner collapsed to a len-grade vacuity with one-step complementarity, chain re-rooting named as the gate-refused closure, and debt (c) gains a second pressure point: post-settlement tuple-drift echoes); ROW I STAGE 1 CLOSED NEGATIVE 2026-07-21 (addendum 22: every assembly route for the harmless leak closes against an audited mechanism — the two nearest misses built and confirmed predictions-first as rows R1/R2, examples/rowi.rs; sharpened claim at derivation grade, cold audit owed: a strict sub-B′ stored value under V5 requires a stale-at-filter W′ pass, so viol ⟹ settle-inc, stage 1 as protocoled is unassemblable, and (d2) is the whole of (H | V5), decided by stage 2)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry); CUSTODY PERSISTENCE WRITTEN 2026-07-18 (addendum 20: Lemma Rep proved, re-arm gaps closed by bound domination at violating events, S1 reduced to S2 — and the honest negative: S2's closure is not derivable from the assembled machinery; (H | V5) is now conditional on exactly one obligation, (d2) the frontier-order question, decidable by row I's two-stage protocol, with the exit-cap engine as the designed fallback; same-session math, cold audit owed); addendum 20 cold audit PASSED 2026-07-18 (addendum 21: all five attack points hold, one wording repair — D3's "consumed" reads "settled"; the case-5 corner collapsed to a len-grade vacuity with one-step complementarity, chain re-rooting named as the gate-refused closure, and debt (c) gains a second pressure point: post-settlement tuple-drift echoes); ROW I STAGE 1 CLOSED NEGATIVE 2026-07-21 (addendum 22: every assembly route for the harmless leak closes against an audited mechanism — the two nearest misses built and confirmed predictions-first as rows R1/R2, examples/rowi.rs; sharpened claim at derivation grade, cold audit owed: a strict sub-B′ stored value under V5 requires a stale-at-filter W′ pass, so viol ⟹ settle-inc, stage 1 as protocoled is unassemblable, and (d2) is the whole of (H | V5), decided by stage 2); addendum 22 cold audit PASSED 2026-07-21 (addendum 23: all four attack points hold, two repairs — slot (c) reads the drop call's own later sweep, slot (a) gains its stall arm — and the custody-entry bound-domination dichotomy named as the single-call engine)
 
 What the paper needs and never states or proves:
 
@@ -3382,6 +3382,131 @@ now the whole of (H | V5), decided by stage 2 exactly as protocoled
 still the designed fallback if it falls. Driver + record + docs
 only; solver untouched; tests green with features on and off.
 Next: cold audit of addendum 22's route tree, then row I stage 2.
+
+## Q14 addendum 23 (2026-07-21, fresh session) — cold audit of addendum 22: the route tree holds on all four attack points; two repairs (the improver list's "ancestor sweep" is the drop call's own later iteration, and slot (a)'s kill needs its second arm); the engine named — a custody entry below the eventual bound cannot survive to the return (the stall contradiction b_prime ≤ b_f ≤ value)
+
+Protocol: every step re-derived against the port's code in a fresh
+session, none from memory. The four attack points named by debt (a-22)
+were taken in order; the relax-site inventory was re-established from
+the full file first.
+
+**Site inventory (exhaustiveness ground).** The port has exactly four
+relax call sites: the FindPivots search relax (solver.rs:921), the
+base-case relax (solver.rs:1086), the iteration relax sweep
+(solver.rs:1249), and the W′ boundary sweep (solver.rs:1438); every
+one passes the CALL's own B as the relax bound, and nothing else
+mutates a label. The gates and code-order facts consumed below were
+re-pinned the same way: the ungated base insert (1085-1094), the V5
+cap (1097-1104), the sweep gate d ≥ b_i (1249), the ungated line-29
+mint (1292), line 33's b_prime ≤ d gate (1334), the W′ filter
+(1346-1354), the settle-incomplete check before the sweep (1360-1370),
+the sweep gate d ≥ b_prime (1438), and b_prime's last write (1317).
+
+**(1) Route 6's improver taxonomy — EXHAUSTIVE, two repairs.** The
+window between the source's stale pop and the W′ boundary lies
+entirely inside the drop call D_c's execution, so the available relax
+instances are exactly the four sites instantiated over the window:
+D_c's own later FindPivots searches (slot a), D_c's descendants in
+toto (slot b), D_c's own later iterations' relax sweeps (slot c), and
+D_c's own W′ sweep (slot d). No fifth slot. Repair 1 (wording): slot
+(c) as written says "an ancestor iteration's wide sweep" — a true
+ancestor is suspended while D_c runs and cannot fire in the window;
+the slot is D_c's OWN later relax sweep. Repair 2 (substance): slot
+(a)'s kill as written carries only the settlement-cascade arm ("the
+improver is an S-member of a P-group, its pull or re-selection
+settles it, the exact-tie re-offer mints"). The S-root's settlement
+is not guaranteed — a cutoff exit can strand the group — and the
+audit had to derive the second arm before the kill closed. Both arms:
+
+- *Cascade arm.* The improvement chain grounds at an S-member of the
+  drop call (a search root — capped or merged roots are tree members,
+  and tree ∩ S is P_j membership modulo the prior-group dedup, which
+  only moves the member to an earlier group) or at a settlement echo.
+  When the ground settles, relax re-accepts exact ties (714), so the
+  chain re-fires link by link at settlement sites, where custody is
+  structural: the base insert is ungated, and a base refusal
+  (cand ≥ the grandchild's B) is the parent sweep's insert gate — the
+  one-step complementarity. The cascade delivers a custody entry to
+  the drop target; entry present, the leak closes at equality (the
+  entry is pulled into the final child or holds the separator down).
+  Row R1 is this arm live.
+- *Stall arm (the new closure).* If the cascade stalls — the ground's
+  group custody entry never pulled — the entry survives the last
+  pull, so the last separator obeys b_f ≤ value, and the final
+  child's returned bound obeys b_prime ≤ b_f ≤ value. But the
+  improvement chain is tuple-strictly ascending (len adds ≥ 0 and
+  hops strictly increase), so value ≤ d[ground] < d[w_s], and the
+  drop's premise (the source passes the W′ filter) is d[w_s] <
+  b_prime — a contradiction. So no sub-b_prime custody entry can
+  survive to the return: either it is pulled (the cascade runs) or
+  d[w_s] < b_prime fails and the source never passes the filter —
+  the drop never fires at all. (Group custody cannot vanish a third
+  way: line 33 refuses sub-b_prime hand-backs, base pulls settle
+  immediately, and a group empties only by settlement-excision — the
+  Q8 corner presupposes every member settled.)
+
+The two arms together are the route tree's actual engine, and they
+close every gate-refused branch the audit probed (routes 1, 4-shadow,
+6 in all slots): a sub-bound label with no custody cannot form,
+because its provenance chain always grounds in custody (an S-member's
+group or a settlement echo), and custody below the bound either
+settles through or collapses the bound. The single escape is a ground
+whose settlement fired at an incomplete label — the stale-at-filter
+pass, settle_incomplete ≥ 1 — exactly the sharpened claim's terminal.
+
+**(2) Route 7's bound riding — CONFIRMED; the decoupling concern is
+moot.** On the final spine the identity is code order: the refusing
+W′-sweep gate reads b_prime after its last write (1317) and nothing
+writes it again before the return, so the refusal bound IS the
+returned bound. For a merged deeper leak to decouple them it would
+have to exist — under the induction there are no strict deeper leaks,
+and equality-grade merged entries are pulled or ride as dB = B′ (row
+R2's wall). For drops in earlier iterations (where B′ later wanders),
+the leak cannot assemble regardless of decoupling: a mid-loop mint is
+consumed by the next pull below the moving separator (settle →
+excision or settle-inc; hand-back → ≥ b_prime), and anything
+surviving the final pull sits at ≥ b_f ≥ B′ — Sp's confinement
+re-derived from the pull mechanics alone.
+
+**(3) Route 5's same-cand — CONFIRMED at tuple grade.** Per edge, the
+pop's candidate and the sweep's candidate are tuple-identical (same
+source label by the route's premise, same edge triple → same len,
+hops, curr, pred); labels are tuple-monotone non-increasing; relax
+acceptance (cand ≤ d[v], 714) is therefore monotone backward in time —
+a sweep accept implies the earlier pop accepted the same tuple; both
+sites pass the same call bound. Multigraph parallels close per-edge.
+Strengthening found: the pop's acceptance adopts the target into the
+same failed search's K (927-932), so the differential-free case does
+not merely contradict — it settles the target at the child's own
+boundary (complete → excised at the parent's bookkeeping; incomplete
+→ settle-inc). Routes 4 and 5 are one route read at two moments.
+
+**(4) The complete-S corollary — no tie-break caveat at len grade.**
+Every inequality the closure consumes is tuple-strict on tie-rich and
+zero-weight inputs (hops strictly increase along any relax chain; the
+label order is total), and the cascade tolerates post-settlement
+tuple drift: a tuple-improved complete source re-offers a tuple-≤
+candidate, relax accepts, custody plants either way. The tuple-grade
+restatement of the corollary itself (canonical-tuple completeness)
+remains debt (c), as named — nothing new opened.
+
+**The named device (stage 2's beam).** Worth stating once, as the
+lemma the route tree keeps proving locally: *under V5, in any call, a
+live D entry whose value is strictly below the call's eventual
+returned bound cannot survive to the return — the pull machinery
+consumes it, or its survival forces b_prime ≤ b_f ≤ value.* Rows R1
+and R2 are its two faces (consumed; equality). The single-call (d2)
+skeleton is this dichotomy plus the grounding argument; the only door
+stage 2 can open is cross-call provenance (the narrow-z geometry),
+where the ground's settlement is stale.
+
+**Status.** Debt (a-22) DISCHARGED — addendum 22's sharpened claim
+(viol ⟹ settle-inc under V5) stands cold-audited, with the two
+repairs folded into the route tree's reading. Debts open: (c) tuple
+grade (unchanged, two pressure points); (d2) — still the whole of
+(H | V5), now with the audited two-arm engine as the candidate proof
+core. Docs only; solver untouched. Next: row I stage 2 as protocoled
+(narrow-z + stale-walked-y), predictions first.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
