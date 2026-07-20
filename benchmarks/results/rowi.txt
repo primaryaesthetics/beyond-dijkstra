@@ -1,0 +1,21 @@
+Row I stage 1 — the assembly walls (direct level-1 calls, t=2, k=3, B=len 52):
+
+Row R1: custody discharge (the complementarity mint, pulled):
+  [paper] B'=52 |U|=12 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=true entry=-; w_s: d=51.0625 in-U=true
+  [   V5] B'=52 |U|=12 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=true entry=-; w_s: d=51.0625 in-U=true
+  [   V8] B'=52 |U|=12 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=true entry=-; w_s: d=51.0625 in-U=true
+
+Row R2: the equality wall (cutoff exit, dB[D] == B'):
+  [paper] B'=51.8125 |U|=35 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=false entry=51.8125 (B'=51.8125); w_s: d=51.0625 in-U=true
+  [   V5] B'=51.8125 |U|=35 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=false entry=51.8125 (B'=51.8125); w_s: d=51.0625 in-U=true
+  [   V8] B'=51.8125 |U|=35 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=false entry=51.8125 (B'=51.8125); w_s: d=51.0625 in-U=true
+
+Part 2 -- full recursion, source 0, all engines:
+  full recursion (row R1, n=13, l_top=2):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+  full recursion (row R2, n=37, l_top=3):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
