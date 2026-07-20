@@ -10,12 +10,32 @@ Row R2: the equality wall (cutoff exit, dB[D] == B'):
   [   V5] B'=51.8125 |U|=35 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=false entry=51.8125 (B'=51.8125); w_s: d=51.0625 in-U=true
   [   V8] B'=51.8125 |U|=35 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  v: d=51.8125 true=51.8125 in-U=false entry=51.8125 (B'=51.8125); w_s: d=51.0625 in-U=true
 
+Row I stage 2 — the (d2) decider (narrow-z + stale-walked-y):
+
+Row R3: the repair face (custody pulled, echo repairs y before the filter):
+  [paper] B'=52 |U|=36 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  y: d=50.75 true=50.75 in-U=true entry=-; z: d=50.5 in-U=true; f in-U=true
+  [   V5] B'=52 |U|=36 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  y: d=50.75 true=50.75 in-U=true entry=-; z: d=50.5 in-U=true; f in-U=true
+  [   V8] B'=52 |U|=36 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  y: d=50.75 true=50.75 in-U=true entry=-; z: d=50.5 in-U=true; f in-U=true
+
+Row R4: the refusal face (custody unpulled, B' pinned below the stale walker):
+  [paper] B'=50.4375 |U|=36 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  y: d=51.0625 true=50.75 in-U=false entry=-; z: d=50.5 in-U=false entry=50.5 (B'=50.4375); f in-U=false
+  [   V5] B'=50.4375 |U|=36 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  y: d=51.0625 true=50.75 in-U=false entry=-; z: d=50.5 in-U=false entry=50.5 (B'=50.4375); f in-U=false
+  [   V8] B'=50.4375 |U|=36 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0  y: d=51.0625 true=50.75 in-U=false entry=-; z: d=50.5 in-U=false entry=50.5 (B'=50.4375); f in-U=false
+
 Part 2 -- full recursion, source 0, all engines:
   full recursion (row R1, n=13, l_top=2):
     [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
     [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
     [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
   full recursion (row R2, n=37, l_top=3):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+  full recursion (row R3, n=37, l_top=3):
+    [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+    [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
+  full recursion (row R4, n=43, l_top=3):
     [paper] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
     [   V5] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)
     [   V8] settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0 (exact)

@@ -57,6 +57,65 @@
 //!   precedent): distances EXACT on every engine, settle-inc = 0,
 //!   wards/missing = 0, dups = 0; viol/cap recorded, not predicted.
 //!
+//! ---------------------------------------------------------------------
+//! Stage 2 (QUESTIONS.md addendum 24) — the (d2) decider: the narrow-z +
+//! stale-walked-y geometry. y's true path runs q -> z -> y; z completes as
+//! a tree-shadow member of q's capped search (never popped, so (z, y) is
+//! never relaxed at FindPivots); f's failed search walks y at a stale
+//! label; the loop is then steered to the two endings the derivation
+//! says are the only ones. The violation would need d[y] < B' with d[y]
+//! stale at the filter — the assembly closes because z's custody entry
+//! (value <= dis(z) < dis(y) < d[y]) either survives the last pull,
+//! pinning B' <= dis(z) by the stall arm (y refused: the interval
+//! (dis(y), d[y]) that B' would have to enter is EMPTY), or is pulled,
+//! and the settlement's echo at the event call's own relax sweep fires
+//! with the call's wide bound B before the filter can run (y repaired).
+//!
+//! Shared stage-2 core (direct level-1 call, t = 2, k = 3, B = len 52):
+//! q@50.0 with edges a (0.125), b (0.25), z (0.5, true 50.5); z -> y
+//! (0.25, true 50.75); f@51.0 -> y (0.0625, stale walk 51.0625). q's
+//! search caps at |K| = 4 >= 3 on q's own edge loop, so z is walked
+//! complete and never popped; f's search fails at |K| = 2 and plants
+//! W = {f, y} with y stale. Ballast: 10 2-leaf stars at 15..19.5 burn
+//! 30 settlements in 5 iterations (block size 2), leaving the loop two
+//! settlements under the |U| cutoff of 32 when the core is reached.
+//!
+//! - Row R3 (the repair face, n = 37): iteration 6 pulls {q} alone —
+//!   empty remainder, so the child's bound is B = 52, wide. The child
+//!   settles q, a, b, z in order, and z's own base relax accepts
+//!   z -> y at 50.75 < 52: y is repaired in-child and settled complete
+//!   by pull. Cutoff fires after the iteration (35 > 32); the filter
+//!   skips y (already in U) and settles f complete at 51.0 < B' = 52.
+//! - Row R4 (the refusal face, R3 + two capped stars g1@50.3125 and
+//!   h@50.4375, n = 43): iteration 6 pulls {q, g1} at separator
+//!   h@50.4375 — a NARROW child: q -> z is refused in-child
+//!   (50.5 >= 50.4375), z never settles, and the iteration's parent
+//!   sweep mints z's custody by the complementary gate (tie re-store
+//!   accepted, 50.5 >= 50.4375 inserts z@50.5). Cutoff fires (36 > 32)
+//!   with B' = 50.4375 = h's unpulled pivot entry: the filter refuses
+//!   BOTH W-members (51.0 and stale 51.0625 >= 50.4375) — y returns
+//!   unsettled and stale with z's sub-stale-label custody riding the
+//!   returned D at equality with nothing below B'. The S2 cross-call
+//!   shape with its stale walker, grazing the contract, harmless.
+//!
+//! Stage-2 predictions, written before the first run (all three engines
+//! identical on both rows — every base child drains, so the V5 cap is a
+//! no-op, and no V8-relevant re-offer changes any outcome):
+//! - R3: B' = 52 (= B, drain-grade exit), |U| = 36 (30 ballast + q, a,
+//!   b, z, y + f via W'); settle-inc = 0, viol base/rec = 0/0, cap = 0,
+//!   incomp/stale/wards/missing all 0, dups = 0; y: d = 50.75 = true,
+//!   in-U = TRUE, entry = none (consumed); z: d = 50.5, in-U = TRUE;
+//!   f: in-U = TRUE.
+//! - R4: B' = 50.4375, |U| = 36 (30 ballast + q, a, b, g1 + g1's two
+//!   leaves); settle-inc = 0, viol base/rec = 0/0 (equality at h, by
+//!   strictness of the counter), cap = 0, incomp/stale/wards/missing
+//!   all 0, dups = 0; y: d = 51.0625 STALE (true 50.75), in-U = FALSE,
+//!   entry = none; z: d = 50.5 = true, in-U = FALSE, entry = 50.5;
+//!   f: in-U = FALSE (line-33 re-entry at 51.0).
+//! - Part 2 (full recursion, source 0): distances EXACT on every
+//!   engine, settle-inc = 0, wards/missing = 0, dups = 0; viol/cap
+//!   recorded, not predicted.
+//!
 //! ```text
 //! cargo run --release --features verify-contract,dup-classify --example rowi
 //! ```
@@ -215,6 +274,50 @@ fn row_r2() -> (Craft, u32, u32) {
     (c, w_s, v)
 }
 
+/// The stage-2 core: q's capped search completes z as a tree-shadow
+/// member (q's own edge loop reaches |K| = 4), f's failed search walks
+/// y stale. Returns (z, y, f).
+fn core2(c: &mut Craft) -> (u32, u32, u32) {
+    let q = c.seed(50.0);
+    let a = c.vertex();
+    c.edge(q, a, 0.125);
+    let b = c.vertex();
+    c.edge(q, b, 0.25);
+    let z = c.vertex();
+    c.edge(q, z, 0.5); // z true 50.5
+    let y = c.vertex();
+    c.edge(z, y, 0.25); // y true 50.75
+    let f = c.seed(51.0);
+    c.edge(f, y, 0.0625); // stale walk 51.0625
+    (z, y, f)
+}
+
+fn row_r3() -> (Craft, u32, u32, u32) {
+    let mut c = Craft::new();
+    c.ballast(10, 15.0);
+    let (z, y, f) = core2(&mut c);
+    (c, z, y, f)
+}
+
+fn row_r4() -> (Craft, u32, u32, u32) {
+    let mut c = Craft::new();
+    c.ballast(10, 15.0);
+    let (z, y, f) = core2(&mut c);
+    // The narrow-separator pair: g1 rides into q's pull, h's unpulled
+    // pivot entry becomes the last separator AND the returned bound.
+    let g1 = c.seed(50.3125);
+    let l1 = c.vertex();
+    c.edge(g1, l1, 0.03125);
+    let l2 = c.vertex();
+    c.edge(g1, l2, 0.0625);
+    let h = c.seed(50.4375);
+    let m1 = c.vertex();
+    c.edge(h, m1, 0.015625);
+    let m2 = c.vertex();
+    c.edge(h, m2, 0.03125);
+    (c, z, y, f)
+}
+
 /// One direct level-1 call per engine, wprime.rs pattern.
 fn run_direct(
     craft: &Craft,
@@ -358,7 +461,42 @@ fn main() {
         )
     });
 
+    println!("Row I stage 2 — the (d2) decider (narrow-z + stale-walked-y):");
+    println!();
+
+    let (c3, z3, y3, f3) = row_r3();
+    run_direct(&c3, "R3: the repair face (custody pulled, echo repairs y before the filter)", move |s, _bp, u, ds| {
+        format!(
+            "y: d={} true={} in-U={} entry={}; z: d={} in-U={}; f in-U={}",
+            label_len(s.d[y3 as usize]),
+            s.oracle_len.as_ref().unwrap()[y3 as usize],
+            u.contains(&y3),
+            len_of(ds.get(y3)),
+            label_len(s.d[z3 as usize]),
+            u.contains(&z3),
+            u.contains(&f3),
+        )
+    });
+
+    let (c4, z4, y4, f4) = row_r4();
+    run_direct(&c4, "R4: the refusal face (custody unpulled, B' pinned below the stale walker)", move |s, bp, u, ds| {
+        format!(
+            "y: d={} true={} in-U={} entry={}; z: d={} in-U={} entry={} (B'={}); f in-U={}",
+            label_len(s.d[y4 as usize]),
+            s.oracle_len.as_ref().unwrap()[y4 as usize],
+            u.contains(&y4),
+            len_of(ds.get(y4)),
+            label_len(s.d[z4 as usize]),
+            u.contains(&z4),
+            len_of(ds.get(z4)),
+            label_len(bp),
+            u.contains(&f4),
+        )
+    });
+
     println!("Part 2 -- full recursion, source 0, all engines:");
     run_full(&c1, "row R1");
     run_full(&c2, "row R2");
+    run_full(&c3, "row R3");
+    run_full(&c4, "row R4");
 }
