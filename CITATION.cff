@@ -1,0 +1,68 @@
+cff-version: 1.2.0
+message: "If you use this software, its audit findings, or its benchmark results, please cite it as below."
+type: software
+title: "beyond-dijkstra: the first implementation of the Duan–Mao–Shu–Yin O(m√(log n·log log n)) directed SSSP algorithm, with an audit and a completeness proof"
+authors:
+  - family-names: Khobotov
+    given-names: Nikolai
+    orcid: "https://orcid.org/0009-0005-3612-830X"
+    email: nicholaask@gmail.com
+version: 0.1.0
+date-released: 2026-07-21
+url: "https://github.com/primaryaesthetics/beyond-dijkstra"
+repository-code: "https://github.com/primaryaesthetics/beyond-dijkstra"
+license: MIT
+keywords:
+  - shortest paths
+  - SSSP
+  - Dijkstra
+  - graph algorithms
+  - algorithm engineering
+  - algorithm audit
+  - Rust
+abstract: >-
+  The first implementation of the Duan–Mao–Shu–Yin directed single-source
+  shortest-path algorithm (arXiv:2602.07868, February 2026): a Python
+  reference, a Rust port gated bit-exactly against it, and a variant study
+  with all distances verified against Dijkstra. Two results. Measured: the
+  algorithm is not faster at any storable input size — the faithful port
+  runs at 38–182x of a production Dijkstra and the most engineered variant
+  at 1.8–2.2x, with the prescribed degree parameter falling outside the
+  paper's own validity range on every input below n = 2^4096. Audited: the
+  distances are exact on every input run, but the printed pseudocode
+  crashes on ordinary graphs at two lines, and the completeness clause of
+  Lemma 3.7 is false as stated — a 70-vertex counterexample settles an
+  incomplete vertex, and a variant that trusts the clause finishes with a
+  wrong distance. The repository includes a hand proof, derived and
+  independently re-derived across thirty-two recorded sessions, that a
+  capped variant of the algorithm settles every vertex with its canonical
+  (length, hop count) label.
+references:
+  - type: article
+    title: "A Faster Directed Single-Source Shortest Path Algorithm"
+    authors:
+      - family-names: Duan
+        given-names: Ran
+      - family-names: Mao
+        given-names: Xiao
+      - family-names: Shu
+        given-names: Xinkai
+      - family-names: Yin
+        given-names: Longhui
+    year: 2026
+    url: "https://arxiv.org/abs/2602.07868"
+  - type: article
+    title: "Breaking the Sorting Barrier for Directed Single-Source Shortest Paths"
+    authors:
+      - family-names: Duan
+        given-names: Ran
+      - family-names: Mao
+        given-names: Jiayi
+      - family-names: Mao
+        given-names: Xiao
+      - family-names: Shu
+        given-names: Xinkai
+      - family-names: Yin
+        given-names: Longhui
+    year: 2025
+    url: "https://arxiv.org/abs/2504.17033"
