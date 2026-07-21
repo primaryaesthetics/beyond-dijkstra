@@ -7,6 +7,10 @@ authors = ["Nikolai Khobotov <nicholaask@gmail.com>"]
 description = "Single-source shortest paths: production Dijkstra plus the first implementation of the Duan-Mao-Shu-Yin O(m sqrt(log n log log n)) directed SSSP algorithm (arXiv:2602.07868)"
 license = "MIT"
 repository = "https://github.com/primaryaesthetics/beyond-dijkstra"
+readme = "README.md"
+# crates.io caps keywords at five, twenty characters each.
+keywords = ["shortest-path", "sssp", "dijkstra", "graph", "algorithms"]
+categories = ["algorithms", "data-structures", "science"]
 
 [features]
 default = []
