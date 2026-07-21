@@ -99,7 +99,7 @@ against Dijkstra bit-exactly over a property matrix, a tie-rich 1.02·10⁶-edge
 stress, hub families and zero-weight pressure graphs. The *proofs* are another
 matter. `QUESTIONS.md` is the audit log, fifteen numbered entries, each one
 resolved by argument, exhibited by a driver, or left open and marked open.
-Three groups are worth a reader's time.
+Four groups are worth a reader's time.
 
 **Two pseudocode-level crashes.** In Algorithm 3, a later `u ∈ U_i` in the same
 pass can empty a `P_j` after `j` has already entered `J`, so the re-selection at
@@ -108,6 +108,17 @@ random float-weighted test graphs. Line 6 fails the same way when the Θ(k)
 partition produces a subtree containing no `S`-vertices; on hub-shaped graphs
 most `P_j` are empty, so there it is the common path rather than a corner. Both
 take one-line guards (Q2, Q8).
+
+**A bound clause violated at scale, on ordinary weights.** Lemma 3.7 asserts
+that a partial execution returns no stored value below its returned boundary
+(`dB[D] ≥ B′`). On a family with plain positive unit weights (no zero-weight
+edges, no exact ties, no crafted stars) that clause fails 366 times at path
+length 5 000 and 988 times at 20 000, with the base case's matching clause
+(Lemma 3.1's) failing in the thousands, while every run still finishes with
+exact distances (Q15, `examples/escape.rs`, raw record
+`benchmarks/results/escape.txt`). The mechanism is one violation per
+wave-carrying base chunk, and the counts confirm it arithmetically. The V5
+cap below zeroes all of these counters at once.
 
 **A settlement that is not complete.** Lemma 3.7's completeness clause says
 every vertex the algorithm settles carries its true distance at that moment.
