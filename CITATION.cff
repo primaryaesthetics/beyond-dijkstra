@@ -24,19 +24,19 @@ abstract: >-
   The first implementation of the Duan–Mao–Shu–Yin directed single-source
   shortest-path algorithm (arXiv:2602.07868, February 2026): a Python
   reference, a Rust port gated bit-exactly against it, and a variant study
-  with all distances verified against Dijkstra. Two results. Measured: the
-  algorithm is not faster at any storable input size — the faithful port
-  runs at 38–182x of a production Dijkstra and the most engineered variant
-  at 1.8–2.2x, with the prescribed degree parameter falling outside the
-  paper's own validity range on every input below n = 2^4096. Audited: the
-  distances are exact on every input run, but the printed pseudocode
-  crashes on ordinary graphs at two lines, and the completeness clause of
-  Lemma 3.7 is false as stated — a 70-vertex counterexample settles an
-  incomplete vertex, and a variant that trusts the clause finishes with a
-  wrong distance. The repository includes a hand proof, derived and
-  independently re-derived across thirty-two recorded sessions, that a
-  capped variant of the algorithm settles every vertex with its canonical
-  (length, hop count) label.
+  with all distances verified against Dijkstra. Measured: the algorithm is
+  not faster at any storable input size. The faithful port runs at 38–182x
+  of a production Dijkstra, the most engineered variant at 1.8–2.2x, and
+  the prescribed degree parameter falls outside the paper's own validity
+  range on every input below n = 2^4096. Audited: the distances are exact
+  on every input run, but the printed pseudocode crashes on ordinary graphs
+  at two lines, and the completeness clause of Lemma 3.7 is false as
+  stated. A 70-vertex counterexample settles an incomplete vertex, and a
+  variant that trusts the clause finishes with a wrong distance. The
+  repository also includes a hand proof, derived and independently
+  re-derived across thirty-two recorded sessions, that a capped variant of
+  the algorithm settles every vertex with its canonical (length, hop count)
+  label.
 references:
   - type: article
     title: "A Faster Directed Single-Source Shortest Path Algorithm"
