@@ -3,12 +3,19 @@
 The first implementation of the Duan–Mao–Shu–Yin directed shortest-path
 algorithm ([arXiv:2602.07868](https://arxiv.org/abs/2602.07868), February 2026),
 in Rust, with the two questions the paper leaves open answered by measurement
-and by proof: does it run faster than Dijkstra, and is it correct as written.
+and by proof: does it run faster than Dijkstra, and does its correctness
+argument hold up.
 
-Short answers, both documented below: **no, not at any size you can store**,
-and **not quite** — the algorithm computes correct distances on every input we
-have run, but two lines of its pseudocode crash on ordinary graphs, and its
-completeness argument has a gap we can exhibit on a 70-vertex example.
+Short answers, both documented below. **It is not faster** — not at any size
+you can store. And **the algorithm looks correct while one of its proofs is
+not**: every engine here returns exact distances on every input we have run,
+but two lines of the printed pseudocode crash on ordinary graphs, and the
+completeness clause of Lemma 3.7 is false as stated — we exhibit a 70-vertex
+graph where a settled vertex is incomplete. The paper's own engine still
+finishes with the right answers there; nothing in the paper guarantees that it
+will. The distinction matters because the clause is load-bearing: trust it and
+optimize on it, as any implementer would, and you get a wrong distance. Ours
+did.
 
 This is the second study in a series. The first,
 [logtwothirds](https://github.com/primaryaesthetics/logtwothirds), implemented
@@ -84,9 +91,10 @@ land on δ=3, t=6, k=3 — the recursion is four levels of overhead over a graph
 it just made eight times bigger. The two bounds themselves cross near
 `n ≈ 2^1000`; the observable universe holds roughly `2^266` atoms.
 
-## Is it correct
+## Is it correct, and is it proved
 
-This is where the second study diverges from the first. The distances are
+This is where the second study diverges from the first, and the two halves of
+the question have different answers. The distances are
 right: every engine here is gated against Dijkstra bit-exactly over a property
 matrix, a tie-rich 1.02·10⁶-edge stress, star/hub families, and zero-weight
 pressure graphs. The *proofs* are another matter. `QUESTIONS.md` is the audit
@@ -109,8 +117,13 @@ lets an incomplete vertex through: `examples/rowh.rs` builds a 70-vertex graph
 where the three engines separate, and one of our own variants — the settled-bit
 variant, which is exact everywhere else — finishes with a wrong final distance
 (23.59375 against the true 23.546875). The paper's engine heals through a
-duplicate settlement; nothing in the paper says it must. Recorded with drivers
-and predictions-before-runs in Q14 addenda 13–15.
+duplicate settlement; nothing in the paper says it must.
+
+That is the whole reason this finding matters. The clause is not decorative —
+it is what licenses the obvious optimization of never reopening a finished
+vertex, and an implementer who takes the lemma at face value earns a wrong
+answer for it. We know because we did. Recorded with drivers and
+predictions-written-before-runs in Q14 addenda 13–15.
 
 **Our own completeness proof.** Capping `B′` in the base case closes that hole
 exactly, and `PROOF.md` is the linear write-up of what we can then prove:
