@@ -4,7 +4,7 @@ This document consolidates the proof of the settlement-completeness
 property (H) for the V5 variant of our port of arXiv:2602.07868 — the
 result that the Q14 research program (QUESTIONS.md) was opened to decide.
 The program's history, its falsifications, and the session-by-session
-derivation trail live in QUESTIONS.md Q14 and its addenda 1–28; this
+derivation trail live in QUESTIONS.md Q14 and its addenda 1–31; this
 document is the linear write-up of the surviving chain at its final
 grade, self-contained modulo SPEC.md (the pinned semantics) and
 VARIANTS.md (the engine definitions).
@@ -23,14 +23,17 @@ the paper's algorithm as written — (H) is *false* for the paper's
 algorithm and for the V8 variant, by recorded counterexample (§10). Each
 step of the chain was derived in one working session and re-derived from
 the code in a separate, later session before anything was built on it;
-the audit trail is QUESTIONS.md addenda 16–28 (seven derivation/audit
+the audit trail is QUESTIONS.md addenda 16–31 (eight derivation/audit
 pairs). The label's fourth slot (pred) is excluded from the claim by
-design, not by debt — §11.
+design, not by debt — §11; §12 sharpens the exclusion to its final
+form: settlement labels are bit-final, pred included, and the pred
+residual is an arrival-set property, never drift.
 
 Every number in this document traces to a file under `benchmarks/results/`.
 Line references are to `src/solver.rs` at the commit that introduced this
 document; the solver is unchanged since, and every reference was
-re-verified in the tuple-grade audit pass.
+re-verified in the tuple-grade audit pass and again in the pass that
+produced §12.
 
 ---
 
@@ -92,7 +95,7 @@ Standing facts used throughout, all structural:
   equal-len fewer-hops prefix contradicts hops-minimality among
   len-minimal paths. The full-tuple analogue is *false* — the min-pred
   tie-break at v constrains nothing about the predecessor's own pred —
-  which is why the pred slot is scope, not target (§11).
+  which is why the pred slot is scope, not target (§§11–12).
 - **(S) The slot lemma.** The candidate at 708–713 reads only
   (len, hops) of its source plus the two vertex ids — the candidate's
   pred slot is the source's *id*, not the source's pred. So: **(S1)**
@@ -568,6 +571,15 @@ d[z] — the filter-time label, prefix lh(z). Exhaust the sites:
 
 Every branch of Case 2 is contradictory or vacuous, so Case 1 holds. ∎
 
+**Remark (bit-finality from the last valid pop).** Case 2's site
+exhaustion is slot-agnostic — a pred-only improver is an accept at one
+of the four sites, and every arm ends in the same custody/Lemma-V
+contradiction — so in the regime a W′ settler's label is bit-final
+from its last valid pop: pop label, filter label, and settled label
+are one bit-identical tuple, pred included. First recorded as an
+unconsumed observation in the lh-grade revision; now consumed as the
+W′ face of the bit-finality theorem (§12).
+
 **Corollary (co-settlement).** At a complete W′ settlement of z in call
 C, for every out-edge (z, x): the candidate
 ⟨lh(z).len + w, lh(z).hops + 1, x, z⟩ was offered at z's final-label
@@ -732,6 +744,7 @@ Dijkstra oracle; `settle-inc` counts incomplete settlements,
 | `escape.txt` | The bound clause at scale: paper engine `viol_bound_rec` = 12 at L = 200 and 366 at L = 5000; V5 zero at every L. |
 | `rowi.txt` rows R1/R2 | Lemma V's two faces, built predictions-first: R1 exhibits the complementarity mint being pulled and settled (custody discharge, B′ = 52, every counter 0); R2 exhibits the equality wall — a cutoff exit returning D = {v@51.8125} with B′ = 51.8125 exactly, dB[D] = B′, grazed not breached. |
 | `rowi.txt` rows R3/R4 | Lemma d2's two faces, built predictions-first: R3 the repair face (the wide child repairs y at 50.75 before the filter; y settles complete); R4 the refusal face (B′ = 50.4375 pinned at the unpulled custody below dis(z) = 50.5; the stale y@51.0625 refused; z's custody rides the returned D). All three engines identical on all four rows — `cap=0`, `dups=0`, so the engines' only divergence sites never trigger, as predicted in the driver header before the first run. |
+| `rowj.txt` | The pred slot's recorded faces (row J, predictions first; addendum 27's predicted settle ≠ final flip corrected to *unassemblable* at design time — addendum 30, cold-audited addendum 31): J1, the arrival-set face — a diamond whose canonical pred is pre-labeled outside S never fires its offer, and y settles at the arrived pred with settle = final on all three engines, every counter 0; J2, the arrival-order face — S2's pre-settlement pred-only tie-break accept lands and y settles already canonical; part 2, the full recursion heals J1's artifact on all engines. Face (b), the lh-oracle: a hops-aware Dijkstra against final labels, four families × three engines — reach/len/hops/pred mismatches all zero in all 12 rows. |
 
 Corpus-wide, every V5 row of every recorded family shows
 `settle-inc = 0` and `viol base/rec = 0/0` (wprime, rowh, rowi,
@@ -742,26 +755,34 @@ an empirical observation but the predicted face of Lemmas V and d2.
 
 One honest gap between theorem and record: the instrumentation is
 length-grade — both settle-inc counters compare `.len` only (1059,
-1366) — so the record above measures the len-slot projection. The hop
-slot's content (no settlement at a correct length with a non-minimal
-hop count) has no recorded counter; its designed probes are recorded
-in QUESTIONS.md (Q14 addendum 27, row J), predictions first, driver
-only.
+1366) — so the counter rows above measure the len-slot projection. The
+hop slot's content (no settlement at a correct length with a
+non-minimal hop count) has no recorded counter; row J's lh-oracle face
+(`rowj.txt`, above) measures it driver-side — zero (len, hops)
+mismatches corpus-wide on all three engines, the theorem's predicted
+face for V5. The bound-clause counters, by contrast, compare full
+tuples (1453): `viol base/rec = 0` measures exactly the clause Lemma V
+consumes.
 
 ## 11. Grade, limitations, and open items
 
-- **(len, hops) grade; the pred slot is scope, not debt.** "Complete"
-  compares the label's (len, hops) prefix to the canonical pair lh(v).
-  The pred slot is excluded by design: prefix optimality fails there
-  (the min-pred tie-break at a vertex constrains nothing about the
+- **(len, hops) grade; the pred slot is scope, not debt — and the
+  scope is sharp (§12).** "Complete" compares the label's (len, hops)
+  prefix to the canonical pair lh(v). The pred slot is excluded from
+  *completeness* by design: prefix optimality fails there (the
+  min-pred tie-break at a vertex constrains nothing about the
   predecessor's own pred), and settlement-time pred is the min id
   among the tight offers that *arrived* before settlement — gate
-  geometry, not canon. A two-pred diamond whose smaller-id tight pred
-  is gated until after the target settles exhibits settlement-time
-  pred ≠ final pred: pred drift is live and harmless ((S2):
-  candidate-invisible), and no claim here covers the slot. The
-  differential gate pins determinism (port = reference, bit-exact),
-  not pred canonicality.
+  geometry, not canon (row J1's recorded exhibit: a diamond whose
+  canonical pred is pre-labeled outside S settles at the arrived
+  pred, all three engines identical). What the exclusion is *not*:
+  drift. §12 proves settlement labels are bit-final — the flip an
+  earlier revision of this bullet described (settlement-time pred ≠
+  final pred via post-settlement drift) is unassemblable on V5, and
+  in full runs the settled pred is canonical outright. Pre-settlement
+  pred drift (S2's tie-break accept) stays live and harmless ((S2):
+  candidate-invisible; row J2's exhibit). The differential gate pins
+  determinism (port = reference, bit-exact), not pred canonicality.
 - **First-violation regime.** The theorem is an induction, so each
   lemma above is stated inside the regime; none of the conditional
   lemmas (V, Rep, D, d2) is claimed unconditionally.
@@ -774,9 +795,260 @@ only.
   question (Q10/Q13) is separate and remains open.
 - **Proof grade.** Hand proof against the frozen port, every step
   re-derived from the code in a later independent pass (QUESTIONS.md
-  addenda 16–28: seven derivation/audit pairs; the §7 lemma re-derived
+  addenda 16–31: eight derivation/audit pairs; the §7 lemma re-derived
   in the consolidation pass; the tuple-grade upgrade derived and
-  cold-audited as its own pair, with the two closures assembled in
-  that audit — the bound face's strict chain and self-cancellation,
-  and the cascade's re-base face — re-derived from the code in the
-  pass that produced this revision). Not machine-checked.
+  cold-audited as its own pair, with its two audit-assembled closures
+  — the bound face's strict chain and self-cancellation, and the
+  cascade's re-base face — re-derived from the code in the lh-grade
+  revision; the bit-finality closure derived at row J's design time,
+  cold-audited as the eighth pair, with its two audit-assembled
+  closures — Lemma T and the delivery induction — re-derived from the
+  code in the pass that produced §12). Not machine-checked.
+
+## 12. Bit-finality of settlement labels
+
+The theorem pins the settled (len, hops) prefix; this section pins the
+whole tuple. The closure was found at row J's design time — the drift
+probe the tuple-grade session had designed turned out to be
+unassemblable — and cold-audited (QUESTIONS.md addenda 30/31); the two
+lemmas that audit assembled, T and the delivery induction inside
+Theorem BF, were re-derived from the code in the pass that produced
+this section, per the cadence rule. Two facts of raw code structure
+carry everything:
+
+- **(Stack locality.)** Every block D is a local of an active call
+  (`ds`, 1040/1141); a returning call's D merges into its parent
+  synchronously (1212); the top call's D drains (the totality assert,
+  1544). So the live Ds at any settlement event are exactly those of
+  the settling call's ancestor chain: any live entry below the
+  settling value is co-resident with the settling vertex's descent at
+  their common level, and "the first context whose bound covers a
+  candidate" is always an ancestor of the settling call.
+- **(Value-prefix pulls.)** A pull (327–344) removes the M smallest
+  stored values — all values distinct (the keep-min asserts, 307/313),
+  so pulled values sit strictly below the separator — and any
+  co-resident entry below a pulled value is in the same pulled prefix.
+  The base D is the M = 1 case (1040): a pure value-order drain.
+  Pivot proxies are compatible: the pivot is the argmin of its P_j at
+  selection and re-selection (1147–1153, 1284–1291), so proxy custody
+  sits at or below every member it represents, and a member expanded
+  into a block (d < b_i, 1195) never outruns a smaller direct entry
+  or a smaller proxy chain.
+
+**Lemma T (every reached vertex settles).** *In a completed full run —
+the `sssp_run` shape: top call at B = Inf from the source label alone
+(1532–1538), the totality assert passing (1544) — on the V5 engine in
+the first-violation regime, every vertex that ever holds a finite
+label appears in the settlement log at least once.*
+
+*Proof.* Induct on the tuple order of current labels ((Z) makes every
+regress below tuple-strictly descending, so the induction is
+well-founded). Three steps.
+
+*(1) A labeled vertex holds a live entry or settles.* The label was
+written by an accept at one of the four relax sites, or is the source
+seed (custody at 1043–1045). The base accept inserts ungated
+(1086–1088). A sweep accept whose gate passes inserts (1250, 1439); a
+gate-refused sweep accept lands in audited machinery — at the
+iteration sweep, one-step complementarity (§5: the bit-identical
+candidate was accepted inside that iteration's child under the child's
+own bound, and the first accepting level fired its own insert,
+grounding at the ungated base insert or the W′ face); at the W′ sweep,
+a refused gate means d < B′ after the accept, and the drop lemma turns
+the corner into a settlement — the sweeping source was popped at its
+final label by a failed search that relaxed the same edge with the
+bit-identical candidate under the same bound (§7), so the target had
+joined that search's K ⊆ W and passes that call's own filter. The one
+insert-free site is the FindPivots relax (922). A prior entry, at
+however stale a value, still serves: keys leave a D only by pulls, and
+seeds re-read current labels (1044; a child's S is a key list). A
+vertex whose entire label history is FindPivots accepts — every
+non-root K-member joins by an accepting relax (922–932), so this face
+includes W-members outside the call's S — regresses through its
+accept's source: the source is tuple-strictly below ((Z)), so by the
+induction it settles; its settlement is complete (the regime), the
+candidate is bit-identical from then on ((S1)/(S2)), and the
+settlement echo re-fires the tie — an exact-tie re-store is an accept
+at 714's ≤ — at echo sites that do insert (the settling call's own
+site, then each ancestor sweep on the return path, with gate refusals
+closed by one-step complementarity as above), minting the vertex's
+custody at the first covering level. The top call's bound is Inf, so a
+covering level always exists.
+
+*(2) Every entry is eventually pulled.* Entries leave a D only through
+`pull`; keep-min rewrites values in place (300–316), merges relocate
+entries upward intact (321–325), every non-top D merges into its
+parent at the return (stack locality), and the top D drains (the
+assert). No entry outlives the run unpulled.
+
+*(3) A pulled member settles or hands a live entry back.* Pulled keys
+and expanded members form the child's seed set (1186–1204); a
+represented member whose pivot is pulled either descends with it
+(d < b_i — proxy upgraded to identity) or keeps representation through
+the ungated re-selection at the new argmin (1275–1299, Rep §6).
+Induct on level: base pulls settle unconditionally (1048–1055; no V8
+skip on this engine), and a base cutoff exit returns its remainder
+intact — postponement, not loss (merged at 1212, re-pulled later). At
+a bmssp level, a seed v that does not settle inside the child C_c is
+unsettled at C_c's return with d[v] < B(C_c) (seeded strictly below
+the child's bound — pulled values sit under the separator and expanded
+members under b_i, both strict; labels only improve). d[v] < B′ is
+impossible: Rep would put a live entry ≤ d[v] < B′ in C_c's Ds at the
+return — all merged into C_c's own ds by then — contradicting Lemma V.
+So B′ ≤ d[v] < B(C_c) and line 33 (1334–1335) re-inserts v: a live
+entry handed back and merged up (1212).
+
+Every consumption of v's entry therefore settles v or leaves a live
+entry for v; at the run's end no live D exists (2), so the last
+consumption settled v. ∎
+
+*Scope note (the paper face).* On the paper engine the same proof runs
+wherever Lemma V's conclusion holds — and first-violation-freeness
+alone does *not* supply it there: `escape.txt` is the recorded witness
+(settle-inc = 0 with `viol_bound_rec` = 366). The paper face of this
+whole section is therefore conditioned on the **zero-counter record**
+proper — settle-inc *and* viol base/rec all zero — which is the
+recorded state of every family row J measures; the viol counters
+compare full tuples (1108, 1453), so they measure exactly the clause
+consumed. This is the precise form of the audit's scope map.
+
+**Reach totality (remark).** In a completed full run every
+graph-reachable vertex of the reduced graph is reached: a reached
+vertex settles (Lemma T), every settlement enters the top call's log
+(concatenation at 1319, W′ append at 1450), and the top call's relax
+sweep fires the settled vertex's out-edges at B = Inf (1246–1272) —
+the bound clause is mute, so every out-neighbor acquires a finite
+label. Induction along any path from the source.
+
+**Theorem BF (bit-finality of settlement labels).** *In the
+first-violation regime under V5, the label a vertex carries at its
+first settlement event is bit-final: no later accept strictly improves
+any slot, pred included. On V8 the claim is raw code — the dedup gate
+(701–706) refuses every post-settlement relax. On the paper engine it
+holds under the zero-counter record above.*
+
+Post-settlement pred drift therefore does not exist; the pred slot's
+non-canonicality at settlement (§11) is purely an *arrival-set*
+property — which tight offers fired before the event — never a drift
+property. Pre-settlement drift (S2's tie-break accept) remains live
+and harmless.
+
+*Proof.* Let v settle at label L with governing bound β — the pulled
+stored value at a base pull (β = L, with W3/W1 giving the floor) or B′
+at a W′ append (L < B′, with Lemma V pinning the filter moment). In
+both cases L ≤ β and Lemma W forbids any live stored value < β at the
+event — in particular any value < L. The settlement is complete (§9), so
+prefix(L) = lh(v), and by (Floor) a later strictly-improving accept
+into v carries a candidate c with prefix(c) = lh(v), the same curr,
+and a smaller pred: c < L full-tuple.
+
+Suppose some strictly-improving accept with candidate tuple-below L
+fires after v's event, into any target; let a₀ be the first in program
+order, with source u₀ and candidate c₀ < L. (If the alleged violation
+into v exists, this set is non-empty.) Exact-tie re-stores are no-ops
+and are excluded by "strictly-improving"; they cannot violate
+bit-finality. The accept that wrote u₀'s current label carried a
+candidate equal to that label, tuple-strictly below c₀ ((Z)), and
+precedes a₀ — by a₀'s firstness it is pre-event, or u₀ is the source
+vertex. So u₀'s sub-L label predates v's event.
+
+*u₀ settled before the event.* Every custody form a sub-L label can
+take is itself sub-L: identity mints and line-33 hand-backs store
+current labels, keep-min only lowers, and complementarity/regress
+mints (Lemma T, step 1) store accepted candidates ≤ the label. At the
+event no live value < L exists (above). So if u₀'s pre-event label
+came with custody, that custody was consumed pre-event, and Lemma T's
+step 3 makes every consumption settle u₀ or hand back live sub-L
+custody — the last pre-event consumption settled u₀. If u₀'s label
+history is FindPivots-only, regress through its source (tuple-smaller,
+sub-L, pre-event by the same firstness argument): by induction on the
+tuple order the source settled pre-event, and its settlement echo's
+tie re-store minted u₀'s custody at the first covering level — and it
+did so *pre-event*: the echo fires inside the source's own settling
+iteration at each level of the return path, and the first covering
+level sits at or below the deepest common ancestor with the event call
+(whose bound exceeds L — next paragraph); an earlier iteration there
+completes before the event's seeding, and the same-iteration face
+descends into the co-descent ground below. Custody pre-event reduces
+to the settled case.
+
+*Delivery.* u₀ settled pre-event, complete (the regime), so from its
+settlement on every (u₀, x) candidate is bit-identical ((S1)/(S2)).
+Let D† be the deepest common ancestor of u₀'s settling call and the
+event call (possibly the event call itself). Every bound on the event
+stack exceeds L — settled labels sit strictly below every bound of
+their descent (W1's nesting and the per-site gates) — so
+B(D†) > L > c₀. Two cases:
+
+- *Earlier iteration.* If u₀'s iteration at D† strictly precedes the
+  event's seeding iteration, D†'s relax sweep fired every out-edge of
+  u₀ at B(D†) when u₀'s subtree returned (u_log concatenation
+  1319/1450 — W′ settlers enter the log before the return — and the
+  sweep at 1241–1272), strictly before the event's seeding pull
+  (in-iteration order: the sweep at 1241 precedes the loop's next pull
+  at 1177). The bit-identical offer c₀ cleared the bound
+  (c₀ < L < B(D†)), so it was accepted or label-refused then:
+  d[x₀] ≤ c₀ pre-event.
+- *Same iteration.* If the two share an iteration at D†, descend into
+  the shared child — the level strictly decreases — grounding at a
+  shared base call, where the base D drains in pure value order
+  (M = 1): u₀'s sub-L custody was pulled before the event's L-value
+  entry, u₀'s in-base settlement swept (u₀, x₀) at the base bound
+  B > L > c₀ with the insert ungated (1085–1094), before the event's
+  pull.
+- *Same W′ batch.* If the event is a W′ append and u₀ co-settles in
+  the event's own batch, the drop lemma supplies the offer: u₀ was
+  popped at its final label by a failed search of the event call's
+  FindPivots, which relaxed (u₀, x₀) at the call's full bound then
+  (§7 and its remark — u₀'s label is bit-final from that pop), before
+  the append.
+
+In every case d[x₀] ≤ c₀ already held at the event, so a₀ does not
+strictly improve — contradicting its choice. No post-event
+strictly-improving accept below L exists; in particular none into v.
+The settled label is bit-final. ∎
+
+**Corollary (pred canonicality of final labels; paper/V5 full runs).**
+*In a completed full run in the regime (V5; paper under the
+zero-counter record), every reached non-source vertex's final label
+carries the canonical pred: the minimum id among its tight
+predecessors — sources u of edges (u, v, w) with
+lh(u) + (w, 1) = lh(v).*
+
+*Proof.* Final prefixes are canonical: every reached vertex settles
+complete (Lemma T, §9) and labels never move below the floor. Stored
+preds are tight: the accept that wrote the final label built its
+candidate from the pred's write-time label (708–713), and a strictly
+cheaper genuine prefix at the pred would extend along the edge to a
+genuine path below lh(v) — contradicting lh-minimality — so the
+pred's write-time prefix was canonical and the edge tight; S2 drift
+moves only pred slots and never enters candidates, so tightness is
+permanent. Hence the final pred is a tight pred: final pred ≥ p*, the
+minimum tight id. Conversely p* is reached (reach totality), settles
+(Lemma T), and the top call's sweep fires (p*, v) at B = Inf with the
+canonical candidate c* = ⟨lh(v), v, p*⟩. A label-refusal would need
+d[v] < c*: equal prefix (Floor + canonicity), equal curr, pred < p* —
+impossible, the pred is tight. So the relax accepts (strict or tie)
+and d[v] ≤ c* with pred ≤ p* thereafter; combined with ≥, the final
+pred is p*. And by Theorem BF the settlement label *is* the final
+label, so in full runs the settled pred is canonical too. ∎
+
+Not claimed for V8: the dedup gate freezes labels at settlement, so a
+late-arriving pred-healing accept is refused — a frozen non-canonical
+pred is within V8's distance-exact contract (recorded zero on the row
+J corpus, but recorded, not predicted).
+
+*Scope map.* What this section consumes beyond raw engine mechanics:
+Lemma V and Lemma W (the no-sub-L floor at events), the §7 drop lemma
+and its remark (the W′ faces), §5's one-step complementarity, §6's
+Rep, and (H_lh | V5) itself (settlements complete, prefixes pinned).
+All are regime-conditional exactly as stated; on V8 bit-finality alone
+survives, as raw dedup code. Row J1's exhibit marks the boundary of
+the corollary, not of the theorem: in a *partial* call shape (a
+driver-seeded direct call with the canonical pred pre-labeled outside
+any custody) the settlement label is still bit-final — settle = final
+on all three engines, as recorded — but Lemma T's premise fails for
+the pre-labeled pred, its offer never fires, and the settled pred is
+the min id among *arrived* tight offers. The full-recursion part of
+row J records the corollary's face: final labels canonical including
+pred, on all three engines.
