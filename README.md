@@ -97,7 +97,7 @@ Here the second study diverges from the first, and the two halves of the
 question get different answers. Distances are right: every engine is gated
 against Dijkstra bit-exactly over a property matrix, a tie-rich 1.02·10⁶-edge
 stress, hub families and zero-weight pressure graphs. The *proofs* are another
-matter. `QUESTIONS.md` is the audit log, fourteen numbered entries, each one
+matter. `QUESTIONS.md` is the audit log, fifteen numbered entries, each one
 resolved by argument, exhibited by a driver, or left open and marked open.
 Three groups are worth a reader's time.
 
@@ -142,7 +142,7 @@ derivation/audit pairs, written down as they happened, falsifications included.
 |---|---|
 | `ASSESSMENT.md` | paper reading: component inventory, lemma classification, stage plan |
 | `SPEC.md` | frozen reference semantics: tie tuple, pull order, dedup, determinism |
-| `QUESTIONS.md` | the audit log, Q1–Q14 with addenda; every finding traceable to a driver |
+| `QUESTIONS.md` | the audit log, Q1–Q15 with addenda; every finding traceable to a driver |
 | `PROOF.md` | the completeness theorem for the V5 engine |
 | `VARIANTS.md` | V1–V10: claim, proof sketch, classification, gate, measurement |
 | `OPTIMIZATION.md` | behavior-neutral passes on the frozen mainline |
