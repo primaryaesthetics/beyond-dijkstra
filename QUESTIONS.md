@@ -469,7 +469,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry); CUSTODY PERSISTENCE WRITTEN 2026-07-18 (addendum 20: Lemma Rep proved, re-arm gaps closed by bound domination at violating events, S1 reduced to S2 — and the honest negative: S2's closure is not derivable from the assembled machinery; (H | V5) is now conditional on exactly one obligation, (d2) the frontier-order question, decidable by row I's two-stage protocol, with the exit-cap engine as the designed fallback; same-session math, cold audit owed); addendum 20 cold audit PASSED 2026-07-18 (addendum 21: all five attack points hold, one wording repair — D3's "consumed" reads "settled"; the case-5 corner collapsed to a len-grade vacuity with one-step complementarity, chain re-rooting named as the gate-refused closure, and debt (c) gains a second pressure point: post-settlement tuple-drift echoes); ROW I STAGE 1 CLOSED NEGATIVE 2026-07-21 (addendum 22: every assembly route for the harmless leak closes against an audited mechanism — the two nearest misses built and confirmed predictions-first as rows R1/R2, examples/rowi.rs; sharpened claim at derivation grade, cold audit owed: a strict sub-B′ stored value under V5 requires a stale-at-filter W′ pass, so viol ⟹ settle-inc, stage 1 as protocoled is unassemblable, and (d2) is the whole of (H | V5), decided by stage 2); addendum 22 cold audit PASSED 2026-07-21 (addendum 23: all four attack points hold, two repairs — slot (c) reads the drop call's own later sweep, slot (a) gains its stall arm — and the custody-entry bound-domination dichotomy named as the single-call engine); ROW I STAGE 2 CLOSED NEGATIVE 2026-07-21 (addendum 24: the narrow-z + stale-walked-y assembly closes on every route — the DCA-echo reduction retires the settled-z geometry, the beam dichotomy retires the unsettled-z one (unpulled custody pins B′ ≤ dis(z), the empty interval; pulled custody cascades and the same-iteration echo repairs y before the filter), rows R3/R4 exhibit the two faces predictions-first — (d2) CLOSED at derivation grade: (H | V5) assembled end-to-end with NO named obligation for the first time, cold audit owed); addendum 24 cold audit PASSED 2026-07-21 (addendum 25: all five attack points hold — one substantive repair, the refused-echo corner closed by the W′-sweep drop lemma (W′ settlers are exactly walked-at-final vertices; every out-neighbor below B′ co-settles in the batch), two wording grades sharpened; (d2) COLD-AUDITED — every link of the (H | V5) chain is now audited end-to-end; remaining: (a-25) re-derive the drop lemma inside the consolidation write-up, (c) tuple grade); (H | V5) CONSOLIDATED 2026-07-21 (addendum 26: PROOF.md written as the linear citable record of the chain — Lemma V named, the S1/S2 narrative folded into it; (a-25) DISCHARGED inside §7, the drop lemma re-derived cold with both attack points closed and two sharpenings — the failed-search attribution forced, the descendant-W′-sweep improver case vacuous by IH pre-emption; the single remaining open item is (c), the tuple grade); TUPLE GRADE UPGRADED 2026-07-21 (addendum 27: the honest target is (len, hops) grade — the pred slot fails prefix optimality and is excluded as permanent scope — and the whole chain transfers: the tie-refusal corner closes by the refusal-floor argument (a refused canonical candidate certifies lh-completeness), post-settlement drift is confined by the regime to the candidate-invisible pred slot, and the tuple-strict borrows become native; (H_lh | V5) at derivation grade, cold audit owed as (a-27), row J designed as the record's face); addendum 27 cold audit PASSED 2026-07-21 (addendum 28: all five attack points hold — one substantive repair, the refusal-floor argument gains its bound-gate face (the acceptance test is `cand ≤ d[v] && cand < b`: the strict prefix chain kills the bound face at branch (iii), the DCA echo, and the cascade re-mints, and it self-cancels at the drop corner — pop and sweep share the bound on bit-identical candidates), plus three same-key inventory additions (lazy-deletion equality, same-key heap order, the acceptance tie face) — (H_lh | V5) COLD-AUDITED end-to-end; pred slot permanent scope; next the PROOF.md lh rewrite, then row J)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry); CUSTODY PERSISTENCE WRITTEN 2026-07-18 (addendum 20: Lemma Rep proved, re-arm gaps closed by bound domination at violating events, S1 reduced to S2 — and the honest negative: S2's closure is not derivable from the assembled machinery; (H | V5) is now conditional on exactly one obligation, (d2) the frontier-order question, decidable by row I's two-stage protocol, with the exit-cap engine as the designed fallback; same-session math, cold audit owed); addendum 20 cold audit PASSED 2026-07-18 (addendum 21: all five attack points hold, one wording repair — D3's "consumed" reads "settled"; the case-5 corner collapsed to a len-grade vacuity with one-step complementarity, chain re-rooting named as the gate-refused closure, and debt (c) gains a second pressure point: post-settlement tuple-drift echoes); ROW I STAGE 1 CLOSED NEGATIVE 2026-07-21 (addendum 22: every assembly route for the harmless leak closes against an audited mechanism — the two nearest misses built and confirmed predictions-first as rows R1/R2, examples/rowi.rs; sharpened claim at derivation grade, cold audit owed: a strict sub-B′ stored value under V5 requires a stale-at-filter W′ pass, so viol ⟹ settle-inc, stage 1 as protocoled is unassemblable, and (d2) is the whole of (H | V5), decided by stage 2); addendum 22 cold audit PASSED 2026-07-21 (addendum 23: all four attack points hold, two repairs — slot (c) reads the drop call's own later sweep, slot (a) gains its stall arm — and the custody-entry bound-domination dichotomy named as the single-call engine); ROW I STAGE 2 CLOSED NEGATIVE 2026-07-21 (addendum 24: the narrow-z + stale-walked-y assembly closes on every route — the DCA-echo reduction retires the settled-z geometry, the beam dichotomy retires the unsettled-z one (unpulled custody pins B′ ≤ dis(z), the empty interval; pulled custody cascades and the same-iteration echo repairs y before the filter), rows R3/R4 exhibit the two faces predictions-first — (d2) CLOSED at derivation grade: (H | V5) assembled end-to-end with NO named obligation for the first time, cold audit owed); addendum 24 cold audit PASSED 2026-07-21 (addendum 25: all five attack points hold — one substantive repair, the refused-echo corner closed by the W′-sweep drop lemma (W′ settlers are exactly walked-at-final vertices; every out-neighbor below B′ co-settles in the batch), two wording grades sharpened; (d2) COLD-AUDITED — every link of the (H | V5) chain is now audited end-to-end; remaining: (a-25) re-derive the drop lemma inside the consolidation write-up, (c) tuple grade); (H | V5) CONSOLIDATED 2026-07-21 (addendum 26: PROOF.md written as the linear citable record of the chain — Lemma V named, the S1/S2 narrative folded into it; (a-25) DISCHARGED inside §7, the drop lemma re-derived cold with both attack points closed and two sharpenings — the failed-search attribution forced, the descendant-W′-sweep improver case vacuous by IH pre-emption; the single remaining open item is (c), the tuple grade); TUPLE GRADE UPGRADED 2026-07-21 (addendum 27: the honest target is (len, hops) grade — the pred slot fails prefix optimality and is excluded as permanent scope — and the whole chain transfers: the tie-refusal corner closes by the refusal-floor argument (a refused canonical candidate certifies lh-completeness), post-settlement drift is confined by the regime to the candidate-invisible pred slot, and the tuple-strict borrows become native; (H_lh | V5) at derivation grade, cold audit owed as (a-27), row J designed as the record's face); addendum 27 cold audit PASSED 2026-07-21 (addendum 28: all five attack points hold — one substantive repair, the refusal-floor argument gains its bound-gate face (the acceptance test is `cand ≤ d[v] && cand < b`: the strict prefix chain kills the bound face at branch (iii), the DCA echo, and the cascade re-mints, and it self-cancels at the drop corner — pop and sweep share the bound on bit-identical candidates), plus three same-key inventory additions (lazy-deletion equality, same-key heap order, the acceptance tie face) — (H_lh | V5) COLD-AUDITED end-to-end; pred slot permanent scope; next the PROOF.md lh rewrite, then row J); PROOF.md REWRITTEN AT LH GRADE 2026-07-21 (addendum 29: the document now states and proves (H_lh | V5) with the length-grade theorem as its len-slot projection — the two audit-assembled closures (bound-face strict-chain/self-cancel, cascade re-base) re-derived fresh from the code before folding in, the refusal-floor lemma named in §3, §7's corollary split into three faces with the label-clause proviso, and the instrumentation gap recorded in §10; the chain carries no named debt and its citable record is at final grade; remaining follow-up: row J, designed, predictions recorded)
 
 What the paper needs and never states or proves:
 
@@ -4360,6 +4360,113 @@ recorded in addendum 27, driver-only.
 first time at tuple grade. Docs only; solver untouched; tests green
 with features on and off. Next: the PROOF.md lh-grade rewrite, then
 row J at leisure.
+
+## Q14 addendum 29 (2026-07-21, fresh session) — the PROOF.md lh-grade rewrite: the document is now the citable record at (len, hops) grade, with the two audit-assembled closures re-derived fresh before folding in, per the cadence rule
+
+The step queued by addendum 28. Deliverable: PROOF.md rewritten in one
+pass — statement, notation, and every section re-worded at lh grade —
+so the document states and proves **(H_lh | V5)** with the length-grade
+theorem as its len-slot projection. The solver is untouched; the two
+closures that addendum 28 assembled during its audit were re-derived
+from the code in THIS session before being written into the document,
+per the standing rule that same-session audit assembly is never
+consolidated without a fresh derivation.
+
+**The fresh re-derivations (both match the addendum-28 record).**
+
+- *The bound face of the refusal-floor lemma.* Code re-pinned first:
+  the acceptance test is `cand ≤ d[v] && cand < b` (714) — label
+  clause and bound clause; the candidate reads only (len, hops) of the
+  source plus the two ids (708–713); the FindPivots search relax and
+  the W′ sweep relax both pass the enclosing call's own `b` (922,
+  1438 — re-verified by grep over `.relax(` call sites, four hits
+  total). (a) Strict chain: at branch (iii), the DCA echo, and the
+  cascade re-mints, the candidate's prefix is lh(x₁) (S1 + prefix
+  optimality along the chosen canonical path), and
+  prefix(c₁) = lh(x₁) ≤lex lh(y) <lex prefix(d[y]) ≤lex prefix(b_site)
+  — the middle step strict by (Floor) at the violator, d[y] < B(C_e)
+  full-tuple because a failed search adopted y under the call's relax
+  bound and labels only improve, bounds nesting full-tuple above — so
+  by the workhorse c₁ < b_site full-tuple: the bound clause cannot be
+  the refusing clause at any of the three sites. (b) Self-cancellation
+  at the drop corner: the final-label pop and the W′ sweep relax the
+  same edge at the SAME bound B(C) with bit-identical candidates
+  (candidates are prefix-functions of the source plus ids; z's prefix
+  is pinned by completeness), so a bound-refused pop forces a
+  bound-refused sweep — no sub-B′ drop occurs through the bound face,
+  and the corollary's refused face needs only the label-clause
+  proviso.
+- *The cascade re-base face.* A re-fired bit-identical offer into
+  chain link v can be label-refused because v itself improved below it
+  since the chain was traced — including a pred-only drift (equal
+  prefix, smaller pred: S2's subject). The refusal means d[v] < cand:
+  v's current label is a strictly smaller tuple whose writing accept
+  (one of the four relax sites) roots a new provenance chain through
+  v — again tuple-strictly ascending by Fact Z, again grounded in a
+  settlement echo or a walked S-member, and the cascade/stall
+  dichotomy applies to the re-based chain verbatim. No step of the
+  machinery reads WHY a refusal fired, only what it implies in the
+  total order.
+
+**What changed in the document, section by section.** Header:
+statement now (H_lh | V5), audit trail 16–28 (seven pairs), the pred
+slot named as scope by design. §1: path tuples, lh(v), lh-completeness,
+and four standing facts added to (E)/(P) — (Floor), (Prefix
+optimality) with the pred-slot failure, (S) the slot lemma (S1/S2,
+with the code basis: the candidate's pred slot is the source's id),
+and (Z) with the workhorse and the self-stripping of degree-reduction
+zero cycles. §2: the acceptance test's two clauses named; the
+lazy-deletion test noted full-tuple with the re-push discipline (a
+mid-search drift strands only stale entries — addendum 28's inventory
+addition). §3: the frame at lh grade — τ_z := d[z] with the
+drift-insensitivity note (every strict comparison against τ_z is
+prefix-decided), the strictness chain in prefix form, the batch
+tie-break derived unread, and the refusal-floor lemma stated as a
+named lemma with both bound-face closures. §5: step 2's pin sentence
+rewritten (settled complete ⟹ (len, hops) pinned at the floor; pred
+drift never enters candidates); the cascade arm gains the re-base
+face; a new post-proof note makes explicit that complete sub-B′
+entries are permitted and harmless (duplicate settlement or
+confinement — the grade-independent point of addendum 28's (iv)).
+§6: bound domination and the anchor chain re-worded over τ_z with the
+full-tuple/workhorse split made explicit. §7: the lemma's conclusion
+re-worded (pop label = filter label, prefix lh(z)); Case 2 now
+explicitly includes pred-only drift — the site exhaustion was checked
+slot-agnostic, so the case analysis kills post-pop pred drift of a W′
+settler too, and Case 1's bit-exact "final label" conclusion survives
+verbatim at tuple grade; case (d) strengthened to bit-identical
+candidates with the three-way accept/label-refuse/bound-refuse
+exhaustion; the corollary rewritten as three faces with the proviso
+(label clause only) and the self-cancellation; the audit note extended.
+§8: case A's echo argument now runs adoption-or-refusal-floor with the
+bound face closed by the strict chain (the len-grade text asserted
+"the echo relax accepts", which glossed the tie face — the gloss the
+tuple-grade pair repaired); ending 2 cites the re-base face among the
+re-mint mechanisms. §9: theorem restated at lh grade. §10: a closing
+paragraph records the instrumentation gap honestly — both settle-inc
+counters compare .len only, so the record measures the projection;
+row J's designed probes are referenced, predictions recorded in
+addendum 27. §11: rewritten — (len, hops) grade with the pred slot as
+permanent scope (settlement-time pred = min id among ARRIVED tight
+offers; the diamond shape; the differential gate pins determinism, not
+canon), regime conditionality, the paper-contract paragraph unchanged,
+proof grade updated to seven pairs plus this revision's two fresh
+re-derivations.
+
+**One derivation-level observation recorded (not consumed anywhere
+yet).** Writing §7's Case 2 slot-agnostically shows the drop lemma is
+stronger than its length-grade reading suggested: in the regime a W′
+settler's label is bit-final from its last valid pop — even the pred
+slot cannot drift between pop and filter, because a pred-only improver
+would be an accept at one of the four sites and every site's arm ends
+in the same custody/Lemma-V contradiction. The document states this
+inside Case 2's preamble ("in any slot, pred-only drift included")
+rather than as a separate corollary.
+
+**Status.** Docs only; solver untouched; tests green with features on
+and off (14/14 both configs). The (H_lh | V5) chain remains without
+named debt; PROOF.md is now its citable record at the final grade.
+Next: row J (predictions recorded in addendum 27), at leisure.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
