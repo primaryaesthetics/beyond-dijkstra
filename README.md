@@ -23,7 +23,8 @@ This is the second study in a series. The first,
 the 2025 paper that broke the sorting barrier
 ([arXiv:2504.17033](https://arxiv.org/abs/2504.17033)); this repository does the
 same for the faster algorithm four of those five authors published ten months
-later.
+later. Everything below is also written up as a seven-page note,
+[10.5281/zenodo.21478493](https://doi.org/10.5281/zenodo.21478493).
 
 ## The algorithm
 
@@ -195,6 +196,13 @@ Written by Nikolai Khobotov
 this implementation, its audit findings or its benchmark results, cite it
 through `CITATION.cff`; GitHub renders a "Cite this repository" button from that
 file.
+
+The findings are also written up as an experimental note, *An Implementation
+and Audit of the Duan–Mao–Shu–Yin Directed Shortest-Path Algorithm*
+([10.5281/zenodo.21478493](https://doi.org/10.5281/zenodo.21478493)): the
+measurements, the counterexample and the completeness theorem in seven pages,
+for reading rather than for running. Cite the note for the results and this
+repository for the code.
 
 The algorithm belongs to Ran Duan, Xiao Mao, Xinkai Shu and Longhui Yin
 ([arXiv:2602.07868](https://arxiv.org/abs/2602.07868)). This project is an
