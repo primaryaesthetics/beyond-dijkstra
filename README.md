@@ -1,5 +1,7 @@
 # beyond-dijkstra
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21473443.svg)](https://doi.org/10.5281/zenodo.21473443)
+
 The first implementation of the Duan–Mao–Shu–Yin directed shortest-path
 algorithm ([arXiv:2602.07868](https://arxiv.org/abs/2602.07868), February 2026),
 in Rust, with the two questions the paper leaves open answered by measurement
