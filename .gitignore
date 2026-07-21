@@ -4,3 +4,7 @@ __pycache__/
 .pytest_cache/
 target/
 benchmarks/data/
+# Working drafts for publication: letters, plans, ready-to-paste texts.
+# Not part of the research record and not for publication. Kept here
+# rather than in .git/info/exclude so the rule survives a clone.
+publication/
