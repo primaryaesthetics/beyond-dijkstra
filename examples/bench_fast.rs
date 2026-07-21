@@ -222,6 +222,29 @@ fn main() {
     let d0 = bench_dedup(0);
     let dtop = bench_dedup(99);
 
+    // V10 = V5+V8 certified composition (VARIANTS.md V10): the settled
+    // bit on top of the V5 base cap. Distance-exact by proof (PROOF.md
+    // §12), unlike V8 alone.
+    let bench_v5v8 = |hl: u64| -> f64 {
+        let mut times = Vec::new();
+        for _ in 0..6 {
+            let t0 = Instant::now();
+            let run = fast::sssp_fixed_dedup(n, &edges, 0, hl, None);
+            times.push(t0.elapsed().as_secs_f64());
+            assert_eq!(run.dup_settlements, 0, "v5v8-fast(L={hl}): dups");
+            let bad = dist
+                .iter()
+                .zip(run.dist.iter())
+                .filter(|(a, b)| a.total_cmp(b) != std::cmp::Ordering::Equal)
+                .count();
+            assert_eq!(bad, 0, "v5v8-fast(L={hl}) distances diverge from dijkstra");
+        }
+        times.remove(0); // warmup
+        median(times)
+    };
+    let c0 = bench_v5v8(0);
+    let ctop = bench_v5v8(99);
+
     // V9 flat top runner (VARIANTS.md V9).
     let mut flat_times = Vec::new();
     for _ in 0..6 {
@@ -269,6 +292,17 @@ fn main() {
         "v8-fast L=top median {dtop:7.3} s   ({:.2}x dijkstra, {:.2}x of fast L=top)",
         dtop / dj,
         dtop / ftop
+    );
+    println!(
+        "v5v8-fast L=0 median {c0:7.3} s   ({:.2}x dijkstra, {:.2}x of fast L=0, {:.2}x of v8-fast L=0)",
+        c0 / dj,
+        c0 / f0,
+        c0 / d0
+    );
+    println!(
+        "v5v8-fast L=top median {ctop:5.3} s   ({:.2}x dijkstra, {:.2}x of fast L=top)",
+        ctop / dj,
+        ctop / ftop
     );
     println!(
         "v9-flat      median {flat:8.3} s   ({:.2}x dijkstra, {:.2}x of v8-fast L=top)",

@@ -861,6 +861,23 @@ pub fn sssp_dedup(
     sssp_full(n, edges, source, hybrid_level, false, true, override_params)
 }
 
+/// V10 entry (VARIANTS.md): the V5 base cap AND the V8 settled bit
+/// together — the certified composition. Under V5 the settlement label
+/// is bit-final (PROOF.md §12, Theorem BF), so the settled bit rejects
+/// only relaxes that would have been no-ops; distances therefore equal
+/// V5's, which are the true lengths on V5 (PROOF.md, (H_lh | V5)). Unlike
+/// V8 alone this composition is distance-exact by proof, not just on the
+/// tested matrix.
+pub fn sssp_fixed_dedup(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> FastRun {
+    sssp_full(n, edges, source, hybrid_level, true, true, override_params)
+}
+
 fn sssp_full(
     n: usize,
     edges: &[(u32, u32, f64)],

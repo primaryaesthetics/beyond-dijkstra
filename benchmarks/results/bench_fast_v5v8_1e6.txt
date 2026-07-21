@@ -1,0 +1,10 @@
+graph: random m=4n, n=1000000
+n=1000000, m=4000000
+dijkstra     median    0.813 s
+fast L=0     median    3.881 s   (4.78x dijkstra)
+fast L=top   median    2.300 s   (2.83x dijkstra)
+v8-fast L=0  median    3.682 s   (4.53x dijkstra, 0.95x of fast L=0)
+v8-fast L=top median   2.377 s   (2.93x dijkstra, 1.03x of fast L=top)
+v5v8-fast L=0 median   3.645 s   (4.49x dijkstra, 0.94x of fast L=0, 0.99x of v8-fast L=0)
+v5v8-fast L=top median 2.387 s   (2.94x dijkstra, 1.04x of fast L=top)
+v9-flat      median    1.553 s   (1.91x dijkstra, 0.65x of v8-fast L=top)

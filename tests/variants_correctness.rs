@@ -47,6 +47,18 @@ fn check(n: usize, edges: &[(u32, u32, f64)], source: usize, tag: &str) {
         assert_dists(n, &v5.dist, &expect, &format!("{tag} (v5 L={hl})"));
         let f5 = fast::sssp_fixed(n, edges, source, hl, Some((3, 2, 2)));
         assert_dists(n, &f5.dist, &expect, &format!("{tag} (v5-fast L={hl})"));
+        // V10 = V5+V8 certified composition: distance-exact vs Dijkstra,
+        // zero duplicate settlements, AND bit-identical to V5 — the
+        // operational content of PROOF.md §12 (the settled bit changes
+        // nothing under V5, so no relax it rejects was an improvement).
+        let v58 = no_transform::sssp_v5v8(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(n, &v58.dist, &expect, &format!("{tag} (v5v8 L={hl})"));
+        assert_eq!(v58.dup_settlements, 0, "{tag} (v5v8 L={hl}): dups");
+        assert_dists(n, &v58.dist, &v5.dist, &format!("{tag} (v5v8 vs v5 L={hl})"));
+        let f58 = fast::sssp_fixed_dedup(n, edges, source, hl, Some((3, 2, 2)));
+        assert_dists(n, &f58.dist, &expect, &format!("{tag} (v5v8-fast L={hl})"));
+        assert_eq!(f58.dup_settlements, 0, "{tag} (v5v8-fast L={hl}): dups");
+        assert_dists(n, &f58.dist, &f5.dist, &format!("{tag} (v5v8-fast vs v5-fast L={hl})"));
     }
     // V8 settled bit, natural and deepest-recursion regimes; duplicate
     // settlements must be zero by construction.
@@ -106,6 +118,15 @@ fn check_seed_range(seeds: std::ops::Range<u64>) {
         assert_dists(g.n, &v5.dist, &expect, &format!("seed {seed} (v5)"));
         let f5 = fast::sssp_fixed(g.n, &g.edges, g.source, 0, g.override_params);
         assert_dists(g.n, &f5.dist, &expect, &format!("seed {seed} (v5-fast)"));
+        // V10 = V5+V8 certified composition (full recursion).
+        let v58 = no_transform::sssp_v5v8(g.n, &g.edges, g.source, 0, g.override_params);
+        assert_dists(g.n, &v58.dist, &expect, &format!("seed {seed} (v5v8)"));
+        assert_eq!(v58.dup_settlements, 0, "seed {seed} (v5v8): dups");
+        assert_dists(g.n, &v58.dist, &v5.dist, &format!("seed {seed} (v5v8 vs v5)"));
+        let f58 = fast::sssp_fixed_dedup(g.n, &g.edges, g.source, 0, g.override_params);
+        assert_dists(g.n, &f58.dist, &expect, &format!("seed {seed} (v5v8-fast)"));
+        assert_eq!(f58.dup_settlements, 0, "seed {seed} (v5v8-fast): dups");
+        assert_dists(g.n, &f58.dist, &f5.dist, &format!("seed {seed} (v5v8-fast vs v5-fast)"));
         // V8 settled bit (full recursion), zero duplicates by construction.
         let v8 = no_transform::sssp_v8(g.n, &g.edges, g.source, 0, g.override_params);
         assert_dists(g.n, &v8.dist, &expect, &format!("seed {seed} (v8)"));
@@ -202,6 +223,14 @@ fn q10_resettlement_pressure() {
             let f8 = fast::sssp_dedup(n, &edges, 0, hl, Some((3, 2, 2)));
             assert_dists(n, &f8.dist, &expect, &format!("q10 n={n} L={hl} (v8-fast)"));
             assert_eq!(f8.dup_settlements, 0, "q10 n={n} L={hl} (v8-fast): dups");
+            // V10 = V5+V8 under the maximum re-settlement pressure.
+            let v58 = no_transform::sssp_v5v8(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &v58.dist, &expect, &format!("q10 n={n} L={hl} (v5v8)"));
+            assert_eq!(v58.dup_settlements, 0, "q10 n={n} L={hl} (v5v8): dups");
+            assert_dists(n, &v58.dist, &v5.dist, &format!("q10 n={n} L={hl} (v5v8 vs v5)"));
+            let f58 = fast::sssp_fixed_dedup(n, &edges, 0, hl, Some((3, 2, 2)));
+            assert_dists(n, &f58.dist, &expect, &format!("q10 n={n} L={hl} (v5v8-fast)"));
+            assert_eq!(f58.dup_settlements, 0, "q10 n={n} L={hl} (v5v8-fast): dups");
         }
     }
 }

@@ -874,3 +874,75 @@ the 1e6 signal. The best family member is now **1.8–2.0× of the
 crate's Dijkstra**, and V9 is structurally identical to it except for
 the 16-byte packed 4-tuple key and the pred side-array — the verdict
 chain's residual, measured as precisely as this machine allows.
+
+## V10 — V5 + V8: the certified composition
+
+V8 alone is a math repair AND a measured speedup, but its exactness was
+only ever conditional: "IF every settlement settles a complete vertex."
+Q14 (addenda 13–15) falsified that hypothesis — the paper's W′ filter
+settles an incomplete vertex on a crafted frontier, and row H exhibits
+a full recursion where V8 freezes the wrong distance (d[y_t] =
+23.59375 vs the true 23.546875, `examples/rowh.rs`). So V8's speedup
+came with the same trust grade as the paper's own completeness clause:
+exact on the tested matrix, incorrect in general.
+
+V5 removes exactly that hypothesis's failure mode: the base-case B′ cap
+restores the Lemma 3.1 contract, and the whole Q14 (H | V5) program —
+now the linear record `PROOF.md` — proves that on V5 every settlement
+settles a complete vertex (Lemma T, §9) and, sharper, the settlement
+label is **bit-final**, pred included (Theorem BF, §12). V10 runs both:
+the V5 base cap and the V8 settled bit together.
+
+**Claim.** With the V5 base cap on, adding the V8 settled bit changes
+no distance. V10's distances equal V5's, which are the true shortest
+lengths.
+
+**Proof.** The settled bit does three things: it drops stale entries of
+a settled vertex at a pull, refuses relaxes into a settled vertex, and
+excludes settled vertices from W′. Each only ever suppresses work on a
+vertex whose label is already its settlement label. By Theorem BF
+(PROOF.md §12), on V5 that settlement label is bit-final: no later
+accept strictly improves it. So every relax the bit refuses would have
+been rejected anyway by the engine's own `cand ≤ d[v]` test (it is a
+no-op — an equal-or-worse candidate), and every entry it drops is a
+stale duplicate the keep-min map would never have pulled at a better
+value. Removing no-ops changes neither the label array nor the
+distances. Hence V10 ≡ V5 on distances, and V5 is distance-exact
+((H_lh | V5), PROOF.md §9). Unlike V8 alone, V10's exactness is a
+theorem, not a property of the tested matrix — row H's channel is
+closed by the V5 cap it runs under (same input: cap = 1, all counters
+zero, distances exact). The settled bit additionally makes |U|
+accounting exact (event count = distinct count, dup_settlements ≡ 0),
+so the pinned event-count guard and the paper's set-count guard
+coincide — the operational half of Q10/Q13 for this engine.
+
+**Classification.** Class 2 (distances must stay bit-exact; on top of
+V5's contract restoration and V8's dedup). Gate: Tier-2 full matrix,
+with V10 asserted bit-exact against Dijkstra, `dup_settlements == 0`,
+AND bit-identical to V5 per input — the last assertion is the
+operational content of the proof (the bit changes nothing under V5).
+
+**Result.** Tier-2 gate green over the full matrix, both engines
+(`tests/variants_correctness.rs`: `sssp_v5v8` map engine, `sssp_fixed_dedup`
+fast engine), across the three generator regimes, the tie-rich 1.02e6-edge
+stress, the star/hub family, and the Q10 zero-heavy min-slack pressure —
+V10 bit-exact vs Dijkstra and vs V5, dups zero, on every cell. The V5 cap
+costs nothing measurable: it touches only base-case return values, so V10
+carries V8's speedup unchanged. Same-process fast-engine medians on the
+Windows box (raw records `benchmarks/results/bench_fast_v5v8_{1e5,1e6,NY}.txt`;
+within-run ratios only — the box's absolute constant is not comparable to
+the recorded mac numbers):
+
+| input | fast L=0 | v8-fast L=0 | v5v8-fast L=0 | v5v8/v8 | v5v8/fast |
+|---|---|---|---|---|---|
+| random 1e5 | 5.76x | 5.12x | 5.12x | 1.00x | 0.89x |
+| random 1e6 | 4.78x | 4.53x | 4.49x | 0.99x | 0.94x |
+| USA-road-d.NY | 7.33x | 7.15x | 7.68x | 1.07x | 0.94x |
+
+v5v8-fast tracks v8-fast to within run-to-run noise (the NY 1.07x is
+spread on a 0.03 s Dijkstra baseline, the same small-input variance V8's
+own record notes), and keeps V8's −6…−11% win over the plain fast engine
+where duplicates and re-adoption pressure live. The verdict is unchanged
+— no family member approaches Dijkstra at storable sizes — but V10 is the
+first variant whose speedup and whose exactness are BOTH proved: the
+accelerating bit rides on a certified-complete base.

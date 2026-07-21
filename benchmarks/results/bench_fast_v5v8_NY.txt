@@ -1,0 +1,10 @@
+graph: benchmarks/data/USA-road-d.NY.gr
+n=264346, m=733846
+dijkstra     median    0.032 s
+fast L=0     median    0.238 s   (7.33x dijkstra)
+fast L=top   median    0.087 s   (2.68x dijkstra)
+v8-fast L=0  median    0.232 s   (7.15x dijkstra, 0.97x of fast L=0)
+v8-fast L=top median   0.100 s   (3.10x dijkstra, 1.16x of fast L=top)
+v5v8-fast L=0 median   0.249 s   (7.68x dijkstra, 1.05x of fast L=0, 1.07x of v8-fast L=0)
+v5v8-fast L=top median 0.091 s   (2.79x dijkstra, 1.04x of fast L=top)
+v9-flat      median    0.058 s   (1.80x dijkstra, 0.58x of v8-fast L=top)

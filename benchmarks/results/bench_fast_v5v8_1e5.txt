@@ -1,0 +1,14 @@
+graph: random m=4n, n=100000
+n=100000, m=400000
+params: delta=3 t=6 k=3 l_top=4 n2=800040
+v1 params: delta=3 t=5 k=3 l_top=4
+dijkstra     median    0.028 s
+mainline     median    9.384 s   (338.69x dijkstra)
+no-transform median    0.206 s   (7.43x dijkstra, 0.02x of mainline)
+fast L=0     median    0.160 s   (5.76x dijkstra, 0.78x of no-transform)
+fast L=top   median    0.083 s   (2.98x dijkstra)
+v8-fast L=0  median    0.142 s   (5.12x dijkstra, 0.89x of fast L=0)
+v8-fast L=top median   0.085 s   (3.06x dijkstra, 1.03x of fast L=top)
+v5v8-fast L=0 median   0.142 s   (5.12x dijkstra, 0.89x of fast L=0, 1.00x of v8-fast L=0)
+v5v8-fast L=top median 0.088 s   (3.16x dijkstra, 1.06x of fast L=top)
+v9-flat      median    0.052 s   (1.89x dijkstra, 0.62x of v8-fast L=top)

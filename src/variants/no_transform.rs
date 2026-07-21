@@ -93,6 +93,22 @@ pub fn sssp_v8(
     sssp_run_inner(n, edges, source, hybrid_level, false, true, override_params, None)
 }
 
+/// V10 (VARIANTS.md): the V5 fixed base case AND the V8 settled bit
+/// together — the certified composition. On V5 settlement labels are
+/// bit-final (PROOF.md §12, Theorem BF), so the settled bit skips only
+/// no-op relaxes and the distances equal V5's, i.e. the true lengths
+/// ((H_lh | V5)). Distance-exact by proof, not merely on the tested
+/// matrix as V8 alone is.
+pub fn sssp_v5v8(
+    n: usize,
+    edges: &[(u32, u32, f64)],
+    source: usize,
+    hybrid_level: u64,
+    override_params: Option<(u64, u64, u64)>,
+) -> VariantRun {
+    sssp_run_inner(n, edges, source, hybrid_level, true, true, override_params, None)
+}
+
 /// Restricted-invariant pre-test runner (QUESTIONS.md Q14 item 1): any of
 /// the engines above, plus an exact-completeness oracle (true shortest-path
 /// lengths per vertex) feeding the `incomplete_*` counters. Observation
