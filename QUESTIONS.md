@@ -4629,6 +4629,175 @@ residual's two faces as exhibits and the lh-oracle's corpus-wide
 zeros. Next: the (a-30) cold audit; if it holds, fold bit-finality
 into PROOF.md §11 as the sharpened scope sentence.
 
+## Q14 addendum 31 (2026-07-21, fresh session) — cold audit of addendum 30: all five attack points hold — bit-finality of settlement labels and the pred-canonicality argument are COLD-AUDITED, with one substantive repair (the top-sweep argument silently assumed the canonical pred settles; the missing every-reached-vertex-settles lemma is derived here) and two structural facts made explicit (stack locality of live Ds; pivot-argmin value-prefix compatibility)
+
+**Protocol.** Every step re-derived against the port's code this
+session, none from memory: label.rs 24–32 (total lex order), the
+relax candidate 708–713 (reads only the source's (len, hops) plus
+the two ids) and acceptance 714 (`cand <= d[v] && cand < b`), the
+four relax sites (922 / 1086 / 1249 / 1438, grep-complete), the
+eight insert sites (1044, 1088, 1159, 1212, 1250, 1292, 1335,
+1439, grep-complete), pull as a value-prefix (327–337: the M
+smallest leave together; the separator is the smallest remaining,
+so every sub-separator entry present at the pull is in the pulled
+prefix), keep-min 300–316, the pivot argmin at selection 1147–1153
+and re-selection 1284–1291, expansion 1189–1203, the in-iteration
+order pull → recurse → merge (1212) → bookkeeping (1221) → relax
+sweep (1241) → re-selection (1275) → next pull, line 33 at 1334,
+the W′ filter 1346–1354 and sweep 1435–1447, W′ members entering
+u_log before the return (1450), the V5 cap 1097–1105, the V8 gates
+(701–706, 1052, 1192, 1206–1210, 1331, 1352), and the top call at
+1538 with the totality assert 1544.
+
+**(i) Route 1's first-covering-context argument under recursion and
+M > 1 — HOLDS.** Two facts the addendum consumed implicitly are now
+explicit, and both are raw code structure. (Stack locality): every
+D is a local of an active call, so at any settlement event every
+live D sits on the settling call's own ancestor chain — "the first
+context whose bound covers v's settlement" is always an ancestor of
+the settling call, and any custody entry below d[v] is co-resident
+with v's descent at their common level. (Value-prefix pulls): a
+pull takes the M smallest entries, so any block containing v's
+custody contains every smaller live entry; pivot-proxy custody is
+compatible because the pivot is the argmin of its P_j (pivot value
+≤ member value), so a member expanded into block i (d < b_i) can
+never outrun a smaller direct entry (a sub-b_i entry present at the
+pull is in the pulled prefix) or a smaller proxy chain (its pivot
+is smaller still, with a live entry by the re-selection re-mint).
+The in-child delivery exhaustion: in the settling base call the
+only relax site is 1086 and its insert 1088 is ungated below the
+call bound, so the co-descended chain cascades in pull order and c
+fires before v's pull — the bound clause is mute because every
+base-D value sits under B (W1, re-verified per site) and
+c < d[v] ≤ stored(v) < B. In recursive children every tightening
+accept mints custody: the base insert is ungated, and at sweep
+sites the first accepting ancestor's insert gate passes by one-step
+complementarity (refusal at the child's bound means cand ≥
+B(child) = the parent's insert gate), with a deeper level minting
+instead when the candidate sits under the child's own bound. The
+one custody-free face — a tightening at the FindPivots relax 922,
+which never inserts, inside a search that succeeds (the re-pushed
+entry is never popped because |K| reaches k first), leaving the
+tightened vertex invisible at that call — closes by chain regress:
+the accept's source either holds custody or is pivot-eligible (an
+s_list member of a tree group, with the group argmin at or below
+it), so the source settles first by the same value-prefix descent,
+and its settlement echo re-fires the tie into the target — an
+exact-tie re-store is an accept at 714's ≤, and inserts fire on any
+accept — minting the target's custody at the first covering
+ancestor. The regress is finite by Fact Z (tuple-strict descent
+along tight edges). Cutoff interruptions postpone v's settlement
+rather than break delivery: at v's actual settling call the
+surviving chain entries are still tuple-below and still co-pulled.
+
+**(ii) Route 1's bound-refused source sweep and the ancestor
+re-fire ordering — HOLDS.** The echo climbs lazily — p′ ∈ u_log
+propagates one level per return, and each ancestor's relax sweep
+fires p′'s full edge list at that ancestor's own bound (1246–1272,
+site 1249 passing b) only when p′'s iteration returns there — and
+the lazy climb is exactly enough. At any moment the deepest
+still-active call that has swept p′ is some A_s on the current
+stack; every subtree seeded after that sweep is seeded by a pull at
+A_s, so a settlement of v inside such a subtree has stored(v) <
+b_pull ≤ B(A_s), hence c < d[v] ≤ stored(v) < B(A_s), and the
+accept of c already fired at A_s's sweep — before the seeding pull,
+by the in-iteration code order (the sweep at 1241 precedes the
+loop's next pull at 1177). If v instead settles in a subtree seeded
+before the sweep, it shares p′'s iteration and the co-descent
+recursion of (i) applies one level down, grounding at base pull
+order. W′ settlement of the source is not special: w_prime members
+enter u_log before the return (1450), so the parent sweeps them in
+the same iteration — the DCA-echo geometry in reverse, exactly as
+the addendum stated, now checked in every interleaving.
+
+**(iii) Edge-tightness of stored preds under S2 drift chains —
+HOLDS, with the audit's one substantive repair landing beside it.**
+The edge-tightness step itself is clean: the accept that wrote the
+current d[v] = (len, hops, v, p) built its candidate at 708–713
+from p's label at write time, which was therefore edge-tight at
+(len − w, hops − 1); labels only improve, so a later improvement of
+p's prefix would put canonical(p) + edge lex-below (len, hops) — a
+genuine path prefix under v's canonical pair, contradicting
+lh-minimality. Hence p's write-time prefix was canonical, p is a
+genuine tight pred, and S2 drift — which moves only pred slots and
+never enters the candidate — cannot un-tighten it; all four accept
+sites share the one candidate constructor. The repair: the
+top-sweep argument ("every settled vertex is re-swept at the top
+call's infinite bound, so the canonical tight offer eventually
+fires ungated") silently assumes the min-id tight pred p* SETTLES.
+That premise is not a raw invariant — the port's own
+instrumentation comment (solver.rs 131) names
+complete-but-never-settled states mid-run — and the audit derives
+it as a lemma for full paper/V5 runs in the regime: every reached
+vertex settles at least once. Derivation: a reached vertex's
+completing accept mints custody at the first accepting sweep level
+or the base (complementarity, per (i)), or — at the insert-free
+FindPivots site — custody arrives by the (i) regress (the source
+settles first and its echo's exact-tie re-store mints it); entries
+are consumed only by pulls and the top D drains (the totality
+assert 1544), so the entry is eventually pulled into some si; an si
+member either settles in-loop (base pulls settle unconditionally at
+1055), settles at the boundary (a failed search puts it in w_list,
+and sub-B′ w_list members pass the filter), hands custody back by
+line 33 (d ≥ B′), or roots/joins a successful tree — and in the
+last case the pivot machinery grinds: an unpulled pivot entry at
+the return would sit at value ≤ the member's, hence sub-B′,
+contradicting Lemma V at the return; a pulled pivot settles (echo,
+then re-selection re-mints the next argmin, eventually the member
+itself) or is an s_list member of the child one level down, and the
+level induction grounds at the base. Custody therefore persists
+until settlement, and p*'s settlement fires the canonical offer at
+the top call's Inf bound; a label-refusal then forces pred
+equality, since refusal pins d[v] ≤ c* (equal canonical prefix,
+pred ≤ p*) while the stored pred is itself tight (≥ the min id).
+With the lemma in place the pred column's prediction for paper/V5
+is derivation-grade; V8 stays recorded-not-predicted, as the
+addendum said.
+
+**(iv) V5 cap slot-inertness — HOLDS.** The cap (1097–1105) lowers
+the returned bound to a stored value and touches nothing else: no
+label write, no D mutation. Every bound the two arguments consume
+is compared full-tuple (714, 1195, 1249, 1334, 1338, 1351), every
+bound is Inf or a stored value (provenance unchanged), and no step
+of either derivation decomposes a bound into slots — re-checked
+sentence by sentence against the route texts. The cap only
+tightens the W′ filter and widens line 33, both consumed as-is.
+
+**(v) Scope hygiene — HOLDS as stated.** The map: route 1 consumes
+the regime through exactly three doors — the §7 corollary
+(walked-at-final), Lemma V (stored ≥ B′ at returns and filters),
+and the lh-pinning of tight-pred prefixes ((H_lh | V5) + Floor) —
+with everything else raw engine mechanics (total order, W1
+per-site, value-prefix pulls, complementarity, stack locality, code
+order). Route 2 consumes the §7 corollary and, for the same-batch
+face, §7 Case 2's slot-agnostic exhaustion — the addendum-29
+observation, now consumed exactly where addendum 30 said it would
+be. The pred-canonicality argument consumes (H_lh | V5) + Floor for
+final (len, hops) canonicity, lh-minimality for edge-tightness, and
+the new settles-lemma (Lemma V plus the raw totality assert). So
+the V5 claims are regime-conditional exactly as stated; the
+paper-engine face rests on the same steps under the
+first-violation-free regime (the corpus's zero-counter record);
+bit-finality on V8 is raw code (the dedup gates), and
+pred-canonicality is correctly NOT claimed for V8 — a frozen
+non-canonical pred is within its distance-exact contract.
+
+**Verdict.** (a-30) discharged: the bit-finality closure and the
+pred-canonicality argument are COLD-AUDITED; the chain's audit
+trail now runs addenda 16–31 with every derivation paired to a
+cold audit. No named debt stands against the chain. The PROOF.md
+fold-in — §11's bit-finality sentence, §7's observation promoted
+from "consumed nowhere", and the settles-lemma if the
+pred-canonicality argument is folded too — is the next session's
+task, and per the cadence rule it must re-derive fresh the two
+closures this audit assembled: (α) the every-reached-vertex-settles
+lemma and (β) the explicit delivery induction of (i)/(ii) (stack
+locality + value-prefix pulls + the lazy-climb ordering).
+
+**Status.** Docs only; solver untouched; tests green with features
+on and off (14/14 both configs). Next: the PROOF.md fold-in
+session.
+
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 
 Built to decide Q14 addendum 4's unproved item (i): force a
