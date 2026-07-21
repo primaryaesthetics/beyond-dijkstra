@@ -101,3 +101,7 @@ required-features = ["verify-contract", "dup-classify"]
 [[example]]
 name = "rowi"
 required-features = ["verify-contract", "dup-classify"]
+
+[[example]]
+name = "rowj"
+required-features = ["verify-contract", "dup-classify", "q11-trace"]

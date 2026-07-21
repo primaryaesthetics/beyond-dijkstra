@@ -469,7 +469,7 @@ settlement events anywhere: a re-settlement cascade, if constructible,
 finishes silently with super-linear time under set semantics and
 aborts loudly under the pinned one.
 
-## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry); CUSTODY PERSISTENCE WRITTEN 2026-07-18 (addendum 20: Lemma Rep proved, re-arm gaps closed by bound domination at violating events, S1 reduced to S2 — and the honest negative: S2's closure is not derivable from the assembled machinery; (H | V5) is now conditional on exactly one obligation, (d2) the frontier-order question, decidable by row I's two-stage protocol, with the exit-cap engine as the designed fallback; same-session math, cold audit owed); addendum 20 cold audit PASSED 2026-07-18 (addendum 21: all five attack points hold, one wording repair — D3's "consumed" reads "settled"; the case-5 corner collapsed to a len-grade vacuity with one-step complementarity, chain re-rooting named as the gate-refused closure, and debt (c) gains a second pressure point: post-settlement tuple-drift echoes); ROW I STAGE 1 CLOSED NEGATIVE 2026-07-21 (addendum 22: every assembly route for the harmless leak closes against an audited mechanism — the two nearest misses built and confirmed predictions-first as rows R1/R2, examples/rowi.rs; sharpened claim at derivation grade, cold audit owed: a strict sub-B′ stored value under V5 requires a stale-at-filter W′ pass, so viol ⟹ settle-inc, stage 1 as protocoled is unassemblable, and (d2) is the whole of (H | V5), decided by stage 2); addendum 22 cold audit PASSED 2026-07-21 (addendum 23: all four attack points hold, two repairs — slot (c) reads the drop call's own later sweep, slot (a) gains its stall arm — and the custody-entry bound-domination dichotomy named as the single-call engine); ROW I STAGE 2 CLOSED NEGATIVE 2026-07-21 (addendum 24: the narrow-z + stale-walked-y assembly closes on every route — the DCA-echo reduction retires the settled-z geometry, the beam dichotomy retires the unsettled-z one (unpulled custody pins B′ ≤ dis(z), the empty interval; pulled custody cascades and the same-iteration echo repairs y before the filter), rows R3/R4 exhibit the two faces predictions-first — (d2) CLOSED at derivation grade: (H | V5) assembled end-to-end with NO named obligation for the first time, cold audit owed); addendum 24 cold audit PASSED 2026-07-21 (addendum 25: all five attack points hold — one substantive repair, the refused-echo corner closed by the W′-sweep drop lemma (W′ settlers are exactly walked-at-final vertices; every out-neighbor below B′ co-settles in the batch), two wording grades sharpened; (d2) COLD-AUDITED — every link of the (H | V5) chain is now audited end-to-end; remaining: (a-25) re-derive the drop lemma inside the consolidation write-up, (c) tuple grade); (H | V5) CONSOLIDATED 2026-07-21 (addendum 26: PROOF.md written as the linear citable record of the chain — Lemma V named, the S1/S2 narrative folded into it; (a-25) DISCHARGED inside §7, the drop lemma re-derived cold with both attack points closed and two sharpenings — the failed-search attribution forced, the descendant-W′-sweep improver case vacuous by IH pre-emption; the single remaining open item is (c), the tuple grade); TUPLE GRADE UPGRADED 2026-07-21 (addendum 27: the honest target is (len, hops) grade — the pred slot fails prefix optimality and is excluded as permanent scope — and the whole chain transfers: the tie-refusal corner closes by the refusal-floor argument (a refused canonical candidate certifies lh-completeness), post-settlement drift is confined by the regime to the candidate-invisible pred slot, and the tuple-strict borrows become native; (H_lh | V5) at derivation grade, cold audit owed as (a-27), row J designed as the record's face); addendum 27 cold audit PASSED 2026-07-21 (addendum 28: all five attack points hold — one substantive repair, the refusal-floor argument gains its bound-gate face (the acceptance test is `cand ≤ d[v] && cand < b`: the strict prefix chain kills the bound face at branch (iii), the DCA echo, and the cascade re-mints, and it self-cancels at the drop corner — pop and sweep share the bound on bit-identical candidates), plus three same-key inventory additions (lazy-deletion equality, same-key heap order, the acceptance tie face) — (H_lh | V5) COLD-AUDITED end-to-end; pred slot permanent scope; next the PROOF.md lh rewrite, then row J); PROOF.md REWRITTEN AT LH GRADE 2026-07-21 (addendum 29: the document now states and proves (H_lh | V5) with the length-grade theorem as its len-slot projection — the two audit-assembled closures (bound-face strict-chain/self-cancel, cascade re-base) re-derived fresh from the code before folding in, the refusal-floor lemma named in §3, §7's corollary split into three faces with the label-clause proviso, and the instrumentation gap recorded in §10; the chain carries no named debt and its citable record is at final grade; remaining follow-up: row J, designed, predictions recorded)
+## Q14 — the missing re-settlement lemma: statement, why naive induction fails, and the one-bit repair. OPEN — NARROWED 2026-07-15 (the D-entry channel is closed by the gate-tiling lemma; only the FindPivots/W′ channel remains); (H) proof opened 2026-07-16 (addendum 7: restricted invariant measured clean everywhere, base-case half proved, two sub-lemmas remain); (H) FALSIFIED LIVE 2026-07-17 for the paper engine and V8 (addendum 13, row G; cold-audited addendum 14) — the proof target is now (H | V5); V8 wrong FINAL distance exhibited in full recursion same day (addendum 15, row H) — V8's exactness falsified, VARIANTS.md amended; (H | V5) ASSEMBLED AT SKETCH GRADE 2026-07-18 (addendum 16: the window/off-path-anchor recast — window proved modulo Q12, anchor closed over the channel inventory, E-c drops out of the base half; same-session math, cold audit owed); cold audit PASSED 2026-07-18 (addendum 17: all five targets hold, two wording repairs, Q12 carve-out transitive, custody persistence named as the write-up's spine — Q12 is the last statement-level gap); Q12 ABSORBED 2026-07-18 (addendum 18: spine confinement + two-shape theorem under the batch tie-break — the W2 carve-out becomes the S1/S2 interface of the custody-persistence lemma, which is now the single remaining gap); addendum 18 cold audit PASSED 2026-07-18 (addendum 19: all four attack points hold, one wording repair — the spine is the leak-carrying prefix; keep-min corner closed; S2 keys proven outside the event call's W; obligations scoped to W′ events; provenance named as the persistence lemma's required carry); CUSTODY PERSISTENCE WRITTEN 2026-07-18 (addendum 20: Lemma Rep proved, re-arm gaps closed by bound domination at violating events, S1 reduced to S2 — and the honest negative: S2's closure is not derivable from the assembled machinery; (H | V5) is now conditional on exactly one obligation, (d2) the frontier-order question, decidable by row I's two-stage protocol, with the exit-cap engine as the designed fallback; same-session math, cold audit owed); addendum 20 cold audit PASSED 2026-07-18 (addendum 21: all five attack points hold, one wording repair — D3's "consumed" reads "settled"; the case-5 corner collapsed to a len-grade vacuity with one-step complementarity, chain re-rooting named as the gate-refused closure, and debt (c) gains a second pressure point: post-settlement tuple-drift echoes); ROW I STAGE 1 CLOSED NEGATIVE 2026-07-21 (addendum 22: every assembly route for the harmless leak closes against an audited mechanism — the two nearest misses built and confirmed predictions-first as rows R1/R2, examples/rowi.rs; sharpened claim at derivation grade, cold audit owed: a strict sub-B′ stored value under V5 requires a stale-at-filter W′ pass, so viol ⟹ settle-inc, stage 1 as protocoled is unassemblable, and (d2) is the whole of (H | V5), decided by stage 2); addendum 22 cold audit PASSED 2026-07-21 (addendum 23: all four attack points hold, two repairs — slot (c) reads the drop call's own later sweep, slot (a) gains its stall arm — and the custody-entry bound-domination dichotomy named as the single-call engine); ROW I STAGE 2 CLOSED NEGATIVE 2026-07-21 (addendum 24: the narrow-z + stale-walked-y assembly closes on every route — the DCA-echo reduction retires the settled-z geometry, the beam dichotomy retires the unsettled-z one (unpulled custody pins B′ ≤ dis(z), the empty interval; pulled custody cascades and the same-iteration echo repairs y before the filter), rows R3/R4 exhibit the two faces predictions-first — (d2) CLOSED at derivation grade: (H | V5) assembled end-to-end with NO named obligation for the first time, cold audit owed); addendum 24 cold audit PASSED 2026-07-21 (addendum 25: all five attack points hold — one substantive repair, the refused-echo corner closed by the W′-sweep drop lemma (W′ settlers are exactly walked-at-final vertices; every out-neighbor below B′ co-settles in the batch), two wording grades sharpened; (d2) COLD-AUDITED — every link of the (H | V5) chain is now audited end-to-end; remaining: (a-25) re-derive the drop lemma inside the consolidation write-up, (c) tuple grade); (H | V5) CONSOLIDATED 2026-07-21 (addendum 26: PROOF.md written as the linear citable record of the chain — Lemma V named, the S1/S2 narrative folded into it; (a-25) DISCHARGED inside §7, the drop lemma re-derived cold with both attack points closed and two sharpenings — the failed-search attribution forced, the descendant-W′-sweep improver case vacuous by IH pre-emption; the single remaining open item is (c), the tuple grade); TUPLE GRADE UPGRADED 2026-07-21 (addendum 27: the honest target is (len, hops) grade — the pred slot fails prefix optimality and is excluded as permanent scope — and the whole chain transfers: the tie-refusal corner closes by the refusal-floor argument (a refused canonical candidate certifies lh-completeness), post-settlement drift is confined by the regime to the candidate-invisible pred slot, and the tuple-strict borrows become native; (H_lh | V5) at derivation grade, cold audit owed as (a-27), row J designed as the record's face); addendum 27 cold audit PASSED 2026-07-21 (addendum 28: all five attack points hold — one substantive repair, the refusal-floor argument gains its bound-gate face (the acceptance test is `cand ≤ d[v] && cand < b`: the strict prefix chain kills the bound face at branch (iii), the DCA echo, and the cascade re-mints, and it self-cancels at the drop corner — pop and sweep share the bound on bit-identical candidates), plus three same-key inventory additions (lazy-deletion equality, same-key heap order, the acceptance tie face) — (H_lh | V5) COLD-AUDITED end-to-end; pred slot permanent scope; next the PROOF.md lh rewrite, then row J); PROOF.md REWRITTEN AT LH GRADE 2026-07-21 (addendum 29: the document now states and proves (H_lh | V5) with the length-grade theorem as its len-slot projection — the two audit-assembled closures (bound-face strict-chain/self-cancel, cascade re-base) re-derived fresh from the code before folding in, the refusal-floor lemma named in §3, §7's corollary split into three faces with the label-clause proviso, and the instrumentation gap recorded in §10; the chain carries no named debt and its citable record is at final grade; remaining follow-up: row J, designed, predictions recorded); ROW J EXECUTED 2026-07-21 (addendum 30: the drift face closes NEGATIVE at design time — settlement-time labels are bit-final on V5, pred included, so addendum 27's flip prediction is corrected before the first run; derivation grade, cold audit owed as (a-30); rows J1/J2 exhibit the arrival-set residual predictions-first (examples/rowj.rs — the unarrived canonical offer and the pre-settlement pred-tie-break accept, healed in full recursion), and the lh-oracle face is all-zero across 12 rows, pred column included)
 
 What the paper needs and never states or proves:
 
@@ -4467,6 +4467,167 @@ rather than as a separate corollary.
 and off (14/14 both configs). The (H_lh | V5) chain remains without
 named debt; PROOF.md is now its citable record at the final grade.
 Next: row J (predictions recorded in addendum 27), at leisure.
+
+## Q14 addendum 30 (2026-07-21, fresh session; the closure and the pred-canonicality argument are same-session math, flagged for cold re-derivation before anything builds on them) — row J executed: the drift face closes NEGATIVE at design time (settlement-time labels are bit-final on V5, pred included — addendum 27's flip prediction corrected before the first run), the two nearest misses exhibited predictions-first (rows J1/J2, examples/rowj.rs), and the lh-oracle face confirms corpus-wide (len, hops) equality with the pred column zero on every engine
+
+**The correction, found at design time.** Addendum 27 designed row
+J's face (a) as the drift face: a two-pred diamond whose smaller-id
+tight pred is gated until after the target settles, predicted to show
+settlement-time pred ≠ final pred on all three engines. The
+construction attempts (this session, against the code, before any
+run) closed every route — the flip is unassemblable, and the closure
+is a theorem-shaped strengthening of the scope statement:
+
+> **(Bit-finality of settlement labels.)** On V5 — and on the paper
+> engine in the first-violation-free regime — the label a vertex
+> carries at its first settlement event is bit-final: no later accept
+> changes any slot, pred included. Post-settlement pred drift does
+> not exist; the pred slot's non-canonicality ((Prefix optimality)'s
+> failure there, PROOF.md §11) is purely an *arrival-set* property —
+> which tight offers ever fire — never a drift property.
+> Pre-settlement pred drift (S2's tie-break accept) remains live and
+> harmless. Derivation grade; cold audit owed as (a-30).
+
+The two-route derivation. A flip needs an accepted candidate
+c = (len, hops, v, p′) with c < d[v] full-tuple (equal prefix,
+smaller pred — labels only improve, so a post-settlement accept is
+exactly this) arriving strictly after v's settlement event.
+
+- *Route 1 — v settles by pull.* Two audited devices close it
+  jointly. First, the refusal-floor argument is slot-free: c sits
+  full-tuple below v's stored value, and every bound that admits v's
+  pull admits everything below v's entry, so the bound clause can
+  never separate c from v's settlement context — wherever v can
+  settle, c is acceptable (the addendum-28 strict chain, with the
+  last link now pred-strict instead of prefix-strict; the total
+  order carries it unchanged). Second, echo immediacy: c's source
+  sits tuple-strictly below c (Fact Z), hence below v — it settles
+  strictly earlier, and its settlement echoes at its settling
+  context's relax sites and at every ancestor's relax sweep on the
+  return path (u_log propagation). The first context whose bound
+  covers v's settlement covers c, and its sweep of the source's
+  subtree fires when that subtree returns — before v's own block is
+  pulled there (value order; the co-resident case fires in-child,
+  before v's pull, by the same bound argument). So c lands, or
+  label-refuses against an even smaller pred, strictly before v
+  settles. Either way the settle-time pred is already final.
+- *Route 2 — v settles at a W′ boundary.* The drop-lemma corollary
+  (walked-at-final): every W′ settler's edges fired at FindPivots at
+  the call's full bound ≥ B′ > d[v]'s stored value > c, so a co-mate
+  source's offer was delivered before the append — accepted (the
+  drift landed pre-settlement) or label-refused (v already held
+  ≤ c). The addendum-29 observation ("a W′ settler's label is
+  bit-final from its last valid pop, even at pred — consumed
+  nowhere") is this route's statement; the closure now consumes it
+  and extends bit-finality to pull settlers via route 1.
+- On V8 the claim is a fortiori: the dedup gate refuses every
+  post-settlement relax outright.
+
+The construction log (recorded because each wall is a named audited
+device — the same shape as row I's closures). (i) The in-call
+W′-mate diamond — u_small ∈ W′ sweeping a co-settled y — needs a W′
+member whose final-label edge never fired; the corollary forbids it
+(a failed search drains its heap, improvements re-push, the
+re-pushed entry pops valid). (ii) The gated-improver chain — keeping
+u_small's tight offer dormant behind an unsettled improver — closes
+on both arms of the cascade/stall dichotomy: every improver with a D
+entry sits tuple-below its beneficiary, settles first, and its echo
+re-mints the next link (tie re-store + the complementary insert
+gate, one-step complementarity), while any unpulled link at the loop
+end pins B′ at or below itself, failing the target's own W′ filter;
+and a FindPivots improver whose search caps or merges either roots a
+pivot (the partition's undirected adjacency reaches every stamped
+vertex, and every s_list member of a group is pivot-eligible) or
+drains onto the target. (iii) The cross-call echo — u_small settled
+in a narrow subtree, y settling elsewhere — dies on bound nesting:
+any bound refusing c also blocks y's settlement (c < y's stored
+value), so y settles only under an ancestor that accepts c, and that
+ancestor's sweep of u_small's subtree precedes y's settling
+iteration (the DCA-echo geometry, run in reverse).
+
+**The exhibits (examples/rowj.rs, predictions in the driver header
+before the first run — all confirmed exactly; record
+benchmarks/results/rowj.txt).** Shared diamond, super-source 0:
+0 → u_small(v1) at 50.5, 0 → u_big(v2) at 50.25, u_small → y(v3) at
+0.25, u_big → y at 0.5 — both y-paths tight at (50.75, 2), canonical
+pred = v1. Direct level-1 calls, t = 2, k = 3, B = len 52, traced at
+y under q11-trace with the full counter panel:
+
+- *Row J1 (the unarrived offer).* S = [u_big]; u_small pre-labeled
+  complete but outside S — no search roots at it, nothing relaxes
+  into it, its offer never fires. u_big's search fails (|K| = 2 < 3)
+  after labeling y at (50.75, h2, v3, p2); no pivots, zero
+  iterations, B′ = B = 52, W′ = [u_big, y]. All three engines
+  identical: |U| = 2, every counter 0, y settles at
+  (50.75, h2, v3, p2) and the final label is the same tuple — the
+  settlement-time pred u_big is the min id among ARRIVED tight
+  offers, not the canonical argmin, exactly §11's scope sentence
+  live. The only engine difference is the trace's post-settlement
+  exact-tie re-store at the W′ sweep (paper/V5), which V8's dedup
+  gate refuses — value-identical either way.
+- *Row J2 (the arrival-order face).* Same graph, S = [u_big,
+  u_small] — the larger-id search runs first. The trace shows y
+  labeled (50.75, h2, v3, p2) at FindPivots, then the pred-only
+  tie-break accept (cand p1 over old p2 — S2's accept, live,
+  pre-settlement), then the settlement already carrying the
+  canonical tuple. |U| = 3, every counter 0, settle-time = final =
+  (50.75, h2, v3, p1) on all three engines.
+- *Part 2 (full recursion, source 0).* Distances exact, settle-inc =
+  dups = 0, and y's final label is (50.75, h2, v3, p1) — canonical
+  including pred — on all three engines: J1's artifact is an
+  arrival-set property of that call shape, healed the moment every
+  offer fires (even V8 accepts the pred improvement, which lands
+  before y's pull).
+
+**Face (b) — the lh-oracle (addendum 27's design, unchanged).** A
+driver-side hops-aware Dijkstra (lex-min (len, hops), lazy
+deletion) against final labels across the standard families
+(zero-heavy minslack n = 4094 and 16382 at (t, k) = (2, 2), tie-rich
+0..3 n = 170 000, zero-heavy large n = 500 000), all three engines,
+full recursion from source 0. Result: reach, len, hops, and pred
+mismatches all ZERO in every one of the 12 rows. The (len, hops)
+columns confirm addendum 27's prediction (for V5 a consequence of
+(H_lh | V5) + (Floor) + labels-only-improve; for paper the corpus's
+zero-counter regime). The pred column was predicted 0 for paper/V5
+by a new argument recorded here (same-session, inside (a-30)'s
+scope): every settled vertex's edges are re-swept at the top call's
+infinite bound, so the canonical tight offer eventually fires
+ungated, and a label-refusal of it forces pred equality — a stored
+label is a genuine path tuple, so its pred is itself an edge-tight
+pred (a cheaper-prefix genuine path would contradict lh-minimality),
+and the min-id tight pred refuses only against itself. For V8 the
+pred column was recorded, not predicted — the dedup gate freezes
+labels at settlement, so a late-arriving hops- or pred-healing
+accept is refused and mismatches are possible within V8's
+distance-exact contract; on this corpus none occurred.
+
+**Named debts after this addendum.** (a-30) cold re-derivation of
+the bit-finality closure and the pred-canonicality argument in a
+fresh session. Attack points, recorded now: (i) route 1's "first
+covering context" argument when the settling child is recursive
+(level ≥ 1) rather than a base case, and under same-block
+co-residency (M > 1) — verify the in-child delivery of c
+exhaustively over the child's own sites; (ii) route 1's source
+settling at a W′ boundary whose own sweep is bound-refused — check
+the ancestor re-fire ordering carries c before v's settlement in
+every interleaving; (iii) the pred-canonicality argument's
+"stored preds are edge-tight" step under S2 drift chains — the
+stored pred changes while (len, hops) is pinned; confirm genuineness
+survives every accept site; (iv) the V5 cap is bound-only — confirm
+slot-inertness everywhere both arguments touch bounds; (v) scope
+hygiene — which steps consume (H_lh | V5) or the regime versus raw
+engine invariants (the paper-engine face of the claim rests on the
+latter plus the clean corpus). (c)-class debts: none — the chain
+itself is untouched by this addendum; PROOF.md deliberately not
+amended (the bit-finality strengthening of §11 and the §7
+observation's promotion from "consumed nowhere" wait for (a-30),
+per the cadence rule).
+
+**Status.** Driver + record only; solver untouched. Row J closes the
+program's last designed probe: the record now carries the scope
+residual's two faces as exhibits and the lh-oracle's corpus-wide
+zeros. Next: the (a-30) cold audit; if it holds, fold bit-finality
+into PROOF.md §11 as the sharpened scope sentence.
 
 ## Q15 — the wave-escape family: Lemma 3.7's bound clause violated at scale on plain positive weights; the Q3 leak is an accidental wave damper; V5 repairs every counter at once. CONFIRMED (recorded run)
 

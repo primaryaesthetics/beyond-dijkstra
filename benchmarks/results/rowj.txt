@@ -1,0 +1,105 @@
+﻿Row J -- pred-slot scope exhibits (direct level-1 calls, t=2, k=3, B=len 52):
+
+Row J1: the unarrived offer (final pred = min ARRIVED, not canonical):
+  [paper] B'=52 |U|=2 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y final=(50.75, h2, v3, p2) (canonical pred p1); u_small: d=(50.5, h1, v1, p0) in-U=false entry=none
+          | RELAX-ACCEPT at find_pivots: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=INF
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | JOIN-K (local search root x=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | JOIN-W (failed search root x=2, |K|=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | SETTLE #1 [W′ boundary append] d=(50.75, h2, v3, p2) b_prime=(52, h0, v0, p-1) in-this-call-U=false
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | RELAX-ACCEPT [exact-tie re-store] at w_prime_sweep: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=(50.75, h2, v3, p2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+  [   V5] B'=52 |U|=2 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y final=(50.75, h2, v3, p2) (canonical pred p1); u_small: d=(50.5, h1, v1, p0) in-U=false entry=none
+          | RELAX-ACCEPT at find_pivots: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=INF
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | JOIN-K (local search root x=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | JOIN-W (failed search root x=2, |K|=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | SETTLE #1 [W′ boundary append] d=(50.75, h2, v3, p2) b_prime=(52, h0, v0, p-1) in-this-call-U=false
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | RELAX-ACCEPT [exact-tie re-store] at w_prime_sweep: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=(50.75, h2, v3, p2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+  [   V8] B'=52 |U|=2 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y final=(50.75, h2, v3, p2) (canonical pred p1); u_small: d=(50.5, h1, v1, p0) in-U=false entry=none
+          | RELAX-ACCEPT at find_pivots: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=INF
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | JOIN-K (local search root x=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | JOIN-W (failed search root x=2, |K|=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+          | SETTLE #1 [W′ boundary append] d=(50.75, h2, v3, p2) b_prime=(52, h0, v0, p-1) in-this-call-U=false
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=1)
+
+Row J2: the arrival-order face (pre-settlement pred-only accept, canonical):
+  [paper] B'=52 |U|=3 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y final=(50.75, h2, v3, p1) (canonical pred p1); u_small: d=(50.5, h1, v1, p0) in-U=true entry=none
+          | RELAX-ACCEPT at find_pivots: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=INF
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-K (local search root x=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-W (failed search root x=2, |K|=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | RELAX-ACCEPT at find_pivots: u=1 w=0.25 cand=(50.75, h2, v3, p1) old=(50.75, h2, v3, p2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-K (local search root x=1)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | SETTLE #1 [W′ boundary append] d=(50.75, h2, v3, p1) b_prime=(52, h0, v0, p-1) in-this-call-U=false
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | RELAX-ACCEPT [exact-tie re-store] at w_prime_sweep: u=1 w=0.25 cand=(50.75, h2, v3, p1) old=(50.75, h2, v3, p1)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+  [   V5] B'=52 |U|=3 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y final=(50.75, h2, v3, p1) (canonical pred p1); u_small: d=(50.5, h1, v1, p0) in-U=true entry=none
+          | RELAX-ACCEPT at find_pivots: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=INF
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-K (local search root x=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-W (failed search root x=2, |K|=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | RELAX-ACCEPT at find_pivots: u=1 w=0.25 cand=(50.75, h2, v3, p1) old=(50.75, h2, v3, p2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-K (local search root x=1)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | SETTLE #1 [W′ boundary append] d=(50.75, h2, v3, p1) b_prime=(52, h0, v0, p-1) in-this-call-U=false
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | RELAX-ACCEPT [exact-tie re-store] at w_prime_sweep: u=1 w=0.25 cand=(50.75, h2, v3, p1) old=(50.75, h2, v3, p1)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+  [   V8] B'=52 |U|=3 settle-inc=0 viol base/rec=0/0 cap=0 incomp b/r/i=0/0/0 stale-inc=0/0/0 wards b/r/i=0/0/0 missing=0/0/0 dups=0
+          y final=(50.75, h2, v3, p1) (canonical pred p1); u_small: d=(50.5, h1, v1, p0) in-U=true entry=none
+          | RELAX-ACCEPT at find_pivots: u=2 w=0.5 cand=(50.75, h2, v3, p2) old=INF
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-K (local search root x=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-W (failed search root x=2, |K|=2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | RELAX-ACCEPT at find_pivots: u=1 w=0.25 cand=(50.75, h2, v3, p1) old=(50.75, h2, v3, p2)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | JOIN-K (local search root x=1)
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+          | SETTLE #1 [W′ boundary append] d=(50.75, h2, v3, p1) b_prime=(52, h0, v0, p-1) in-this-call-U=false
+          |         in bmssp(l=1, B=(52, h0, v0, p-1), |S|=2)
+
+Part 2 -- full recursion on the diamond, source 0, all engines:
+  [paper] settle-inc=0 dups=0 y final=(50.75, h2, v3, p1) (exact)
+  [   V5] settle-inc=0 dups=0 y final=(50.75, h2, v3, p1) (exact)
+  [   V8] settle-inc=0 dups=0 y final=(50.75, h2, v3, p1) (exact)
+
+Face (b) -- lh-oracle across the standard families:
+                       input        n engine    reach   len-mism  hops-mism  pred-mism
+         zero-heavy minslack     4094  paper        0          0          0          0
+         zero-heavy minslack     4094     V5        0          0          0          0
+         zero-heavy minslack     4094     V8        0          0          0          0
+         zero-heavy minslack    16382  paper        0          0          0          0
+         zero-heavy minslack    16382     V5        0          0          0          0
+         zero-heavy minslack    16382     V8        0          0          0          0
+               tie-rich 0..3   170000  paper        0          0          0          0
+               tie-rich 0..3   170000     V5        0          0          0          0
+               tie-rich 0..3   170000     V8        0          0          0          0
+            zero-heavy large   500000  paper        0          0          0          0
+            zero-heavy large   500000     V5        0          0          0          0
+            zero-heavy large   500000     V8        0          0          0          0
