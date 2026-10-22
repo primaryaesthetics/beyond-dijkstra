@@ -4,7 +4,7 @@ This document consolidates the proof of the settlement-completeness
 property (H) for the V5 variant of our port of arXiv:2602.07868 — the
 result that the Q14 research program (QUESTIONS.md) was opened to decide.
 The program's history, its falsifications, and the session-by-session
-derivation trail live in QUESTIONS.md Q14 and its addenda 1–31; this
+derivation trail live in QUESTIONS.md Q14 and its addenda 1–32; this
 document is the linear write-up of the surviving chain at its final
 grade, self-contained modulo SPEC.md (the pinned semantics) and
 VARIANTS.md (the engine definitions).

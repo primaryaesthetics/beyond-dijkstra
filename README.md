@@ -136,6 +136,14 @@ implementer who takes it at face value earns a wrong answer. We know because we
 did. Recorded with drivers and predictions-written-before-runs in Q14 addenda
 13–15.
 
+**The authors' fix.** The paper's authors point to a local base-case fix for
+this example: updating `B′` after the final Pull and the relaxations that
+follow it. As far as we can tell from that description, it is the same change
+as the `V5` cap below, which we found independently, and they plan a revision
+of the paper. Under the `V5` cap no vertex of the example is settled before its
+distance is final (`benchmarks/results/rowh.txt`). The completeness clause
+stays false for the algorithm as printed.
+
 **Our own completeness proof.** Capping `B′` in the base case closes that hole
 exactly, and `PROOF.md` writes up what we can then prove: on the capped engine
 every settlement settles a vertex carrying the lexicographic minimum of
@@ -144,8 +152,8 @@ Scope, stated plainly: this is a careful hand proof against a frozen
 implementation, and it is not machine-checked. It is also not a proof about the
 paper's algorithm as written, which the counterexample above rules out.
 Thirty-two recorded addenda under one
-discipline: every step derived in one session, then re-derived from the code in
-a separate later session before anything was built on it. Eight
+discipline: every step derived in one pass, then re-derived from the code in
+a separate later pass before anything was built on it. Eight
 derivation/audit pairs, written down as they happened, falsifications included.
 
 ## Layout

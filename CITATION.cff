@@ -39,7 +39,7 @@ abstract: >-
   stated. A 70-vertex counterexample settles an incomplete vertex, and a
   variant that trusts the clause finishes with a wrong distance. The
   repository also includes a hand proof, derived and independently
-  re-derived across thirty-two recorded sessions, that a capped variant of
+  re-derived across thirty-two recorded passes, that a capped variant of
   the algorithm settles every vertex with its canonical (length, hop count)
   label.
 references:
